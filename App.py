@@ -4,6 +4,21 @@ import pandas as pd
 import plotly.graph_objects as go
 import random
 
+# ---------- Inject CSS for muted divider ----------
+st.markdown(
+    """
+    <style>
+    hr {
+        border: none;
+        height: 1px;
+        background-color: #d3d3d3;  /* light gray */
+        margin: 2rem 0;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---------- Page Config ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
@@ -69,6 +84,8 @@ with col_right:
     df_table = pd.DataFrame(table_data, index=index_labels)
     st.dataframe(df_table)
 
+st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
+
 # ---------- Bottom Row ----------
 col_bottom_left, col_bottom_right = st.columns([3, 2])
 
@@ -118,6 +135,7 @@ with col_bottom_right:
         fig_order_accuracy = pie_chart(100.00, "Accuracy", "0 SLA Missed")
         st.plotly_chart(fig_order_accuracy, use_container_width=True, height=200)
 
+st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
+
 # ---------- Footer ----------
-st.markdown("---")
 st.markdown("### 💙 *Stay Safe & Well*")
