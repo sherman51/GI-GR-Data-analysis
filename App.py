@@ -27,7 +27,7 @@ hr {
 
 if uploaded_file:
     # Skip the first 5 rows, use row 6 as header
-    df_raw = pd.read_excel(uploaded_file, skiprows=5)
+    df_raw = pd.read_excel(uploaded_file, skiprows=6)
 
     # Clean column names
     df_raw.columns = df_raw.columns.str.strip()
@@ -175,5 +175,6 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
