@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, timedelta
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -24,6 +24,18 @@ st.markdown(
 
 # ---------- Sidebar File Upload ----------
 uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
+
+# Define the 3 dates for selection
+today = date.today()
+tomorrow = today + timedelta(days=1)
+day_after_tomorrow = today + timedelta(days=2)
+
+date_options = [today, tomorrow, day_after_tomorrow]
+date_labels = [d.strftime('%d %b %Y') for d in date_options]
+
+# Sidebar selectbox for date selection
+selected_label = st.sidebar.selectbox("Select ExpDate to Filter", date_labels, index=0)
+selected_date = date_options[date_labels.index(selected_label)]
 
 # ---------- Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
@@ -157,3 +169,4 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
