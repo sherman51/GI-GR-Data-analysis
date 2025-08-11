@@ -65,7 +65,7 @@ if uploaded_file:
 
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
-        col_date, col_metric = st.columns([2, 1])
+        col_date, col_orders, col_unique = st.columns(3)
 
         with col_date:
             st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
@@ -185,6 +185,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
