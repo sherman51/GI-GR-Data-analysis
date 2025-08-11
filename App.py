@@ -4,6 +4,21 @@ import pandas as pd
 import plotly.graph_objects as go
 import random
 
+# ------------------------ FILE UPLOAD ------------------------
+uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
+
+if uploaded_file:
+    # Skip metadata rows, header starts on row 6 (index 5)
+    df_raw = pd.read_excel(uploaded_file, skiprows=5)
+
+    # Clean up
+    df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
+    df.dropna(how="all", inplace=True)     # Remove empty rows
+
+
+
+
+
 # ---------- Inject CSS for muted divider ----------
 st.markdown(
     """
@@ -139,3 +154,4 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
