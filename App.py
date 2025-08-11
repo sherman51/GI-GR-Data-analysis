@@ -32,6 +32,29 @@ if uploaded_file:
         '1-ADHOC Critical': 'Ad-hoc Critical'
     })
 
+     # ------------------------ SIDEBAR SINGLE-DATE FILTER ------------------------
+    # Ensure 'ExpDate' is in datetime format
+    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
+
+    # Drop NaT values just in case
+    available_dates = df['ExpDate'].dropna().dt.date.unique()
+    available_dates = sorted(available_dates)
+
+    selected_date = st.sidebar.selectbox(
+        "Select ExpDate to Filter",
+        options=available_dates,
+        format_func=lambda date: date.strftime('%d %b %Y')
+    )
+
+    # Filter the dataframe by selected ExpDate
+    df = df[df['ExpDate'].dt.date == selected_date]
+
+    # Optional: Early stop if no data for that date
+    if df.empty:
+        st.warning(f"No data available for {selected_date.strftime('%d %b %Y')}.")
+        st.stop()
+
+
     # ------------------------ METRICS ------------------------
     today_orders = df[df['Date'] == df['Date'].max()]
     daily_orders_count = today_orders['GINo'].nunique()
@@ -165,3 +188,4 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
