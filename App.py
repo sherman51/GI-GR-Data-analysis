@@ -9,9 +9,6 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 # ---------- Page Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 
-# ---------- File Upload ----------
-uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
-
 # ---------- Sidebar: Date Picker ----------
 selected_date = st.sidebar.date_input(
     "Select Date for Metrics",
@@ -20,6 +17,10 @@ selected_date = st.sidebar.date_input(
 )
 
 st.markdown(f"**Date:** {selected_date.strftime('%d %b %Y')}")
+
+# ---------- File Upload ----------
+uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
+
 # ---------- Styling ----------
 st.markdown("""
 <style>
@@ -187,4 +188,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
