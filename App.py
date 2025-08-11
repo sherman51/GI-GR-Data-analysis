@@ -17,24 +17,6 @@ selected_date = date_options[date_labels.index(selected_label)]
 
 
 
-# ------------------------ DATA PROCESSING ------------------------
-If uploaded_file:
-    # ------------------ Step 1: Load & Clean Data ------------------
-    df_raw = pd.read_excel(uploaded_file, skiprows=5)
-    df = df_raw.dropna(axis=1, how="all")  # Drop empty columns
-    df.dropna(how="all", inplace=True)     # Drop empty rows
-
-    # Fix column names (strip trailing spaces)
-    df.columns = df.columns.str.strip()
-
-    # Optional: Filter by ExpDate if available
-    if 'ExpDate' in df.columns:
-        df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce').dt.date
-        df2 = df[df['ExpDate'] == selected_date]
-
-
-
-
 #---------- Inject CSS for muted divider ----------
 st.markdown(
     """
@@ -175,5 +157,6 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
