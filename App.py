@@ -13,9 +13,9 @@ if uploaded_file is not None:
     # Read the file
     try:
         if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file, skiprows = 5)
+            df = pd.read_csv(uploaded_file, skiprows = 6)
         else:
-            df = pd.read_excel(uploaded_file, skiprows = 5)
+            df = pd.read_excel(uploaded_file, skiprows = 6)
 
        
         # Show dataframe
@@ -26,6 +26,7 @@ if uploaded_file is not None:
         st.error(f"Error: {e}")
 
     
+
 
 
 
