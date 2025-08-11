@@ -19,7 +19,7 @@ if uploaded_file:
     df = df.drop(index=0).reset_index(drop=True)
 
     # Convert data types
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
     num_cols = ['ExpectedQTY', 'ShippedQTY', 'VarianceQTY']
     for col in num_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -62,7 +62,7 @@ if uploaded_file:
         st.stop()
 
     # ------------------------ METRICS ------------------------
-    today_orders = df[df['Date'] == df['Date'].max()]
+    today_orders = df[df['ExpDate'] == df['ExpDate'].max()]
     daily_orders_count = today_orders['GINo'].nunique()
 
     # Status Table
@@ -194,3 +194,4 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
