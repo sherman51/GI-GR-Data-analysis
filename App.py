@@ -2,93 +2,88 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import datetime
-
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 uploaded_file = st.sidebar.file_uploader("Choose an XLSX file", type=['xlsx'])
 
 
+    # Daily Order breakdown
 
-# Mock data generation
-def generate_inventory_data():
-    categories = ['Electronics', 'Furniture', 'Clothing', 'Groceries', 'Toys']
-    data = {
-        'Product': [f'Item {i}' for i in range(1, 11)],
-        'Category': np.random.choice(categories, size=10),
-        'Stock': np.random.randint(5, 100, size=10),
-        'Price ($)': np.random.uniform(10, 500, size=10).round(2),
-    }
-    return pd.DataFrame(data)
-
-def generate_order_data():
-    status = ['Pending', 'Shipped', 'Delivered', 'Returned']
-    data = {
-        'Order ID': [f'O{1000 + i}' for i in range(1, 6)],
-        'Customer': [f'Customer {i}' for i in range(1, 6)],
-        'Status': np.random.choice(status, size=5),
-        'Amount ($)': np.random.uniform(50, 300, size=5).round(2),
-        'Order Date': [datetime.date.today() - datetime.timedelta(days=np.random.randint(1, 10)) for _ in range(5)],
-    }
-    return pd.DataFrame(data)
-
-def generate_warehouse_activity():
-    activities = ['Item Received', 'Item Picked', 'Order Packed', 'Order Shipped']
-    data = {
-        'Activity': np.random.choice(activities, size=10),
-        'Timestamp': [datetime.datetime.now() - datetime.timedelta(minutes=np.random.randint(1, 60)) for _ in range(10)],
-    }
-    return pd.DataFrame(data)
-
-# Streamlit UI
-st.set_page_config(page_title="Warehouse Management Dashboard", page_icon=":package:", layout="wide")
-
-# Header
-st.title("Warehouse Management Dashboard")
-st.markdown("This dashboard provides insights into your warehouse operations.")
-
-# Sidebar for Navigation
-st.sidebar.header("Navigation")
-dashboard_option = st.sidebar.radio("Choose a view", ("Inventory Overview", "Order Status", "Warehouse Activity"))
-
-# Main dashboard sections
-if dashboard_option == "Inventory Overview":
-    st.subheader("Inventory Overview")
-    inventory_data = generate_inventory_data()
-    st.dataframe(inventory_data)
     
-    st.markdown("### Total Stock Value")
-    total_stock_value = (inventory_data['Stock'] * inventory_data['Price ($)']).sum()
-    st.metric("Total Value of Inventory", f"${total_stock_value:,.2f}")
-
-elif dashboard_option == "Order Status":
-    st.subheader("Order Status")
-    order_data = generate_order_data()
-    st.dataframe(order_data)
-
-    # Order status breakdown
-    st.markdown("### Order Status Breakdown")
-    order_status_count = order_data['Status'].value_counts()
-    st.bar_chart(order_status_count)
-
-elif dashboard_option == "Warehouse Activity":
-    st.subheader("Recent Warehouse Activity")
-    activity_data = generate_warehouse_activity()
-    st.dataframe(activity_data)
+    # --------------------
+    # Load and prepare data
+    # --------------------
+    file_path = "GI SKU line.xlsx"  # Change if file path differs
+    df = pd.read_excel(file_path, sheet_name="Orders")
     
-    st.markdown("### Recent Activities")
-    st.write("This section shows the latest activities in the warehouse, such as receiving, packing, or shipping.")
+    # If date is already selected, we assume df is already filtered externally.
+    # Otherwise, you could filter here with something like:
+    # df = df[df["CreatedOn"].dt.date == selected_date]
+    
+    # --------------------
+    # Count orders by Priority & Status
+    # --------------------
+    orders_by_priority_status = (
+        df.groupby(["Priority", "Status"])
+        .size()
+        .reset_index(name="OrderCount")
+    )
+    
+    # Create cross-matrix (status as rows, priority as columns)
+    cross_matrix = pd.pivot_table(
+        orders_by_priority_status,
+        index="Status",
+        columns="Priority",
+        values="OrderCount",
+        aggfunc="sum",
+        fill_value=0
+    )
+    
+    # --------------------
+    # Create figure layout
+    # --------------------
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, figsize=(14, 6),
+        gridspec_kw={"width_ratios": [2, 1]}
+    )
+    
+    # --- Left: Stacked Horizontal Bar Chart ---
+    pivot_bar = orders_by_priority_status.pivot(
+        index="Priority", columns="Status", values="OrderCount"
+    ).fillna(0)
+    
+    # Ensure consistent priority order
+    pivot_bar = pivot_bar.reindex(index=sorted(pivot_bar.index))
+    
+    bottom_vals = None
+    for status in pivot_bar.columns:
+        ax1.barh(pivot_bar.index, pivot_bar[status], left=bottom_vals, label=status)
+        if bottom_vals is None:
+            bottom_vals = pivot_bar[status].copy()
+        else:
+            bottom_vals += pivot_bar[status]
+    
+    ax1.set_xlabel("Number of Orders")
+    ax1.set_ylabel("Order Priority")
+    ax1.set_title("Outbound Orders by Priority & Status")
+    ax1.legend(title="Status")
+    
+    # --- Right: Cross-Matrix Heatmap ---
+    sns.heatmap(
+        cross_matrix,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        cbar=False,
+        ax=ax2
+    )
+    ax2.set_title("Status vs Priority (Order Count)")
+    ax2.set_xlabel("Order Priority")
+    ax2.set_ylabel("Status")
+    
+    plt.tight_layout()
+    plt.show()
 
-    activity_status_count = activity_data['Activity'].value_counts()
-    st.bar_chart(activity_status_count)
-
-# Footer
-st.markdown("""
-    <br><hr>
-    <footer>
-        <p style="font-size: 12px; text-align: center;">
-            Built with ❤️ by Your Team
-        </p>
-    </footer>
-""", unsafe_allow_html=True)
 
 
