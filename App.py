@@ -5,21 +5,37 @@ import plotly.graph_objects as go
 import random
 
 # ------------------------ FILE UPLOAD ------------------------
+# Upload Excel
 uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
 
-if uploaded_file:
-    # Skip metadata rows, header starts on row 6 (index 5)
+# Date filters (today, tomorrow, day after)
+today = date.today()
+date_options = [today + timedelta(days=i) for i in range(3)]
+date_labels = [d.strftime('%d %b %Y') for d in date_options]
+selected_label = st.sidebar.selectbox("Select ExpDate to Filter", date_labels)
+selected_date = date_options[date_labels.index(selected_label)]
+
+
+
+# ------------------------ DATA PROCESSING ------------------------
+f uploaded_file:
+    # ------------------ Step 1: Load & Clean Data ------------------
     df_raw = pd.read_excel(uploaded_file, skiprows=5)
+    df = df_raw.dropna(axis=1, how="all")  # Drop empty columns
+    df.dropna(how="all", inplace=True)     # Drop empty rows
 
-    # Clean up
-    df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
-    df.dropna(how="all", inplace=True)     # Remove empty rows
+    # Fix column names (strip trailing spaces)
+    df.columns = df.columns.str.strip()
+
+    # Optional: Filter by ExpDate if available
+    if 'ExpDate' in df.columns:
+        df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce').dt.date
+        df2 = df[df['ExpDate'] == selected_date]
 
 
 
 
-
-# ---------- Inject CSS for muted divider ----------
+#---------- Inject CSS for muted divider ----------
 st.markdown(
     """
     <style>
@@ -159,3 +175,4 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
