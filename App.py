@@ -26,20 +26,15 @@ hr {
 """, unsafe_allow_html=True)
 
 if uploaded_file:
-    # Load data
+    # Load the raw file without any processing
     df_raw = pd.read_excel(uploaded_file)
 
-    # Clean empty columns and rows
-    df = df_raw.dropna(axis=1, how="all")
-    df.dropna(how="all", inplace=True)
+    # Display raw columns
+    st.markdown("### 🔍 Preview of Uploaded Data")
+    st.write("**Columns Detected:**", df_raw.columns.tolist())
 
-    # Parse ExpDate and other dates
-    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
-    df['CreatedOn'] = pd.to_datetime(df['CreatedOn'], errors='coerce')
-    df['ShippedOn'] = pd.to_datetime(df['ShippedOn'], errors='coerce')
-
-    # Drop rows with no ExpDate
-    df = df[df['ExpDate'].notna()]
+    # Show first few rows
+    st.dataframe(df_raw.head(10))
 
     # Map order types
     priority_map = {
@@ -178,3 +173,4 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
