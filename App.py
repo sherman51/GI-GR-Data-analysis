@@ -13,10 +13,11 @@ if uploaded_file is not None:
     # Read the file
     try:
         if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
+            df = pd.read_csv(uploaded_file, skiprows = 5)
         else:
-            df = pd.read_excel(uploaded_file)
+            df = pd.read_excel(uploaded_file, skiprows = 5)
 
+       
         # Show dataframe
         st.subheader("Preview of Data")
         st.dataframe(df)  # You can also use st.table(df.head()) for a static table
@@ -25,6 +26,7 @@ if uploaded_file is not None:
         st.error(f"Error: {e}")
 
     
+
 
 
 
