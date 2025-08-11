@@ -48,6 +48,7 @@ if uploaded_file:
     # Clean up
     df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
     df.dropna(how="all", inplace=True)     # Remove empty rows
+    df.columns = df.columns.str.strip()    # 🔧 Fix column names (remove spaces)
 
     # ---------- Top Row ----------
     col_left, col_right = st.columns([4, 2])
@@ -59,7 +60,6 @@ if uploaded_file:
 
         with col_date:
             st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
-
 
         with col_metric:
             st.metric(
@@ -172,6 +172,7 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
 
 
 
