@@ -58,7 +58,8 @@ if uploaded_file:
         col_date, col_metric = st.columns([2, 1])
 
         with col_date:
-            st.metric(label="Date", selected_date.date)
+            st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
+
 
         with col_metric:
             # Use GINo count if exists
@@ -169,6 +170,7 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
 
 
 
