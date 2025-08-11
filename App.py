@@ -62,8 +62,10 @@ if uploaded_file:
 
 
         with col_metric:
-            # Use GINo count if exists
-            st.metric(label="Daily Outbound Orders", value=df["GINo"].nunique() if "GINo" in df.columns else "N/A")
+            st.metric(
+                label="Daily Outbound Orders",
+                value=df['GINo'].nunique() if 'GINo' in df.columns else "N/A"
+            )
 
         # Bar chart code below
         order_types = [
@@ -170,6 +172,7 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
 
 
 
