@@ -89,10 +89,10 @@ with col_right:
     st.markdown("#### 📋 Order Status Table")
 
     table_data = {
-        "Ad-hoc Critical Orders": [3, 0, 3, 0],
-        "Ad-hoc Urgent Orders": [4, 2, 0, 0],
-        "Ad-hoc Normal Orders": [10, 7, 3, 0],
-        "Scheduled Orders": [5, 6, 13, 17],
+        "Ad-hoc Critical": [3, 0, 3, 0],
+        "Ad-hoc Urgent": [4, 2, 0, 0],
+        "Ad-hoc Normal": [10, 7, 3, 0],
+        "Scheduled": [5, 6, 13, 17],
         "Back Orders (Accumulated)": [2, 4, 3, 2]
     }
     index_labels = ["Tpt Booked", "Packed", "Picked", "Open"]
@@ -154,5 +154,6 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
