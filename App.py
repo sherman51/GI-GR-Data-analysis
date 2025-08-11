@@ -20,16 +20,16 @@ if uploaded_file is not None:
         st.dataframe(df)
 
         # Check if required columns exist
-        required_columns = ['Category', 'Sales']
+        required_columns = ['ExpDate', 'Priority']
         if all(col in df.columns for col in required_columns):
             fig = px.bar(
                 df,
-                x='Category',
-                y='Sales',
-                text='Sales',
-                color='Category',
+                x='ExpDate',
+                y='Priority',
+                text='Priority',
+                color='ExpDate',
                 color_discrete_sequence=px.colors.sequential.Plasma_r,
-                title="Fruit Sales Overview",
+                title="Fruit Priority Overview",
             )
 
             fig.update_layout(
@@ -44,7 +44,8 @@ if uploaded_file is not None:
 
             st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("The uploaded file must contain 'Category' and 'Sales' columns.")
+            st.warning("The uploaded file must contain 'ExpDate' and 'Priority' columns.")
 
     except Exception as e:
         st.error(f"Error reading file: {e}")
+
