@@ -27,7 +27,7 @@ st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 # ---------- Top Row ----------
-col_left, col_right = st.columns([3, 2])
+col_left, col_right = st.columns([4, 2])
 
 with col_left:
     st.markdown("#### 📦 Daily Outbound Overview")
@@ -139,3 +139,4 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
