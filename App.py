@@ -26,15 +26,17 @@ hr {
 """, unsafe_allow_html=True)
 
 if uploaded_file:
-    # Load the raw file without any processing
-    df_raw = pd.read_excel(uploaded_file)
+    # Skip the first 5 rows, use row 6 as header
+    df_raw = pd.read_excel(uploaded_file, skiprows=5)
 
-    # Display raw columns
-    st.markdown("### 🔍 Preview of Uploaded Data")
+    # Clean column names
+    df_raw.columns = df_raw.columns.str.strip()
+
+    # Preview data
+    st.markdown("### 🔍 Preview of Uploaded Data (after skipping 5 rows)")
     st.write("**Columns Detected:**", df_raw.columns.tolist())
-
-    # Show first few rows
     st.dataframe(df_raw.head(10))
+
 
     # Map order types
     priority_map = {
@@ -173,4 +175,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
