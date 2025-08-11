@@ -10,6 +10,7 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 # ---------- Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 
+
 # ---------- Summary Metrics ----------
 col1, col2 = st.columns(2)
 with col1:
@@ -73,17 +74,38 @@ with col_chart:
     )
     st.plotly_chart(bar_fig, use_container_width=True)
 
-# ---------- Performance Meters ----------
+# ---------- Performance Metrics with Pie Charts ----------
 st.markdown("#### 📈 Performance Metrics")
 col3, col4 = st.columns(2)
 
+def pie_chart(value, label, total_label):
+    fig = go.Figure(go.Pie(
+        values=[value, 100 - value],
+        labels=[label, 'Remaining'],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.7,
+        textinfo='none',
+        sort=False
+    ))
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        annotations=[dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
+                     dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)]
+    )
+    return fig
+
 with col3:
     st.markdown("**Back Order < 0.50%**")
-    st.progress(0.001, text="0.10% (1 of 1000 lines)")
+    # Example: 0.10%
+    fig_back_order = pie_chart(0.10, "Back Order", "1 of 1000 lines")
+    st.plotly_chart(fig_back_order, use_container_width=True, height=200)
 
 with col4:
     st.markdown("**Order Accuracy > 99.50%**")
-    st.progress(1.0, text="100.00% (0 SLA Missed)")
+    # Example: 100.00%
+    fig_order_accuracy = pie_chart(100.00, "Accuracy", "0 SLA Missed")
+    st.plotly_chart(fig_order_accuracy, use_container_width=True, height=200)
 
 # ---------- Order Status Table ----------
 st.markdown("#### 📋 Order Status Table")
@@ -102,4 +124,3 @@ st.dataframe(df_table)
 # ---------- Footer ----------
 st.markdown("---")
 st.markdown("### 💙 *Stay Safe & Well*")
-
