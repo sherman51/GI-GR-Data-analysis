@@ -4,9 +4,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import random
 
-
-
-
 # ---------- Inject CSS for muted divider ----------
 st.markdown(
     """
@@ -22,26 +19,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Page config
+# ---------- Page Config ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
-# --- Insert logo + title here ---
-logo_url = "https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png"
-
-st.markdown(
-    f"""
-    <div style="display:flex; align-items:center;">
-        <img src="{logo_url}" style="width:50px; height:50px; margin-right:10px;">
-        <h2 style="margin:0;">🏥 SSW Healthcare - <b>Outbound Dashboard</b></h2>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Date below the title
+# ---------- Header ----------
+st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
-
-
 
 # ---------- Top Row ----------
 col_left, col_right = st.columns([4, 2])
@@ -156,5 +139,3 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
-
-
