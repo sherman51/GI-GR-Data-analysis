@@ -55,10 +55,10 @@ with col_left:
     with col_chart:
         order_types = [
             "Back Orders (Accumulated)",
-            "Scheduled Orders",
-            "Ad-hoc Normal Orders",
-            "Ad-hoc Urgent Orders",
-            "Ad-hoc Critical Orders"
+            "Scheduled",
+            "Ad-hoc Normal",
+            "Ad-hoc Urgent",
+            "Ad-hoc Critical"
         ]
         segments = ["Tpt Booked", "Packed", "Picked", "Open"]
         colors = ['green', 'blue', 'yellow', 'salmon']
@@ -154,4 +154,5 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
