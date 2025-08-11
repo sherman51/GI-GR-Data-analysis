@@ -9,7 +9,6 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
 # ---------- Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 # ---------- Summary Metrics ----------
 col1, col2 = st.columns(2)
@@ -34,6 +33,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 # ---------- Daily Orders + Breakdown Section ----------
 st.markdown("#### 📦 Daily Outbound Overview")
+st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 col_do, col_chart = st.columns([1, 5])
 
@@ -102,3 +102,4 @@ st.dataframe(df_table)
 # ---------- Footer ----------
 st.markdown("---")
 st.markdown("### 💙 *Stay Safe & Well*")
+
