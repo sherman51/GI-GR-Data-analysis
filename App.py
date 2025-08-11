@@ -40,7 +40,7 @@ if uploaded_file:
     status_table = df.groupby(['Priority', 'Status']).size().unstack(fill_value=0)
 
     # Orders over time
-    daily_summary = df.groupby('Date').agg(
+    weekly_summary = df.groupby(pd.Grouper(key='Date', freq='W-MON')).agg(
         Orders_Received=('GINo', 'nunique'),
         Orders_Cancelled=('Status', lambda x: (x == '98-Cancelled').sum())
     ).reset_index()
@@ -124,8 +124,8 @@ if uploaded_file:
     with col_bottom_left:
         st.markdown("#### 📊 Orders Over the Past 2 Weeks")
         fig = go.Figure(data=[
-            go.Bar(name='Orders Received', x=daily_summary['Date'], y=daily_summary['Orders_Received'], marker_color='lightgreen'),
-            go.Bar(name='Orders Cancelled', x=daily_summary['Date'], y=daily_summary['Orders_Cancelled'], marker_color='red')
+            go.Bar(name='Orders Received', x=weekly_summary['Date'], y=weekly_summary['Orders_Received'], marker_color='lightgreen'),
+            go.Bar(name='Orders Cancelled', x=weekly_summary['Date'], y=weekly_summary['Orders_Cancelled'], marker_color='red')
         ])
         fig.update_layout(barmode='group', xaxis_title='Date', yaxis_title='Order Count')
         st.plotly_chart(fig, use_container_width=True)
