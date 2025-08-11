@@ -3,6 +3,12 @@ import pandas as pd
 import numpy as np
 import datetime
 
+
+
+uploaded_file = st.file_uploader("Choose an XLSX file", type=['xlsx'])
+
+
+
 # Mock data generation
 def generate_inventory_data():
     categories = ['Electronics', 'Furniture', 'Clothing', 'Groceries', 'Toys']
@@ -84,3 +90,4 @@ st.markdown("""
         </p>
     </footer>
 """, unsafe_allow_html=True)
+
