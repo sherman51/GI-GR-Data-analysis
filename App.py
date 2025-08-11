@@ -47,14 +47,13 @@ col_left, col_right = st.columns([4, 2])
 with col_left:
     st.markdown("#### 📦 Daily Outbound Overview")
 
-    # Create two columns: left for date, right for metric
     col_date, col_metric = st.columns([2, 1])
 
     with col_date:
-        st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
+        st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
 
     with col_metric:
-        st.metric("Daily Outbound Orders", "84")
+        st.metric(label="Daily Outbound Orders", value="84")
 
     # Bar chart code below
     order_types = [
@@ -88,6 +87,7 @@ with col_left:
         height=400
     )
     st.plotly_chart(bar_fig, use_container_width=True)
+
 
 
 with col_right:
@@ -159,6 +159,7 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
 
