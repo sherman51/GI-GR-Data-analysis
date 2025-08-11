@@ -47,43 +47,40 @@ col_left, col_right = st.columns([4, 2])
 with col_left:
     st.markdown("#### 📦 Daily Outbound Overview")
 
-    col_do, col_chart = st.columns([1, 5])
+    # Show metric above the bar chart
+    st.metric("Daily Outbound Orders", "84")
 
-    with col_do:
-        st.metric("Daily Outbound Orders", "84")
+    order_types = [
+        "Back Orders",
+        "Scheduled",
+        "Ad-hoc Normal",
+        "Ad-hoc Urgent",
+        "Ad-hoc Critical"
+    ]
+    segments = ["Tpt Booked", "Packed", "Picked", "Open"]
+    colors = ['green', 'blue', 'yellow', 'salmon']
 
-    with col_chart:
-        order_types = [
-            "Back Orders",
-            "Scheduled",
-            "Ad-hoc Normal",
-            "Ad-hoc Urgent",
-            "Ad-hoc Critical"
-        ]
-        segments = ["Tpt Booked", "Packed", "Picked", "Open"]
-        colors = ['green', 'blue', 'yellow', 'salmon']
+    data = {
+        seg: [random.randint(1, 10) for _ in order_types]
+        for seg in segments
+    }
 
-        data = {
-            seg: [random.randint(1, 10) for _ in order_types]
-            for seg in segments
-        }
-
-        bar_fig = go.Figure()
-        for seg, color in zip(segments, colors):
-            bar_fig.add_trace(go.Bar(
-                y=order_types,
-                x=data[seg],
-                name=seg,
-                orientation='h',
-                marker=dict(color=color)
-            ))
-        bar_fig.update_layout(
-            barmode='stack',
-            xaxis_title='Order Count',
-            margin=dict(l=10, r=10, t=30, b=30),
-            height=400
-        )
-        st.plotly_chart(bar_fig, use_container_width=True)
+    bar_fig = go.Figure()
+    for seg, color in zip(segments, colors):
+        bar_fig.add_trace(go.Bar(
+            y=order_types,
+            x=data[seg],
+            name=seg,
+            orientation='h',
+            marker=dict(color=color)
+        ))
+    bar_fig.update_layout(
+        barmode='stack',
+        xaxis_title='Order Count',
+        margin=dict(l=10, r=10, t=30, b=30),
+        height=400
+    )
+    st.plotly_chart(bar_fig, use_container_width=True)
 
 with col_right:
     st.markdown("#### 📋 Order Status Table")
@@ -154,6 +151,7 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
 
