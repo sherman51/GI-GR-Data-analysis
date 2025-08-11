@@ -5,7 +5,7 @@ import datetime
 
 
 
-uploaded_file = st.file_uploader("Choose an XLSX file", type=['xlsx'])
+uploaded_file = st.sidebar.file_uploader("Choose an XLSX file", type=['xlsx'])
 
 
 
@@ -90,4 +90,5 @@ st.markdown("""
         </p>
     </footer>
 """, unsafe_allow_html=True)
+
 
