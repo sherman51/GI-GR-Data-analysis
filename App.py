@@ -53,7 +53,7 @@ with col_left:
         st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
 
     with col_metric:
-        st.metric(label="Daily Outbound Orders", value="84")
+        st.metric(label="Daily Outbound Orders", df["GINo"].nunique() if "GINo" in df.columns else "N/A")
 
     # Bar chart code below
     order_types = [
@@ -159,3 +159,4 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
