@@ -10,7 +10,6 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 # ---------- Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
-st.markdown("### 🟢 Daily Outbound Orders: **84**")
 
 # ---------- Summary Metrics ----------
 col1, col2 = st.columns(2)
@@ -33,35 +32,46 @@ fig = go.Figure(data=[
 fig.update_layout(barmode='group', xaxis_title='Date', yaxis_title='Order Count')
 st.plotly_chart(fig, use_container_width=True)
 
-# ---------- Horizontal Stacked Bars ----------
-st.markdown("#### 🧱 Order Breakdown by Type")
+# ---------- Daily Orders + Breakdown Section ----------
+st.markdown("#### 📦 Daily Outbound Overview")
 
-order_types = [
-    "Back Orders (Accumulated)",
-    "Scheduled Orders",
-    "Ad-hoc Normal Orders",
-    "Ad-hoc Urgent Orders",
-    "Ad-hoc Critical Orders"
-]
-segments = ["Tpt Booked", "Packed", "Picked", "Open"]
-colors = ['green', 'blue', 'yellow', 'salmon']
+col_do, col_chart = st.columns([1, 5])
 
-data = {
-    seg: [random.randint(1, 10) for _ in order_types]
-    for seg in segments
-}
+with col_do:
+    st.metric("Daily Outbound Orders", "84")
 
-bar_fig = go.Figure()
-for seg, color in zip(segments, colors):
-    bar_fig.add_trace(go.Bar(
-        y=order_types,
-        x=data[seg],
-        name=seg,
-        orientation='h',
-        marker=dict(color=color)
-    ))
-bar_fig.update_layout(barmode='stack', xaxis_title='Order Count')
-st.plotly_chart(bar_fig, use_container_width=True)
+with col_chart:
+    order_types = [
+        "Back Orders (Accumulated)",
+        "Scheduled Orders",
+        "Ad-hoc Normal Orders",
+        "Ad-hoc Urgent Orders",
+        "Ad-hoc Critical Orders"
+    ]
+    segments = ["Tpt Booked", "Packed", "Picked", "Open"]
+    colors = ['green', 'blue', 'yellow', 'salmon']
+
+    data = {
+        seg: [random.randint(1, 10) for _ in order_types]
+        for seg in segments
+    }
+
+    bar_fig = go.Figure()
+    for seg, color in zip(segments, colors):
+        bar_fig.add_trace(go.Bar(
+            y=order_types,
+            x=data[seg],
+            name=seg,
+            orientation='h',
+            marker=dict(color=color)
+        ))
+    bar_fig.update_layout(
+        barmode='stack',
+        xaxis_title='Order Count',
+        margin=dict(l=10, r=10, t=30, b=30),
+        height=400
+    )
+    st.plotly_chart(bar_fig, use_container_width=True)
 
 # ---------- Performance Meters ----------
 st.markdown("#### 📈 Performance Metrics")
