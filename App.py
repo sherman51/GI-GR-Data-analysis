@@ -65,18 +65,20 @@ if uploaded_file:
 
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
+        
+        # Create 3 columns for metrics side-by-side
         col_date, col_orders, col_unique = st.columns(3)
 
         with col_date:
             st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
 
-        with col_metric:
-            st.metric(label="Total Order lines", value=df[df['ExpDate'].dt.date == datetime.today().date()].shape[0])
+        with col_orders:
+            orders_today = df[df['ExpDate'].dt.date == datetime.today().date()].shape[0]
+            st.metric(label="Orders Today (by ExpDate)", value=orders_today)
 
-        with col_metric:
+        with col_unique:
             unique_gis_today = df[df['ExpDate'].dt.date == datetime.today().date()]['GINo'].nunique()
-            st.metric(label="Total Orders", value=unique_gis_today)
-        
+            st.metric(label="Unique GINo Today", value=unique_gis_today)
 
         # Build stacked bar chart by status and order type
         order_types = ['Back Orders', 'Scheduled', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
@@ -122,9 +124,9 @@ if uploaded_file:
         st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
         recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
 
-        daily_summary = recent_df.groupby(df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
+        daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
         cancelled_summary = recent_df[recent_df['Status'] == '98-Cancelled'] \
-            .groupby(df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
+            .groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
 
         dates = pd.date_range(end=datetime.today(), periods=14).strftime("%d-%b")
         orders_received = [daily_summary.get(date, 0) for date in dates]
@@ -185,7 +187,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
