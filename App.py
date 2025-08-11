@@ -17,7 +17,7 @@ if uploaded_file:
     df = df_raw.dropna(axis=1, how="all").dropna(how="all")
 
     # Convert types
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
     num_cols = ['ExpectedQTY', 'ShippedQTY', 'VarianceQTY']
     for col in num_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -33,10 +33,10 @@ if uploaded_file:
     # ------------------------ SIDEBAR FILTER ------------------------
     st.sidebar.header("🔍 Filter Data")
 
-    available_dates = sorted(df['Date'].dt.date.unique())
+    available_dates = sorted(df['ExpDate'].dt.date.unique())
     selected_date = st.sidebar.selectbox("Select a Date", options=available_dates)
 
-    filtered_df = df[df['Date'].dt.date == selected_date]
+    filtered_df = df[df['ExpDate'].dt.date == selected_date]
 
     # ------------------------ METRICS ------------------------
     daily_orders_count = filtered_df['GINo'].nunique()
@@ -124,8 +124,8 @@ if uploaded_file:
         st.markdown("#### 📊 Orders Over the Past 2 Weeks")
 
         fig = go.Figure(data=[
-            go.Bar(name='Orders Received', x=weekly_summary['Date'], y=weekly_summary['Orders_Received'], marker_color='lightgreen'),
-            go.Bar(name='Orders Cancelled', x=weekly_summary['Date'], y=weekly_summary['Orders_Cancelled'], marker_color='red')
+            go.Bar(name='Orders Received', x=weekly_summary['ExpDate'], y=weekly_summary['Orders_Received'], marker_color='lightgreen'),
+            go.Bar(name='Orders Cancelled', x=weekly_summary['ExpDate'], y=weekly_summary['Orders_Cancelled'], marker_color='red')
         ])
         fig.update_layout(barmode='group', xaxis_title='Date', yaxis_title='Order Count')
         st.plotly_chart(fig, use_container_width=True)
@@ -167,3 +167,4 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
