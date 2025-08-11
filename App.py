@@ -72,7 +72,12 @@ if uploaded_file:
             st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
 
         with col_metric:
-            st.metric(label="Orders Today (by ExpDate)", value=df[df['ExpDate'].dt.date == datetime.today().date()].shape[0])
+            st.metric(label="Total Order lines", value=df[df['ExpDate'].dt.date == datetime.today().date()].shape[0])
+            
+            # ✅ New metric: Unique GINos for today
+            unique_gis_today = df[df['ExpDate'].dt.date == datetime.today().date()]['GINo'].nunique()
+            st.metric(label="Unique GINo Today", value=unique_gis_today)
+        
 
         # Build stacked bar chart by status and order type
         order_types = ['Back Orders', 'Scheduled', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
@@ -181,3 +186,4 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
