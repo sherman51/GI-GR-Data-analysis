@@ -18,7 +18,7 @@ selected_date = date_options[date_labels.index(selected_label)]
 
 
 # ------------------------ DATA PROCESSING ------------------------
-f uploaded_file:
+If uploaded_file:
     # ------------------ Step 1: Load & Clean Data ------------------
     df_raw = pd.read_excel(uploaded_file, skiprows=5)
     df = df_raw.dropna(axis=1, how="all")  # Drop empty columns
@@ -175,4 +175,5 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
