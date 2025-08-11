@@ -78,7 +78,7 @@ if uploaded_file:
             st.metric(label="Unique GINo Today", value=unique_gis_today)
 
         # Prepare bar chart data with +1 to avoid zero for log scale
-        order_types = ['Back Orders', 'Scheduled', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
+        order_types = ['Back Orders', 'Normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
         segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
         colors = ['green', 'blue', 'yellow', 'salmon']
 
@@ -184,3 +184,4 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
