@@ -1,4 +1,4 @@
-from datetime import datetime,date,timedelta
+from datetime import datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -7,18 +7,6 @@ import random
 # ------------------------ FILE UPLOAD ------------------------
 uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
 
-# Define the 3 dates for selection
-today = date.today()
-tomorrow = today + timedelta(days=1)
-day_after_tomorrow = today + timedelta(days=2)
-
-date_options = [today, tomorrow, day_after_tomorrow]
-date_labels = [d.strftime('%d %b %Y') for d in date_options]
-
-# Sidebar selectbox for date selection
-selected_label = st.sidebar.selectbox("Select ExpDate to Filter", date_labels, index=0)
-selected_date = date_options[date_labels.index(selected_label)]
-
 if uploaded_file:
     # Skip metadata rows, header starts on row 6 (index 5)
     df_raw = pd.read_excel(uploaded_file, skiprows=5)
@@ -26,13 +14,6 @@ if uploaded_file:
     # Clean up
     df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
     df.dropna(how="all", inplace=True)     # Remove empty rows
-
-    # Make sure 'ExpDate' is datetime
-    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
-
-    # Filter dataframe by selected date (only date part)
-    df1 = df[df['ExpDate'].dt.date == selected_date]
-
 
 
 
@@ -178,4 +159,3 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
-
