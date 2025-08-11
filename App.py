@@ -2,29 +2,27 @@ from datetime import datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.express as px
 
 # ------------------------ PAGE CONFIG ------------------------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
-# ------------------------ FILE UPLOAD ------------------------
-uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
+# ------------------------ SIDEBAR FILE UPLOAD ------------------------
+uploaded_file = st.sidebar.file_uploader("📤 Upload Excel File", type=["xlsx"])
 
+# ------------------------ PROCESS FILE ------------------------
 if uploaded_file:
-    # Load & clean
+    # Load data
     df_raw = pd.read_excel(uploaded_file, skiprows=5)
     df = df_raw.dropna(axis=1, how="all").dropna(how="all")
 
-    # First row is headers
-    df.columns = df.iloc[0]
-    df = df.drop(index=0).reset_index(drop=True)
-
-    # Convert data types
+    # Convert types
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
     num_cols = ['ExpectedQTY', 'ShippedQTY', 'VarianceQTY']
     for col in num_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Map priorities
+    # Map priority values
     df['Priority'] = df['Priority'].replace({
         '1-Normal': 'Ad-hoc Normal',
         '2-ADHOC Normal': 'Ad-hoc Normal',
@@ -32,32 +30,34 @@ if uploaded_file:
         '1-ADHOC Critical': 'Ad-hoc Critical'
     })
 
+    # ------------------------ SIDEBAR FILTER ------------------------
+    st.sidebar.header("🔍 Filter Data")
+
+    available_dates = sorted(df['Date'].dt.date.unique())
+    selected_date = st.sidebar.selectbox("Select a Date", options=available_dates)
+
+    filtered_df = df[df['Date'].dt.date == selected_date]
+
     # ------------------------ METRICS ------------------------
-    today_orders = df[df['Date'] == df['Date'].max()]
-    daily_orders_count = today_orders['GINo'].nunique()
+    daily_orders_count = filtered_df['GINo'].nunique()
 
-    # Status Table
-    status_table = df.groupby(['Priority', 'Status']).size().unstack(fill_value=0)
+    status_table = filtered_df.groupby(['Priority', 'Status']).size().unstack(fill_value=0)
 
-    # Orders over time
     weekly_summary = df.groupby(pd.Grouper(key='Date', freq='W-MON')).agg(
         Orders_Received=('GINo', 'nunique'),
         Orders_Cancelled=('Status', lambda x: (x == '98-Cancelled').sum())
     ).reset_index()
 
-    # Back Order %
-    total_lines = df.shape[0]
-    back_orders = (df['Status'] == 'Back Order').sum()
+    total_lines = filtered_df.shape[0]
+    back_orders = (filtered_df['Status'] == 'Back Order').sum()
     back_order_pct = (back_orders / total_lines * 100) if total_lines > 0 else 0
 
-    # Accuracy %
-    shipped_lines = df['ShippedQTY'].sum()
-    variance_lines = df['VarianceQTY'].sum()
+    shipped_lines = filtered_df['ShippedQTY'].sum()
+    variance_lines = filtered_df['VarianceQTY'].sum()
     accuracy_pct = 100 - ((variance_lines / shipped_lines) * 100) if shipped_lines > 0 else 100
 
-    # ------------------------ CSS ------------------------
-    st.markdown(
-        """
+    # ------------------------ CSS FOR DIVIDERS ------------------------
+    st.markdown("""
         <style>
         hr {
             border: none;
@@ -66,44 +66,43 @@ if uploaded_file:
             margin: 2rem 0;
         }
         </style>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
     # ------------------------ HEADER ------------------------
     st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-    st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
     # ------------------------ TOP ROW ------------------------
     col_left, col_right = st.columns([4, 2])
 
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
+
         col_date, col_metric = st.columns([2, 1])
         with col_date:
-            st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
+            st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
         with col_metric:
             st.metric(label="Daily Outbound Orders", value=daily_orders_count)
 
-        # Orders by Priority
-        order_types = df['Priority'].dropna().unique().tolist()
-        status_categories = df['Status'].dropna().unique().tolist()
-        colors = ['green', 'blue', 'yellow', 'salmon', 'purple']
+        # Orders by Priority Bar Chart
+        order_types = filtered_df['Priority'].dropna().unique().tolist()
+        status_categories = filtered_df['Status'].dropna().unique().tolist()
+        colors = px.colors.qualitative.Set3
 
         bar_data = {
-            status: [len(df[(df['Priority'] == p) & (df['Status'] == status)]) for p in order_types]
+            status: [len(filtered_df[(filtered_df['Priority'] == p) & (filtered_df['Status'] == status)]) for p in order_types]
             for status in status_categories
         }
 
         bar_fig = go.Figure()
-        for status, color in zip(status_categories, colors):
+        for i, status in enumerate(status_categories):
             bar_fig.add_trace(go.Bar(
                 y=order_types,
                 x=bar_data[status],
                 name=status,
                 orientation='h',
-                marker=dict(color=color)
+                marker=dict(color=colors[i % len(colors)])
             ))
+
         bar_fig.update_layout(
             barmode='stack',
             xaxis_title='Order Count',
@@ -123,6 +122,7 @@ if uploaded_file:
 
     with col_bottom_left:
         st.markdown("#### 📊 Orders Over the Past 2 Weeks")
+
         fig = go.Figure(data=[
             go.Bar(name='Orders Received', x=weekly_summary['Date'], y=weekly_summary['Orders_Received'], marker_color='lightgreen'),
             go.Bar(name='Orders Cancelled', x=weekly_summary['Date'], y=weekly_summary['Orders_Cancelled'], marker_color='red')
@@ -153,12 +153,14 @@ if uploaded_file:
             return fig
 
         col_pie1, col_pie2 = st.columns(2)
+
         with col_pie1:
             st.markdown("**Back Order %**")
-            st.plotly_chart(pie_chart(back_order_pct, "Back Order", f"{back_orders} of {total_lines} lines"), use_container_width=True, height=200)
+            st.plotly_chart(pie_chart(back_order_pct, "Back Order", f"{back_orders} of {total_lines} lines"), use_container_width=True)
+
         with col_pie2:
             st.markdown("**Order Accuracy %**")
-            st.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{variance_lines} Variance"), use_container_width=True, height=200)
+            st.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{variance_lines} Variance"), use_container_width=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
