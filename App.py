@@ -1,3 +1,4 @@
+
 from datetime import datetime
 import streamlit as st
 import pandas as pd
@@ -29,19 +30,19 @@ if uploaded_file:
     # Load data
     df_raw = pd.read_excel(uploaded_file)
 
-    
-    
     # Clean empty columns and rows
-    df_raw = pd.read_excel(uploaded_file, skiprows=5)
+    df_raw = pd.read_excel(uploaded_file, skiprows=6)
     df_raw.columns = df_raw.columns.str.strip()
     df = df_raw.dropna(axis=1, how="all")
     df.dropna(how="all", inplace=True)
 
-    # Preview data
-    st.markdown("### 🔍 Preview of Uploaded Data (after skipping 5 rows)")
-    st.write("**Columns Detected:**", df_raw.columns.tolist())
-    st.dataframe(df_raw.head(10))
+    # Parse ExpDate and other dates
+    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
+    df['CreatedOn'] = pd.to_datetime(df['CreatedOn'], errors='coerce')
+    df['ShippedOn'] = pd.to_datetime(df['ShippedOn'], errors='coerce')
 
+    # Drop rows with no ExpDate
+    df = df[df['ExpDate'].notna()]
 
     # Map order types
     priority_map = {
@@ -180,4 +181,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
