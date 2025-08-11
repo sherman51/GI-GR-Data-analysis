@@ -1,4 +1,4 @@
-
+w
 from datetime import datetime
 import streamlit as st
 import pandas as pd
@@ -73,10 +73,10 @@ if uploaded_file:
 
         with col_metric:
             st.metric(label="Total Order lines", value=df[df['ExpDate'].dt.date == datetime.today().date()].shape[0])
-            
-            # ✅ New metric: Unique GINos for today
+
+        with col_metric:
             unique_gis_today = df[df['ExpDate'].dt.date == datetime.today().date()]['GINo'].nunique()
-            st.metric(label="Unique GINo Today", value=unique_gis_today)
+            st.metric(label="Total Orders", value=unique_gis_today)
         
 
         # Build stacked bar chart by status and order type
@@ -186,4 +186,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
