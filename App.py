@@ -2,12 +2,11 @@ from datetime import datetime, date, timedelta
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import random
 
 # ---------- Page Config ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
-# ---------- Inject CSS for muted divider ----------
+# ---------- Inject CSS ----------
 st.markdown(
     """
     <style>
@@ -42,20 +41,21 @@ st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 if uploaded_file:
-    # Skip metadata rows, header starts on row 6 (index 5)
-    df_raw = pd.read_excel(uploaded_file, skiprows=5)
-
-    # Clean up data
-    df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
-    df.dropna(how="all", inplace=True)     # Remove empty rows
-    df.columns = df.columns.str.strip()    # Remove spaces in col names
+    # Load Excel with correct header
+    df = pd.read_excel(uploaded_file, skiprows=5, header=0)
+    df = df.dropna(axis=1, how="all").dropna(how="all")
+    df.columns = df.columns.str.strip()
 
     # Ensure ExpDate is datetime
     if 'ExpDate' in df.columns:
         df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce').dt.date
 
-    # Filter data by selected ExpDate
-    df_filtered = df[df['ExpDate'] == selected_date]
+    # Filter data for selected date
+    if 'ExpDate' in df.columns:
+        df_filtered = df[df['ExpDate'] == selected_date]
+    else:
+        st.error("No 'ExpDate' column found in file")
+        st.stop()
 
     # ---------- Top Row ----------
     col_left, col_right = st.columns([4, 2])
@@ -69,31 +69,23 @@ if uploaded_file:
             st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 
         with col_metric:
-            daily_orders = df_filtered['GINo'].nunique() if 'GINo' in df_filtered.columns else 0
-            st.metric(label="Daily Outbound Orders", value=daily_orders)
+            st.metric(
+                label="Daily Outbound Orders",
+                value=df_filtered['GINo'].nunique() if 'GINo' in df_filtered.columns else "N/A"
+            )
 
-        # Build stacked horizontal bar chart from filtered data
-        order_types = [
-            "Back Orders", "Scheduled", "Ad-hoc Normal", "Ad-hoc Urgent", "Ad-hoc Critical"
-        ]
-        segments = ["Tpt Booked", "Packed", "Picked", "Open"]
-        colors = ['green', 'blue', 'yellow', 'salmon']
-
-        # Pivot table to count orders by Type and Status
-        df_chart = df_filtered.groupby(['Type', 'Status']).size().unstack(fill_value=0)
-        df_chart = df_chart.reindex(order_types, fill_value=0)  # ensure consistent order
+        # Order types & segments from data
+        order_types = df_filtered['Type'].unique().tolist() if 'Type' in df_filtered.columns else []
+        status_counts = df_filtered.groupby(['Type', 'Status']).size().unstack(fill_value=0)
 
         bar_fig = go.Figure()
-        for seg, color in zip(segments, colors):
-            if seg in df_chart.columns:
-                bar_fig.add_trace(go.Bar(
-                    y=df_chart.index,
-                    x=df_chart[seg],
-                    name=seg,
-                    orientation='h',
-                    marker=dict(color=color)
-                ))
-
+        for status in status_counts.columns:
+            bar_fig.add_trace(go.Bar(
+                y=status_counts.index,
+                x=status_counts[status],
+                name=status,
+                orientation='h'
+            ))
         bar_fig.update_layout(
             barmode='stack',
             xaxis_title='Order Count',
@@ -104,17 +96,7 @@ if uploaded_file:
 
     with col_right:
         st.markdown("#### 📋 Order Status Table")
-
-        table_data = {
-            "Ad-hoc Critical": [3, 0, 3, 0],
-            "Ad-hoc Urgent": [4, 2, 0, 0],
-            "Ad-hoc Normal": [10, 7, 3, 0],
-            "Scheduled": [5, 6, 13, 17],
-            "Back Orders": [2, 4, 3, 2]
-        }
-        index_labels = ["Tpt Booked", "Packed", "Picked", "Open"]
-        df_table = pd.DataFrame(table_data, index=index_labels)
-        st.dataframe(df_table)
+        st.dataframe(status_counts)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -122,30 +104,26 @@ if uploaded_file:
     col_bottom_left, col_bottom_right = st.columns([3, 2])
 
     with col_bottom_left:
-        st.markdown("#### 📊 Orders Over the Past 2 Weeks (Weekly View)")
+        st.markdown("#### 📊 Orders Over the Past 2 Weeks (Grouped Weekly)")
 
-        if "Date" in df.columns and "GINo" in df.columns:
-            last_2_weeks = df["Date"].max() - pd.Timedelta(days=14)
-            df_recent = df[df["Date"] >= last_2_weeks].copy()
+        df_past = df.copy()
+        df_past = df_past.dropna(subset=['ExpDate'])
+        df_past['Week'] = pd.to_datetime(df_past['ExpDate']).dt.to_period('W').apply(lambda r: r.start_time)
 
-            df_recent["Week"] = df_recent["Date"].dt.isocalendar().week
-            df_recent["Year"] = df_recent["Date"].dt.year
+        two_weeks_ago = today - timedelta(weeks=2)
+        df_past = df_past[df_past['ExpDate'] >= two_weeks_ago]
 
-            weekly_summary = df_recent.groupby(["Year", "Week"]).agg(
-                Orders_Received=("GINo", "nunique"),
-                Orders_Cancelled=("Status", lambda x: (x == "98-Cancelled").sum()),
-                Orders_Shipped=("ShippedQTY", lambda x: (x.fillna(0) > 0).sum())
-            ).reset_index()
+        weekly_counts = df_past.groupby('Week').agg(
+            Orders_Received=('GINo', 'nunique'),
+            Orders_Cancelled=('Status', lambda x: (x == '98-Cancelled').sum())
+        ).reset_index()
 
-            weekly_summary["Week_Label"] = weekly_summary["Year"].astype(str) + "-W" + weekly_summary["Week"].astype(str)
-
-            fig = go.Figure(data=[
-                go.Bar(name="Orders Received", x=weekly_summary["Week_Label"], y=weekly_summary["Orders_Received"], marker_color="lightgreen"),
-                go.Bar(name="Orders Cancelled", x=weekly_summary["Week_Label"], y=weekly_summary["Orders_Cancelled"], marker_color="red"),
-                go.Bar(name="Orders Shipped", x=weekly_summary["Week_Label"], y=weekly_summary["Orders_Shipped"], marker_color="blue")
-            ])
-            fig.update_layout(barmode="group", xaxis_title="Week", yaxis_title="Order Count")
-            st.plotly_chart(fig, use_container_width=True)
+        fig = go.Figure(data=[
+            go.Bar(name='Orders Received', x=weekly_counts['Week'], y=weekly_counts['Orders_Received'], marker_color='lightgreen'),
+            go.Bar(name='Orders Cancelled', x=weekly_counts['Week'], y=weekly_counts['Orders_Cancelled'], marker_color='red')
+        ])
+        fig.update_layout(barmode='group', xaxis_title='Week', yaxis_title='Order Count')
+        st.plotly_chart(fig, use_container_width=True)
 
     with col_bottom_right:
         st.markdown("#### 📈 Performance Metrics")
@@ -162,10 +140,8 @@ if uploaded_file:
             fig.update_layout(
                 showlegend=False,
                 margin=dict(t=0, b=0, l=0, r=0),
-                annotations=[
-                    dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
-                    dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)
-                ]
+                annotations=[dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
+                             dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)]
             )
             return fig
 
@@ -182,10 +158,7 @@ if uploaded_file:
             st.plotly_chart(fig_order_accuracy, use_container_width=True, height=200)
 
     st.markdown("<hr>", unsafe_allow_html=True)
-
-    # ---------- Footer ----------
     st.markdown("### 💙 *Stay Safe & Well*")
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
-
