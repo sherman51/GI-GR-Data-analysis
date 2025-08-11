@@ -54,7 +54,7 @@ with col_left:
 
     with col_chart:
         order_types = [
-            "Back Orders (Accumulated)",
+            "Back Orders",
             "Scheduled",
             "Ad-hoc Normal",
             "Ad-hoc Urgent",
@@ -93,7 +93,7 @@ with col_right:
         "Ad-hoc Urgent": [4, 2, 0, 0],
         "Ad-hoc Normal": [10, 7, 3, 0],
         "Scheduled": [5, 6, 13, 17],
-        "Back Orders (Accumulated)": [2, 4, 3, 2]
+        "Back Orders": [2, 4, 3, 2]
     }
     index_labels = ["Tpt Booked", "Packed", "Picked", "Open"]
     df_table = pd.DataFrame(table_data, index=index_labels)
@@ -154,6 +154,7 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
 
