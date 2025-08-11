@@ -8,18 +8,13 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
 # ---------- Page Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-
-# ---------- Sidebar: Date Picker ----------
-selected_date = st.sidebar.date_input(
-    "Select Date for Metrics",
-    value=datetime.today(),
-    max_value=datetime.today()
-)
-
-st.markdown(f"**Date:** {selected_date.strftime('%d %b %Y')}")
+st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 # ---------- File Upload ----------
 uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
+
+# ---------- Date selection ----------
+selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 
 # ---------- Styling ----------
 st.markdown("""
@@ -34,30 +29,29 @@ hr {
 """, unsafe_allow_html=True)
 
 if uploaded_file:
-    # Load data and clean
+    # Load and clean data
     df_raw = pd.read_excel(uploaded_file, skiprows=6)
     df_raw.columns = df_raw.columns.str.strip()
     df = df_raw.dropna(axis=1, how="all")
     df.dropna(how="all", inplace=True)
 
-    # Convert date columns
+    # Parse date columns
     df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
     df['CreatedOn'] = pd.to_datetime(df['CreatedOn'], errors='coerce')
     df['ShippedOn'] = pd.to_datetime(df['ShippedOn'], errors='coerce')
 
-    # Drop rows without ExpDate
+    # Filter out rows without ExpDate
     df = df[df['ExpDate'].notna()]
 
-    # Map order types
+    # Map order types and statuses
     priority_map = {
-        '1-Normal': 'Normal',
+        '1-Normal': 'Scheduled',
         '2-ADHOC Normal': 'Ad-hoc Normal',
         '3-ADHOC Urgent': 'Ad-hoc Urgent',
         '4-ADHOC Critical': 'Ad-hoc Critical'
     }
     df['Order Type'] = df['Priority'].map(priority_map).fillna(df['Priority'])
 
-    # Map status categories
     status_map = {
         '65-Packed': 'Packed',
         '75-Shipped': 'Tpt Booked',
@@ -76,24 +70,24 @@ if uploaded_file:
             st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 
         with col_orders:
-            orders_selected_date = df[df['ExpDate'].dt.date == selected_date].shape[0]
-            st.metric(label="Orders Selected Date (by ExpDate)", value=orders_selected_date)
+            total_orders = df[df['ExpDate'].dt.date == selected_date].shape[0]
+            st.metric(label="Total Order Lines", value=total_orders)
 
         with col_unique:
-            unique_gis_selected_date = df[df['ExpDate'].dt.date == selected_date]['GINo'].nunique()
-            st.metric(label="Unique GINo Selected Date", value=unique_gis_selected_date)
+            unique_gis_today = df[df['ExpDate'].dt.date == selected_date]['GINo'].nunique()
+            st.metric(label="Unique GINo Today", value=unique_gis_today)
 
-        # Build stacked bar chart by status and order type
+        # Prepare bar chart data with +1 to avoid zero for log scale
         order_types = ['Back Orders', 'Scheduled', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
         segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
         colors = ['green', 'blue', 'yellow', 'salmon']
 
         data = {seg: [] for seg in segments}
         for ot in order_types:
-            ot_df = df[df['Order Type'] == ot]
+            ot_df = df[(df['Order Type'] == ot) & (df['ExpDate'].dt.date == selected_date)]
             for seg in segments:
                 count = (ot_df['Order Status'] == seg).sum()
-                data[seg].append(count)
+                data[seg].append(count + 1)  # add 1 to avoid zero for log scale
 
         bar_fig = go.Figure()
         for seg, color in zip(segments, colors):
@@ -104,9 +98,11 @@ if uploaded_file:
                 orientation='h',
                 marker=dict(color=color)
             ))
+
         bar_fig.update_layout(
             barmode='stack',
-            xaxis_title='Order Count',
+            xaxis_title='Order Count (log scale)',
+            xaxis_type='log',
             margin=dict(l=10, r=10, t=30, b=30),
             height=400
         )
@@ -114,7 +110,7 @@ if uploaded_file:
 
     with col_right:
         st.markdown("#### 📋 Order Status Table")
-        df_status_table = df.groupby(['Order Status', 'Order Type']).size().unstack(fill_value=0)
+        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Status', 'Order Type']).size().unstack(fill_value=0)
         df_status_table = df_status_table.reindex(index=segments, columns=order_types, fill_value=0)
         st.dataframe(df_status_table)
 
@@ -188,4 +184,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
