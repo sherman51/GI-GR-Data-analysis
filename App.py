@@ -8,7 +8,15 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard")
 
 # ---------- Page Header ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
+
+# ---------- Sidebar: Date Picker ----------
+selected_date = st.sidebar.date_input(
+    "Select Date for Metrics",
+    value=datetime.today(),
+    max_value=datetime.today()
+)
+
+st.markdown(f"**Date:** {selected_date.strftime('%d %b %Y')}")
 
 # ---------- File Upload ----------
 uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
@@ -26,21 +34,18 @@ hr {
 """, unsafe_allow_html=True)
 
 if uploaded_file:
-    # Load data
-    df_raw = pd.read_excel(uploaded_file)
-
-    # Clean empty columns and rows
+    # Load data and clean
     df_raw = pd.read_excel(uploaded_file, skiprows=6)
     df_raw.columns = df_raw.columns.str.strip()
     df = df_raw.dropna(axis=1, how="all")
     df.dropna(how="all", inplace=True)
 
-    # Parse ExpDate and other dates
+    # Convert date columns
     df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
     df['CreatedOn'] = pd.to_datetime(df['CreatedOn'], errors='coerce')
     df['ShippedOn'] = pd.to_datetime(df['ShippedOn'], errors='coerce')
 
-    # Drop rows with no ExpDate
+    # Drop rows without ExpDate
     df = df[df['ExpDate'].notna()]
 
     # Map order types
@@ -65,20 +70,18 @@ if uploaded_file:
 
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
-        
-        # Create 3 columns for metrics side-by-side
         col_date, col_orders, col_unique = st.columns(3)
 
         with col_date:
-            st.metric(label="Date", value=datetime.now().strftime('%d %b %Y'))
+            st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 
         with col_orders:
-            orders_today = df[df['ExpDate'].dt.date == datetime.today().date()].shape[0]
-            st.metric(label="Orders Today (by ExpDate)", value=orders_today)
+            orders_selected_date = df[df['ExpDate'].dt.date == selected_date].shape[0]
+            st.metric(label="Orders Selected Date (by ExpDate)", value=orders_selected_date)
 
         with col_unique:
-            unique_gis_today = df[df['ExpDate'].dt.date == datetime.today().date()]['GINo'].nunique()
-            st.metric(label="Unique GINo Today", value=unique_gis_today)
+            unique_gis_selected_date = df[df['ExpDate'].dt.date == selected_date]['GINo'].nunique()
+            st.metric(label="Unique GINo Selected Date", value=unique_gis_selected_date)
 
         # Build stacked bar chart by status and order type
         order_types = ['Back Orders', 'Scheduled', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
@@ -159,12 +162,10 @@ if uploaded_file:
             )
             return fig
 
-        # Calculate order accuracy
         total_expected = df['ExpectedQTY'].sum()
         total_shipped = df['ShippedQTY'].sum()
         accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
 
-        # Simulate back order % (variance vs expected)
         total_variance = df['VarianceQTY'].sum()
         backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
 
