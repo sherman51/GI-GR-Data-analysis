@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -32,28 +32,34 @@ if uploaded_file:
         '1-ADHOC Critical': 'Ad-hoc Critical'
     })
 
-     # ------------------------ SIDEBAR SINGLE-DATE FILTER ------------------------
-    # Ensure 'ExpDate' is in datetime format
-    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
+    # ------------------------ SIDEBAR SINGLE-DATE FILTER ------------------------
+    # Prepare the 3 date options: today, tomorrow, day after tomorrow
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    day_after_tomorrow = today + timedelta(days=2)
 
-    # Drop NaT values just in case
-    available_dates = df['ExpDate'].dropna().dt.date.unique()
-    available_dates = sorted(available_dates)
+    date_options = [today, tomorrow, day_after_tomorrow]
+    date_labels = [d.strftime('%d %b %Y') for d in date_options]
 
-    selected_date = st.sidebar.selectbox(
+    selected_date_label = st.sidebar.selectbox(
         "Select ExpDate to Filter",
-        options=available_dates,
-        format_func=lambda date: date.strftime('%d %b %Y')
+        options=date_labels,
+        index=0  # default to today
     )
 
-    # Filter the dataframe by selected ExpDate
+    # Map selected label back to date object
+    selected_date = date_options[date_labels.index(selected_date_label)]
+
+    # Ensure 'ExpDate' is datetime
+    df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce')
+
+    # Filter df by selected_date
     df = df[df['ExpDate'].dt.date == selected_date]
 
-    # Optional: Early stop if no data for that date
+    # Optional: Stop if no data for this date
     if df.empty:
         st.warning(f"No data available for {selected_date.strftime('%d %b %Y')}.")
         st.stop()
-
 
     # ------------------------ METRICS ------------------------
     today_orders = df[df['Date'] == df['Date'].max()]
@@ -188,4 +194,3 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
-
