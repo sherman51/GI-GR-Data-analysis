@@ -4,16 +4,40 @@ import pandas as pd
 import plotly.graph_objects as go
 import random
 
-# ------------------------ FILE UPLOAD ------------------------
-uploaded_file = st.sidebar.file_uploader("Upload Excel File", type=["xlsx"])
-
 if uploaded_file:
-    # Skip metadata rows, header starts on row 6 (index 5)
+    # Read and clean
     df_raw = pd.read_excel(uploaded_file, skiprows=5)
+    df = df_raw.dropna(axis=1, how="all").dropna(how="all")
 
-    # Clean up
-    df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
-    df.dropna(how="all", inplace=True)     # Remove empty rows
+    # First row is headers
+    df.columns = df.iloc[0]
+    df = df.drop(index=0).reset_index(drop=True)
+
+    # Convert data types
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    num_cols = ['ExpectedQTY', 'ShippedQTY', 'VarianceQTY']
+    for col in num_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Ensure Priority is consistent
+    df['Priority'] = df['Priority'].str.replace('1-', 'Ad-hoc Normal', regex=False)
+    df['Priority'] = df['Priority'].str.replace('2-', 'Ad-hoc Urgent', regex=False)
+    df['Priority'] = df['Priority'].str.replace('3-', 'Ad-hoc Critical', regex=False)
+
+    # -----------------------
+    # Aggregations
+    # -----------------------
+    daily_orders_count = df['GINo'].nunique()
+
+    # Orders by priority and status
+    status_table = df.groupby(['Priority', 'Status']).size().unstack(fill_value=0)
+
+    # Orders over time
+    daily_summary = df.groupby('Date').agg(
+        Orders_Received=('GINo', 'nunique'),
+        Orders_Cancelled=('Status', lambda x: (x == '98-Cancelled').sum())
+    ).reset_index()
+
 
 
 
@@ -159,6 +183,7 @@ st.markdown("<hr>", unsafe_allow_html=True)  # Muted divider
 
 # ---------- Footer ----------
 st.markdown("### 💙 *Stay Safe & Well*")
+
 
 
 
