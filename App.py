@@ -19,33 +19,9 @@ if uploaded_file is not None:
         st.subheader("Preview of Data")
         st.dataframe(df)
 
-        # Check if required columns exist
-        required_columns = ['ExpDate', 'Priority']
-        if all(col in df.columns for col in required_columns):
-            fig = px.bar(
-                df,
-                x='ExpDate',
-                y='Priority',
-                text='Priority',
-                color='ExpDate',
-                color_discrete_sequence=px.colors.sequential.Plasma_r,
-                title="Fruit Priority Overview",
-            )
 
-            fig.update_layout(
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                font=dict(size=14),
-                title_x=0.5,
-                margin=dict(l=40, r=40, t=60, b=40),
-            )
-
-            fig.update_traces(texttemplate='%{text}', textposition='outside')
-
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.warning("The uploaded file must contain 'ExpDate' and 'Priority' columns.")
 
     except Exception as e:
         st.error(f"Error reading file: {e}")
+
 
