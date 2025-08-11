@@ -42,22 +42,20 @@ st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
 if uploaded_file:
-    # ---------- Data Processing ----------
     # Skip metadata rows, header starts on row 6 (index 5)
-    df_raw = pd.read_excel(uploaded_file, sheet_name="Good Receive Analysis", skiprows=5)
+    df_raw = pd.read_excel(uploaded_file, skiprows=5)
 
-    # Remove empty columns/rows
-    df = df_raw.dropna(axis=1, how="all").dropna(how="all")
-    df.columns = df.columns.str.strip()
+    # Clean up data
+    df = df_raw.dropna(axis=1, how="all")  # Remove empty columns
+    df.dropna(how="all", inplace=True)     # Remove empty rows
+    df.columns = df.columns.str.strip()    # Remove spaces in col names
 
-    # Convert Date column
-    if "Date" in df.columns:
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    # Ensure ExpDate is datetime
+    if 'ExpDate' in df.columns:
+        df['ExpDate'] = pd.to_datetime(df['ExpDate'], errors='coerce').dt.date
 
-    # Ensure quantity columns are numeric
-    for col in ["ExpectedQTY", "ShippedQTY", "VarianceQTY"]:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+    # Filter data by selected ExpDate
+    df_filtered = df[df['ExpDate'] == selected_date]
 
     # ---------- Top Row ----------
     col_left, col_right = st.columns([4, 2])
@@ -71,32 +69,31 @@ if uploaded_file:
             st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 
         with col_metric:
-            st.metric(
-                label="Daily Outbound Orders",
-                value=df['GINo'].nunique() if 'GINo' in df.columns else "N/A"
-            )
+            daily_orders = df_filtered['GINo'].nunique() if 'GINo' in df_filtered.columns else 0
+            st.metric(label="Daily Outbound Orders", value=daily_orders)
 
+        # Build stacked horizontal bar chart from filtered data
         order_types = [
-            "Back Orders",
-            "Scheduled",
-            "Ad-hoc Normal",
-            "Ad-hoc Urgent",
-            "Ad-hoc Critical"
+            "Back Orders", "Scheduled", "Ad-hoc Normal", "Ad-hoc Urgent", "Ad-hoc Critical"
         ]
         segments = ["Tpt Booked", "Packed", "Picked", "Open"]
         colors = ['green', 'blue', 'yellow', 'salmon']
 
-        data = {seg: [random.randint(1, 10) for _ in order_types] for seg in segments}
+        # Pivot table to count orders by Type and Status
+        df_chart = df_filtered.groupby(['Type', 'Status']).size().unstack(fill_value=0)
+        df_chart = df_chart.reindex(order_types, fill_value=0)  # ensure consistent order
 
         bar_fig = go.Figure()
         for seg, color in zip(segments, colors):
-            bar_fig.add_trace(go.Bar(
-                y=order_types,
-                x=data[seg],
-                name=seg,
-                orientation='h',
-                marker=dict(color=color)
-            ))
+            if seg in df_chart.columns:
+                bar_fig.add_trace(go.Bar(
+                    y=df_chart.index,
+                    x=df_chart[seg],
+                    name=seg,
+                    orientation='h',
+                    marker=dict(color=color)
+                ))
+
         bar_fig.update_layout(
             barmode='stack',
             xaxis_title='Order Count',
@@ -191,3 +188,4 @@ if uploaded_file:
 
 else:
     st.info("Please upload an Excel file to view the dashboard.")
+
