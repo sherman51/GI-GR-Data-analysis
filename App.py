@@ -218,27 +218,25 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # Show Date at top
-    st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
-
-    # ===== TOP SECTION LAYOUT =====
-    # Row 1: Orders completed today | Orders Status Table
-    col1, col2 = st.columns([3, 2])
-    with col1:
+    # ROW 1
+    row1_left, row1_right = st.columns([3, 2])
+    with row1_left:
         daily_completed_pie(df_today)
-    with col2:
+    with row1_right:
         order_status_matrix(df_today)
 
-    # Row 2: Daily Outbound Overview | Ad-hoc Orders by GINo
-    col3, col4 = st.columns([3, 2])
-    with col3:
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ROW 2
+    row2_left, row2_right = st.columns([3, 2])
+    with row2_left:
         daily_overview(df_today)
-    with col4:
+    with row2_right:
         adhoc_orders_section(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ROW 3 and below remain unchanged
+    # ROW 3
     row3_left, row3_right = st.columns([3, 2])
     with row3_left:
         expiry_date_summary(df)
@@ -249,11 +247,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
-
-
-
 
