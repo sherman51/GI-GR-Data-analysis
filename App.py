@@ -59,10 +59,6 @@ if uploaded_file:
     }
     df['Order Status'] = df['Status'].map(status_map).fillna('Open')
 
-    # Define order for rows and columns
-    order_types = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
-    segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
-
     # ---------- Top Row ----------
     col_left, col_right = st.columns([4, 2])
 
@@ -82,17 +78,28 @@ if uploaded_file:
             st.metric(label="Unique GINo Today", value=unique_gis_today)
 
         # Prepare bar chart data with +1 to avoid zero for log scale
+        order_types_all = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
+
+        # Filter order types to only those present in data on selected date
+        filtered_order_types = [
+            ot for ot in order_types_all
+            if ot in df[df['ExpDate'].dt.date == selected_date]['Order Type'].unique()
+        ]
+
+        segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
+        colors = ['green', 'blue', 'yellow', 'salmon']
+
         data = {seg: [] for seg in segments}
-        for ot in order_types:
+        for ot in filtered_order_types:
             ot_df = df[(df['Order Type'] == ot) & (df['ExpDate'].dt.date == selected_date)]
             for seg in segments:
                 count = (ot_df['Order Status'] == seg).sum()
                 data[seg].append(count + 1)  # add 1 to avoid zero for log scale
 
         bar_fig = go.Figure()
-        for seg, color in zip(segments, ['green', 'blue', 'yellow', 'salmon']):
+        for seg, color in zip(segments, colors):
             bar_fig.add_trace(go.Bar(
-                y=order_types,
+                y=filtered_order_types,
                 x=data[seg],
                 name=seg,
                 orientation='h',
@@ -109,66 +116,71 @@ if uploaded_file:
         st.plotly_chart(bar_fig, use_container_width=True)
 
     with col_right:
-        st.markdown("#### 📋 Order Status Summary")
+        st.markdown("#### 📋 Order Status Table")
 
-        # Swapped axes table: rows = Order Type, columns = Order Status
-        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
+        # Swap axes for matrix: horizontal = Order Status (segments), vertical = Order Type
+        order_types_all = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
+        segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
 
-        df_status_table = df_status_table.reindex(index=order_types, columns=segments, fill_value=0)
+        df_filtered = df[df['ExpDate'].dt.date == selected_date]
 
-        st.dataframe(df_status_table.style.format("{:,}"))
+        df_status_table = df_filtered.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
 
-    # --- Ad-hoc KPIs and bar chart under the top row ---
-    st.markdown("#### 🚨 Ad-hoc Priority Summary & Orders by GINo (Urgent & Critical)")
+        # Reindex to enforce consistent order and include all categories
+        df_status_table = df_status_table.reindex(index=order_types_all, columns=segments, fill_value=0)
 
-    adhoc_df = df[
-        (df['ExpDate'].dt.date == selected_date) &
-        (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
-    ]
+        st.dataframe(df_status_table.style.format("{:,.0f}"))
 
-    adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
-    adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
+        st.markdown("#### 🚨 Ad-hoc Orders by GINo (Urgent & Critical)")
 
-    col_adhoc1, col_adhoc2 = st.columns(2)
+        adhoc_df = df_filtered[df_filtered['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical'])]
 
-    with col_adhoc1:
-        st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+        # KPI counters for Ad-hoc Urgent and Critical
+        adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
+        adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
 
-    with col_adhoc2:
-        st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
+        col_adhoc1, col_adhoc2 = st.columns(2)
 
-    grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
+        with col_adhoc1:
+            st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
 
-    if not grouped.empty:
-        fig = go.Figure()
+        with col_adhoc2:
+            st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
 
-        if 'Ad-hoc Urgent' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped.index,
-                y=grouped['Ad-hoc Urgent'],
-                name='Ad-hoc Urgent',
-                marker_color='orange'
-            ))
+        # Group by GINo and Order Type for bar chart
+        grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
 
-        if 'Ad-hoc Critical' in grouped.columns:
-            fig.add_trace(go.Bar(
-                x=grouped.index,
-                y=grouped['Ad-hoc Critical'],
-                name='Ad-hoc Critical',
-                marker_color='crimson'
-            ))
+        if not grouped.empty:
+            fig = go.Figure()
 
-        fig.update_layout(
-            barmode='group',
-            xaxis_title='GINo',
-            yaxis_title='Order Count',
-            height=400,
-            margin=dict(l=10, r=10, t=30, b=30)
-        )
+            if 'Ad-hoc Urgent' in grouped.columns:
+                fig.add_trace(go.Bar(
+                    x=grouped.index,
+                    y=grouped['Ad-hoc Urgent'],
+                    name='Ad-hoc Urgent',
+                    marker_color='orange'
+                ))
 
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
+            if 'Ad-hoc Critical' in grouped.columns:
+                fig.add_trace(go.Bar(
+                    x=grouped.index,
+                    y=grouped['Ad-hoc Critical'],
+                    name='Ad-hoc Critical',
+                    marker_color='crimson'
+                ))
+
+            fig.update_layout(
+                barmode='group',
+                xaxis_title='GINo',
+                yaxis_title='Order Count',
+                title='Ad-hoc Urgent & Critical Orders by GINo',
+                height=400,
+                margin=dict(l=10, r=10, t=30, b=30)
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -242,6 +254,7 @@ if uploaded_file:
             missed = total_expected - total_shipped
             fig_order_accuracy = pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed")
             st.plotly_chart(fig_order_accuracy, use_container_width=True)
+
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
