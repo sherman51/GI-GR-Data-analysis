@@ -138,44 +138,55 @@ if uploaded_file:
         fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
         st.plotly_chart(fig, use_container_width=True)
 
-    with col_bottom_right:
-        st.markdown("#### 📈 Performance Metrics")
+with col_bottom_right:
+    st.markdown("#### 📈 Performance Metrics")
 
-        def pie_chart(value, label, total_label):
-            fig = go.Figure(go.Pie(
-                values=[value, 100 - value],
-                labels=[label, 'Remaining'],
-                marker_colors=['mediumseagreen', 'lightgray'],
-                hole=0.7,
-                textinfo='none',
-                sort=False
-            ))
-            fig.update_layout(
-                showlegend=False,
-                margin=dict(t=0, b=0, l=0, r=0),
-                annotations=[dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
-                             dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)]
-            )
-            return fig
+    def pie_chart(value, label, total_label):
+        fig = go.Figure(go.Pie(
+            values=[value, 100 - value],
+            labels=[label, 'Remaining'],
+            marker_colors=['mediumseagreen', 'lightgray'],
+            hole=0.7,
+            textinfo='none',
+            sort=False
+        ))
+        fig.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            annotations=[
+                dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
+                dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)
+            ]
+        )
+        return fig
 
-        total_expected = df['ExpectedQTY'].sum()
-        total_shipped = df['ShippedQTY'].sum()
-        accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
+    # 🔄 Filter to past 14 days, excluding today and future
+    today = pd.Timestamp.today().normalize()
+    recent_past_df = df[
+        (df['ExpDate'] < today) &
+        (df['ExpDate'] >= today - pd.Timedelta(days=14))
+    ]
 
-        total_variance = df['VarianceQTY'].sum()
-        backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
+    total_expected = recent_past_df['ExpectedQTY'].sum()
+    total_shipped = recent_past_df['ShippedQTY'].sum()
+    accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
 
-        col_pie1, col_pie2 = st.columns(2)
+    total_variance = recent_past_df['VarianceQTY'].sum()
+    backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
 
-        with col_pie1:
-            st.markdown("**Back Order %**")
-            fig_back_order = pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance")
-            st.plotly_chart(fig_back_order, use_container_width=True)
+    col_pie1, col_pie2 = st.columns(2)
 
-        with col_pie2:
-            st.markdown("**Order Accuracy %**")
-            fig_order_accuracy = pie_chart(accuracy_pct, "Accuracy", f"{int(total_expected - total_shipped)} Missed")
-            st.plotly_chart(fig_order_accuracy, use_container_width=True)
+    with col_pie1:
+        st.markdown("**Back Order %**")
+        fig_back_order = pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance")
+        st.plotly_chart(fig_back_order, use_container_width=True)
+
+    with col_pie2:
+        st.markdown("**Order Accuracy %**")
+        missed = total_expected - total_shipped
+        fig_order_accuracy = pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed")
+        st.plotly_chart(fig_order_accuracy, use_container_width=True)
+
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -184,4 +195,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
