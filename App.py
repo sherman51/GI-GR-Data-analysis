@@ -90,7 +90,7 @@ def daily_overview(df_today):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    # Prepare data
+    # Prepare raw count data
     data = {seg: [] for seg in segments}
     for ot in order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
@@ -98,10 +98,9 @@ def daily_overview(df_today):
             count = (ot_df['Order Status'] == seg).sum()
             data[seg].append(count)
 
-    # Filter out rows where all segments are 0 or <= 1
+    # Filter to keep only order types where total > 1
     filtered_order_types = []
     filtered_data = {seg: [] for seg in segments}
-
     for idx, ot in enumerate(order_types):
         total = sum(data[seg][idx] for seg in segments)
         if total > 1:
@@ -109,19 +108,8 @@ def daily_overview(df_today):
             for seg in segments:
                 filtered_data[seg].append(data[seg][idx])
 
-    # Recalculate total counts and percentages
-    total_counts = sum([val for seg in segments for val in filtered_data[seg]])
-    percentages = {
-        seg: [
-            (val / total_counts * 100) if total_counts > 0 else 0
-            for val in filtered_data[seg]
-        ]
-        for seg in segments
-    }
-
-    # Build the figure
+    # Build stacked bar chart
     bar_fig = go.Figure()
-
     for seg in segments:
         bar_fig.add_trace(go.Bar(
             y=filtered_order_types,
@@ -129,17 +117,6 @@ def daily_overview(df_today):
             name=seg,
             orientation='h',
             marker=dict(color=colors[seg])
-        ))
-
-    for seg in segments:
-        bar_fig.add_trace(go.Scatter(
-            y=filtered_order_types,
-            x=[v if v > 1 else None for v in filtered_data[seg]],
-            mode='markers+text',
-            text=[f"{p:.1f}%" if v > 1 else "" for v, p in zip(filtered_data[seg], percentages[seg])],
-            textposition="middle right",
-            marker=dict(color=colors[seg], size=8, symbol="circle"),
-            showlegend=False
         ))
 
     bar_fig.update_layout(
@@ -151,6 +128,7 @@ def daily_overview(df_today):
     )
 
     st.plotly_chart(bar_fig, use_container_width=True)
+
 
 
 
@@ -249,6 +227,7 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
