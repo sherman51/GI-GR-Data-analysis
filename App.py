@@ -218,36 +218,39 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # Top Date Display
-    st.markdown(f"### Date: {datetime.now().strftime('%d %b %Y')}")
-    st.markdown("---")
+    # Show Date at top
+    st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 
-    # Create main 2-column layout
-    left_col, right_col = st.columns([2, 2])
-
-    # ===== LEFT COLUMN =====
-    with left_col:
-        st.subheader("Orders Completed Today")
+    # ===== TOP SECTION LAYOUT =====
+    # Row 1: Orders completed today | Orders Status Table
+    col1, col2 = st.columns([3, 2])
+    with col1:
         daily_completed_pie(df_today)
-        st.subheader("Daily Outbound Overview")
-        daily_overview(df_today)
-        st.subheader("Expiry Date Summary")
-        expiry_date_summary(df)
-
-    # ===== RIGHT COLUMN =====
-    with right_col:
-        st.subheader("Orders Status Table")
+    with col2:
         order_status_matrix(df_today)
-        st.subheader("Ad-hoc Orders by GINo")
+
+    # Row 2: Daily Outbound Overview | Ad-hoc Orders by GINo
+    col3, col4 = st.columns([3, 2])
+    with col3:
+        daily_overview(df_today)
+    with col4:
         adhoc_orders_section(df_today)
-        st.subheader("Performance Metrics")
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ROW 3 and below remain unchanged
+    row3_left, row3_right = st.columns([3, 2])
+    with row3_left:
+        expiry_date_summary(df)
+    with row3_right:
         performance_metrics(df)
 
-    st.markdown("---")
+    st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
-
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
 
 
