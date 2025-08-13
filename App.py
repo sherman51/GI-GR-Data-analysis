@@ -2,7 +2,6 @@ from datetime import datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard")
@@ -60,10 +59,6 @@ def load_data(file):
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
     return df
 
-def safe_log_values(values):
-    """Avoid log errors for zero values by replacing with 0.1"""
-    return [v if v > 0 else 0.1 for v in values]
-
 def pie_chart(value, label, total_label):
     fig = go.Figure(go.Pie(
         values=[value, 100 - value],
@@ -103,11 +98,15 @@ def daily_overview(df_today):
         for seg in segments:
             data[seg].append((ot_df['Order Status'] == seg).sum())
 
+    # Decide scale type: log only if no zeros
+    all_counts = sum(data.values(), [])
+    scale_type = 'log' if all(c > 0 for c in all_counts) else 'linear'
+
     bar_fig = go.Figure()
     for seg in segments:
         bar_fig.add_trace(go.Bar(
             y=order_types,
-            x=safe_log_values(data[seg]),
+            x=data[seg],
             name=seg,
             orientation='h',
             marker=dict(color=colors[seg])
@@ -115,8 +114,8 @@ def daily_overview(df_today):
 
     bar_fig.update_layout(
         barmode='stack',
-        xaxis_title='Order Count (log scale)',
-        xaxis_type='log',
+        xaxis_title=f"Order Count ({scale_type} scale)",
+        xaxis_type=scale_type,
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
     )
