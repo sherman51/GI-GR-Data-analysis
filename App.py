@@ -53,10 +53,13 @@ if uploaded_file:
     df['Order Type'] = df['Priority'].map(priority_map).fillna(df['Priority'])
 
     status_map = {
+        '10-Open': 'Open',
+        '45-Picked': 'Picked',
         '65-Packed': 'Packed',
-        '75-Shipped': 'Tpt Booked',
-        '98-Cancelled': 'Open'
+        '75-Shipped': 'Shipped'
     }
+
+    df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(status_map).fillna('Open')
 
     # ---------- Top Row ----------
@@ -78,19 +81,12 @@ if uploaded_file:
             st.metric(label="Unique GINo Today", value=unique_gis_today)
 
         # Prepare bar chart data with +1 to avoid zero for log scale
-        order_types_all = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
-
-        # Filter order types to only those present in data on selected date
-        filtered_order_types = [
-            ot for ot in order_types_all
-            if ot in df[df['ExpDate'].dt.date == selected_date]['Order Type'].unique()
-        ]
-
-        segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
+        order_types = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
+        segments = ['Shipped', 'Packed', 'Picked', 'Open']
         colors = ['green', 'blue', 'yellow', 'salmon']
 
         data = {seg: [] for seg in segments}
-        for ot in filtered_order_types:
+        for ot in order_types:
             ot_df = df[(df['Order Type'] == ot) & (df['ExpDate'].dt.date == selected_date)]
             for seg in segments:
                 count = (ot_df['Order Status'] == seg).sum()
@@ -99,7 +95,7 @@ if uploaded_file:
         bar_fig = go.Figure()
         for seg, color in zip(segments, colors):
             bar_fig.add_trace(go.Bar(
-                y=filtered_order_types,
+                y=order_types,
                 x=data[seg],
                 name=seg,
                 orientation='h',
@@ -116,26 +112,19 @@ if uploaded_file:
         st.plotly_chart(bar_fig, use_container_width=True)
 
     with col_right:
-        st.markdown("#### 📋 Order Status Table")
-
-        # Swap axes for matrix: horizontal = Order Status (segments), vertical = Order Type
-        order_types_all = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
-        segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
-
-        df_filtered = df[df['ExpDate'].dt.date == selected_date]
-
-        df_status_table = df_filtered.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
-
-        # Reindex to enforce consistent order and include all categories
-        df_status_table = df_status_table.reindex(index=order_types_all, columns=segments, fill_value=0)
-
-        st.dataframe(df_status_table.style.format("{:,.0f}"))
+        st.markdown("#### 📋 Order Status Table (Matrix Format)")
+        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
+        # Reindex rows and columns for consistent display order
+        df_status_table = df_status_table.reindex(index=order_types, columns=segments, fill_value=0)
+        st.dataframe(df_status_table)
 
         st.markdown("#### 🚨 Ad-hoc Orders by GINo (Urgent & Critical)")
 
-        adhoc_df = df_filtered[df_filtered['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical'])]
+        adhoc_df = df[
+            (df['ExpDate'].dt.date == selected_date) &
+            (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
+        ]
 
-        # KPI counters for Ad-hoc Urgent and Critical
         adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
         adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
 
@@ -254,7 +243,6 @@ if uploaded_file:
             missed = total_expected - total_shipped
             fig_order_accuracy = pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed")
             st.plotly_chart(fig_order_accuracy, use_container_width=True)
-
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
