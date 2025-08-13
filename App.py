@@ -49,11 +49,9 @@ def load_data(file):
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
-    # Date parsing
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         df[col] = pd.to_datetime(df[col], errors='coerce')
     df = df[df['ExpDate'].notna()]
-    # Map order type & status
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
@@ -92,17 +90,14 @@ def daily_overview(df_today):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    # Prepare data
     data = {seg: [] for seg in segments}
     for ot in order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
             count = (ot_df['Order Status'] == seg).sum()
-            data[seg].append(count if count > 0 else 0.1)  # minimal value for log scale
+            data[seg].append(count)
 
-    # Flatten and sum for percentages
     total_counts = sum([val for seg in segments for val in data[seg]])
-
     percentages = {
         seg: [
             (val / total_counts * 100) if total_counts > 0 else 0
@@ -111,10 +106,8 @@ def daily_overview(df_today):
         for seg in segments
     }
 
-    # Create figure
     bar_fig = go.Figure()
 
-    # Main stacked bars
     for seg in segments:
         bar_fig.add_trace(go.Bar(
             y=order_types,
@@ -124,13 +117,12 @@ def daily_overview(df_today):
             marker=dict(color=colors[seg])
         ))
 
-    # Overlay percentage markers (hide for 0.1 filler)
     for seg in segments:
         bar_fig.add_trace(go.Scatter(
             y=order_types,
-            x=[v if v > 0.1 else None for v in data[seg]],
+            x=[v if v > 0 else None for v in data[seg]],
             mode='markers+text',
-            text=[f"{p:.1f}%" if v > 0.1 else "" for v, p in zip(data[seg], percentages[seg])],
+            text=[f"{p:.1f}%" if v > 0 else "" for v, p in zip(data[seg], percentages[seg])],
             textposition="middle right",
             marker=dict(color=colors[seg], size=8, symbol="circle"),
             showlegend=False
@@ -138,15 +130,13 @@ def daily_overview(df_today):
 
     bar_fig.update_layout(
         barmode='stack',
-        xaxis_title="Order Count (log scale)",
-        xaxis_type="log",
+        xaxis_title="Order Count",
+        xaxis_type="linear",  # Changed from log to linear
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
     )
 
     st.plotly_chart(bar_fig, use_container_width=True)
-
-
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -206,9 +196,11 @@ def performance_metrics(df):
     accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
     total_variance = recent_past_df['VarianceQTY'].sum()
     backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
+
     col1, col2 = st.columns(2)
     col1.markdown("**Back Order %**")
     col1.plotly_chart(pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance"), use_container_width=True)
+
     col2.markdown("**Order Accuracy %**")
     missed = total_expected - total_shipped
     col2.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed"), use_container_width=True)
@@ -241,5 +233,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
 
