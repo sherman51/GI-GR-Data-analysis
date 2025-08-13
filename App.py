@@ -90,6 +90,7 @@ def daily_overview(df_today):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
+    # Prepare data
     data = {seg: [] for seg in segments}
     for ot in order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
@@ -106,17 +107,23 @@ def daily_overview(df_today):
         for seg in segments
     }
 
+    # Build the figure
     bar_fig = go.Figure()
 
     for seg in segments:
+        x_values = [
+            val if val > 0 else 1e-6  # use small value to render on log scale
+            for val in data[seg]
+        ]
         bar_fig.add_trace(go.Bar(
             y=order_types,
-            x=data[seg],
+            x=x_values,
             name=seg,
             orientation='h',
             marker=dict(color=colors[seg])
         ))
 
+    # Overlay percentage markers (skip if original val == 0)
     for seg in segments:
         bar_fig.add_trace(go.Scatter(
             y=order_types,
@@ -130,13 +137,14 @@ def daily_overview(df_today):
 
     bar_fig.update_layout(
         barmode='stack',
-        xaxis_title="Order Count",
-        xaxis_type="linear",  # Changed from log to linear
+        xaxis_title="Order Count (log scale)",
+        xaxis_type="log",
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
     )
 
     st.plotly_chart(bar_fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -233,4 +241,5 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
