@@ -80,46 +80,71 @@ def pie_chart(value, label, total_label):
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
-    col_date, col_orders, col_unique = st.columns(3)
-    with col_date:
-        st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
-    with col_orders:
-        st.metric(label="Total Order Lines", value=df_today.shape[0])
-    with col_unique:
-        st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
+col_date, col_orders, col_unique = st.columns(3)
+with col_date:
+    st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
+with col_orders:
+    st.metric(label="Total Order Lines", value=df_today.shape[0])
+with col_unique:
+    st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
 
-    order_types = CONFIG['order_types']
-    segments = CONFIG['status_segments']
-    colors = CONFIG['colors']
+order_types = CONFIG['order_types']
+segments = CONFIG['status_segments']
+colors = CONFIG['colors']
 
-    data = {seg: [] for seg in segments}
-    for ot in order_types:
-        ot_df = df_today[df_today['Order Type'] == ot]
-        for seg in segments:
-            data[seg].append((ot_df['Order Status'] == seg).sum())
-
-    # Decide scale type: log only if no zeros
-    all_counts = sum(data.values(), [])
-    scale_type = 'log' if all(c > 0 for c in all_counts) else 'linear'
-
-    bar_fig = go.Figure()
+# Prepare data
+data = {seg: [] for seg in segments}
+for ot in order_types:
+    ot_df = df_today[df_today['Order Type'] == ot]
     for seg in segments:
-        bar_fig.add_trace(go.Bar(
-            y=order_types,
-            x=data[seg],
-            name=seg,
-            orientation='h',
-            marker=dict(color=colors[seg])
-        ))
+        data[seg].append((ot_df['Order Status'] == seg).sum())
 
-    bar_fig.update_layout(
-        barmode='stack',
-        xaxis_title=f"Order Count ({scale_type} scale)",
-        xaxis_type=scale_type,
-        margin=dict(l=10, r=10, t=30, b=30),
-        height=400
-    )
-    st.plotly_chart(bar_fig, use_container_width=True)
+all_counts = sum(data.values(), [])
+
+# Calculate percentages
+percentages = {
+    seg: [
+        (val / sum(all_counts) * 100) if sum(all_counts) > 0 else 0
+        for val in data[seg]
+    ]
+    for seg in segments
+}
+
+# Create figure
+bar_fig = go.Figure()
+
+# Main bars
+for seg in segments:
+    bar_fig.add_trace(go.Bar(
+        y=order_types,
+        x=data[seg],
+        name=seg,
+        orientation='h',
+        marker=dict(color=colors[seg])
+    ))
+
+# Overlay percentage markers
+for seg in segments:
+    bar_fig.add_trace(go.Scatter(
+        y=order_types,
+        x=[v if v > 0 else None for v in data[seg]],
+        mode='markers+text',
+        text=[f"{p:.1f}%" if p > 0 else "" for p in percentages[seg]],
+        textposition="middle right",
+        marker=dict(color=colors[seg], size=8, symbol="circle"),
+        showlegend=False
+    ))
+
+bar_fig.update_layout(
+    barmode='stack',
+    xaxis_title="Order Count",
+    xaxis_type="linear",
+    margin=dict(l=10, r=10, t=30, b=30),
+    height=400
+)
+
+st.plotly_chart(bar_fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -214,3 +239,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
