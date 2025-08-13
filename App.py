@@ -129,8 +129,25 @@ def daily_overview(df_today):
 
     st.plotly_chart(bar_fig, use_container_width=True)
 
+def daily_completed_pie(df_today):
+    total_orders = df_today.shape[0]
+    completed_orders = (df_today['Order Status'] == 'Packed').sum()
+    completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
 
-
+    fig = go.Figure(go.Pie(
+        values=[completed_pct, 100 - completed_pct],
+        labels=["Completed (Packed)", "Remaining"],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.6,
+        textinfo='none',
+        sort=False
+    ))
+    fig.update_layout(
+        showlegend=True,
+        margin=dict(t=0, b=0, l=0, r=0),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -208,6 +225,9 @@ if uploaded_file:
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
         daily_overview(df_today)
+        st.markdown("#### ✅ Orders Completed Today")
+        daily_completed_pie(df_today)
+
     with col_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
         order_status_matrix(df_today)
@@ -227,7 +247,3 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
