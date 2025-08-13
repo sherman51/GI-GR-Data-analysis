@@ -131,12 +131,13 @@ def daily_overview(df_today):
 
 def daily_completed_pie(df_today):
     total_orders = df_today.shape[0]
-    completed_orders = (df_today['Order Status'] == 'Packed').sum()
+    # Count orders as completed if status is Packed or Shipped
+    completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
 
     fig = go.Figure(go.Pie(
         values=[completed_pct, 100 - completed_pct],
-        labels=["Completed (Packed)", "Remaining"],
+        labels=["Completed (Packed/Shipped)", "Remaining"],
         marker_colors=['mediumseagreen', 'lightgray'],
         hole=0.6,
         textinfo='none',
@@ -148,6 +149,7 @@ def daily_completed_pie(df_today):
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -247,3 +249,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
