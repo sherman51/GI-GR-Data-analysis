@@ -218,52 +218,38 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # ===== ROW 0 - Filters and Date =====
-    with st.container():
-        col_logo, col_date, col_file = st.columns([2, 1, 1])
-        with col_logo:
-            st.markdown(
-                """
-                <div style="display:flex;align-items:center;padding:8px 12px;border-radius:6px;background-color:#f1f5f9;">
-                    <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
-                         style="max-height:40px;margin-right:10px;">
-                    <h3 style="margin:0;">Outbound Dashboard</h3>
-                </div>
-                """, unsafe_allow_html=True
-            )
-        with col_date:
-            st.write(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
-        with col_file:
-            st.write("**File:** Uploaded")
-
+    # Top Date Display
+    st.markdown(f"### Date: {datetime.now().strftime('%d %b %Y')}")
     st.markdown("---")
 
-    # ===== ROW 1 - Key Metrics =====
-    col1, col2, col3 = st.columns([1.5, 1, 1])
-    with col1:
+    # Create main 2-column layout
+    left_col, right_col = st.columns([2, 2])
+
+    # ===== LEFT COLUMN =====
+    with left_col:
+        st.subheader("Orders Completed Today")
         daily_completed_pie(df_today)
-    with col2:
-        performance_metrics(df)
-    with col3:
-        order_status_matrix(df_today)
-
-    st.markdown("---")
-
-    # ===== ROW 2 - Orders Overview =====
-    col4, col5 = st.columns([2, 1.5])
-    with col4:
+        st.subheader("Daily Outbound Overview")
         daily_overview(df_today)
-    with col5:
+        st.subheader("Expiry Date Summary")
+        expiry_date_summary(df)
+
+    # ===== RIGHT COLUMN =====
+    with right_col:
+        st.subheader("Orders Status Table")
+        order_status_matrix(df_today)
+        st.subheader("Ad-hoc Orders by GINo")
         adhoc_orders_section(df_today)
+        st.subheader("Performance Metrics")
+        performance_metrics(df)
 
     st.markdown("---")
-
-    # ===== ROW 3 - Trends =====
-    expiry_date_summary(df)
-
     st.markdown("### 💙 *Stay Safe & Well*")
+
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
 
 
