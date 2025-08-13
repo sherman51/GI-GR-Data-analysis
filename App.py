@@ -223,32 +223,28 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # ====== SECTION 1: Header + Completion + Status Table + Ad-hoc Orders ======
-    st.markdown(f"### 📅 Date: {selected_date.strftime('%d %b %Y')}")
+    # ====== TWO-COLUMN LAYOUT ======
+    col_left, col_right = st.columns([3, 2])
 
-    col_top_left, col_top_right = st.columns([2, 3])
-
-    # --- Left: Orders Completed Pie ---
-    with col_top_left:
+    # --- LEFT COLUMN ---
+    with col_left:
         st.markdown("#### ✅ Orders Completed Today")
         daily_completed_pie(df_today)
 
-    # --- Right: Order Status + Ad-hoc Orders ---
-    with col_top_right:
+        st.markdown("#### 📦 Daily Outbound Overview")
+        daily_overview(df_today)
+
+    # --- RIGHT COLUMN ---
+    with col_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
         order_status_matrix(df_today)
+
         st.markdown("#### 🚨 Ad-hoc Orders by GINo")
         adhoc_orders_section(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ====== SECTION 2: Daily Outbound Overview ======
-    st.markdown("#### 📦 Daily Outbound Overview")
-    daily_overview(df_today)
-
-    st.markdown("<hr>", unsafe_allow_html=True)
-
-    # ====== SECTION 3: Expiry & Performance ======
+    # ====== BOTTOM SECTION ======
     col_bottom_left, col_bottom_right = st.columns([3, 2])
     with col_bottom_left:
         st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
@@ -262,6 +258,8 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
 
 
