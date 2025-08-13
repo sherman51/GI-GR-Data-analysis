@@ -87,33 +87,32 @@ def daily_overview(df_today):
         st.metric(label="Total Order Lines", value=df_today.shape[0])
     with col_unique:
         st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
-    
+
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
-    
+
     # Prepare data
     data = {seg: [] for seg in segments}
     for ot in order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
-            data[seg].append((ot_df['Order Status'] == seg).sum())
-    
-    all_counts = sum(data.values(), [])
-    total_sum = sum(all_counts)
-    
-    # Calculate percentages for each segment per order type
+            count = (ot_df['Order Status'] == seg).sum()
+            data[seg].append(count if count > 0 else 0.1)  # minimal value for log scale
+
+    # Calculate percentages
+    total_counts = sum(sum(data[seg] for seg in segments))
     percentages = {
         seg: [
-            (val / total_sum * 100) if total_sum > 0 else 0
+            (val / total_counts * 100) if total_counts > 0 else 0
             for val in data[seg]
         ]
         for seg in segments
     }
-    
+
     # Create figure
     bar_fig = go.Figure()
-    
+
     # Main stacked bars
     for seg in segments:
         bar_fig.add_trace(go.Bar(
@@ -123,28 +122,29 @@ def daily_overview(df_today):
             orientation='h',
             marker=dict(color=colors[seg])
         ))
-    
-    # Overlay percentage markers so small bars are visible
+
+    # Overlay percentage markers (ignore zero counts / 0.1 filler)
     for seg in segments:
         bar_fig.add_trace(go.Scatter(
             y=order_types,
-            x=[v if v > 0 else None for v in data[seg]],
+            x=[v if v > 0.1 else None for v in data[seg]],  # hide 0.1 bars
             mode='markers+text',
-            text=[f"{p:.1f}%" if p > 0 else "" for p in percentages[seg]],
+            text=[f"{p:.1f}%" if v > 0.1 else "" for v, p in zip(data[seg], percentages[seg])],
             textposition="middle right",
             marker=dict(color=colors[seg], size=8, symbol="circle"),
             showlegend=False
         ))
-    
+
     bar_fig.update_layout(
         barmode='stack',
-        xaxis_title="Order Count",
-        xaxis_type="linear",  # Always linear scale
+        xaxis_title="Order Count (log scale)",
+        xaxis_type="log",
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
     )
-    
+
     st.plotly_chart(bar_fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -239,3 +239,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
