@@ -223,34 +223,45 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # --- Row 1: Daily Overview & Completed Orders ---
-    st.markdown("#### 📦 Daily Outbound Overview & Completion")
-    col1, col2 = st.columns([3, 2])
-    with col1:
-        daily_overview(df_today)
-    with col2:
+    # ====== SECTION 1: Header + Completion + Status Table + Ad-hoc Orders ======
+    st.markdown(f"### 📅 Date: {selected_date.strftime('%d %b %Y')}")
+
+    col_top_left, col_top_right = st.columns([2, 3])
+
+    # --- Left: Orders Completed Pie ---
+    with col_top_left:
+        st.markdown("#### ✅ Orders Completed Today")
         daily_completed_pie(df_today)
 
-    # --- Row 2: Ad-hoc Orders & Order Status ---
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("#### 📋 Orders Breakdown")
-    col3, col4 = st.columns([3, 2])
-    with col3:
-        adhoc_orders_section(df_today)
-    with col4:
+    # --- Right: Order Status + Ad-hoc Orders ---
+    with col_top_right:
+        st.markdown("#### 📋 Order Status Table (Matrix Format)")
         order_status_matrix(df_today)
+        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
+        adhoc_orders_section(df_today)
 
-    # --- Row 3: Expiry Date Summary & Performance Metrics ---
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("#### 📊 Expiry & Performance")
-    col5, col6 = st.columns([3, 2])
-    with col5:
+
+    # ====== SECTION 2: Daily Outbound Overview ======
+    st.markdown("#### 📦 Daily Outbound Overview")
+    daily_overview(df_today)
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ====== SECTION 3: Expiry & Performance ======
+    col_bottom_left, col_bottom_right = st.columns([3, 2])
+    with col_bottom_left:
+        st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
         expiry_date_summary(df)
-    with col6:
+    with col_bottom_right:
+        st.markdown("#### 📈 Performance Metrics")
         performance_metrics(df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
+
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
