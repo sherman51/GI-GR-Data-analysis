@@ -43,7 +43,7 @@ if uploaded_file:
     # Filter out rows without ExpDate
     df = df[df['ExpDate'].notna()]
 
-    # Map order types and statuses
+    # Map order types
     priority_map = {
         '1-Normal': 'normal',
         '2-ADHOC Normal': 'Ad-hoc Normal',
@@ -52,18 +52,21 @@ if uploaded_file:
     }
     df['Order Type'] = df['Priority'].map(priority_map).fillna(df['Priority'])
 
+    # Map new statuses
     status_map = {
         '10-Open': 'Open',
+        '15-Processing': 'Processing',
+        '20-Partially Allocated': 'Partially Allocated',
+        '25-Fully Allocated': 'Fully Allocated',
+        '35-Pick in Progress': 'Pick in Progress',
         '45-Picked': 'Picked',
         '65-Packed': 'Packed',
         '75-Shipped': 'Shipped'
     }
-
-    df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(status_map).fillna('Open')
 
     # ---------- Top Row ----------
-    col_left, col_right = st.columns([4, 2])
+    col_left, col_right = st.columns([4, 3])
 
     with col_left:
         st.markdown("#### 📦 Daily Outbound Overview")
@@ -80,96 +83,69 @@ if uploaded_file:
             unique_gis_today = df[df['ExpDate'].dt.date == selected_date]['GINo'].nunique()
             st.metric(label="Unique GINo Today", value=unique_gis_today)
 
-        # Prepare bar chart data with +1 to avoid zero for log scale
+    with col_right:
+        # Order Status Table in matrix form, swapped axes (horizontal=status, vertical=order type)
+        st.markdown("#### 📋 Order Status Summary (Matrix)")
+
         order_types = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
-        segments = ['Shipped', 'Packed', 'Picked', 'Open']
-        colors = ['green', 'blue', 'yellow', 'salmon']
+        statuses = ['Shipped', 'Packed', 'Picked', 'Open', 'Processing', 'Partially Allocated', 'Fully Allocated', 'Pick in Progress']
 
-        data = {seg: [] for seg in segments}
-        for ot in order_types:
-            ot_df = df[(df['Order Type'] == ot) & (df['ExpDate'].dt.date == selected_date)]
-            for seg in segments:
-                count = (ot_df['Order Status'] == seg).sum()
-                data[seg].append(count + 1)  # add 1 to avoid zero for log scale
+        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
+        df_status_table = df_status_table.reindex(index=order_types, columns=statuses, fill_value=0)
 
-        bar_fig = go.Figure()
-        for seg, color in zip(segments, colors):
-            bar_fig.add_trace(go.Bar(
-                y=order_types,
-                x=data[seg],
-                name=seg,
-                orientation='h',
-                marker=dict(color=color)
+        st.dataframe(df_status_table.style.format("{:d}"))
+
+    # ---------- Ad-hoc Summary Section ----------
+    st.markdown("#### 🚨 Ad-hoc Orders by GINo (Urgent & Critical)")
+
+    adhoc_df = df[
+        (df['ExpDate'].dt.date == selected_date) &
+        (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
+    ]
+
+    # KPI Counters
+    adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
+    adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
+
+    col_adhoc1, col_adhoc2 = st.columns(2)
+    with col_adhoc1:
+        st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+    with col_adhoc2:
+        st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
+
+    # Bar chart by GINo and Order Type for Ad-hoc
+    grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
+
+    if not grouped.empty:
+        fig = go.Figure()
+
+        if 'Ad-hoc Urgent' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped.index,
+                y=grouped['Ad-hoc Urgent'],
+                name='Ad-hoc Urgent',
+                marker_color='orange'
             ))
 
-        bar_fig.update_layout(
-            barmode='stack',
-            xaxis_title='Order Count (log scale)',
-            xaxis_type='log',
-            margin=dict(l=10, r=10, t=30, b=30),
-            height=400
+        if 'Ad-hoc Critical' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped.index,
+                y=grouped['Ad-hoc Critical'],
+                name='Ad-hoc Critical',
+                marker_color='crimson'
+            ))
+
+        fig.update_layout(
+            barmode='group',
+            xaxis_title='GINo',
+            yaxis_title='Order Count',
+            title='Ad-hoc Urgent & Critical Orders by GINo',
+            height=400,
+            margin=dict(l=10, r=10, t=30, b=30)
         )
-        st.plotly_chart(bar_fig, use_container_width=True)
-
-    with col_right:
-        st.markdown("#### 📋 Order Status Table (Matrix Format)")
-        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
-        # Reindex rows and columns for consistent display order
-        df_status_table = df_status_table.reindex(index=order_types, columns=segments, fill_value=0)
-        st.dataframe(df_status_table)
-
-        st.markdown("#### 🚨 Ad-hoc Orders by GINo (Urgent & Critical)")
-
-        adhoc_df = df[
-            (df['ExpDate'].dt.date == selected_date) &
-            (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
-        ]
-
-        adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
-        adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
-
-        col_adhoc1, col_adhoc2 = st.columns(2)
-
-        with col_adhoc1:
-            st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
-
-        with col_adhoc2:
-            st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
-
-        # Group by GINo and Order Type for bar chart
-        grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
-
-        if not grouped.empty:
-            fig = go.Figure()
-
-            if 'Ad-hoc Urgent' in grouped.columns:
-                fig.add_trace(go.Bar(
-                    x=grouped.index,
-                    y=grouped['Ad-hoc Urgent'],
-                    name='Ad-hoc Urgent',
-                    marker_color='orange'
-                ))
-
-            if 'Ad-hoc Critical' in grouped.columns:
-                fig.add_trace(go.Bar(
-                    x=grouped.index,
-                    y=grouped['Ad-hoc Critical'],
-                    name='Ad-hoc Critical',
-                    marker_color='crimson'
-                ))
-
-            fig.update_layout(
-                barmode='group',
-                xaxis_title='GINo',
-                yaxis_title='Order Count',
-                title='Ad-hoc Urgent & Critical Orders by GINo',
-                height=400,
-                margin=dict(l=10, r=10, t=30, b=30)
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -217,7 +193,7 @@ if uploaded_file:
             )
             return fig
 
-        # 🔄 Filter to past 14 days, excluding today and future
+        # Filter to past 14 days, excluding today and future
         today = pd.Timestamp.today().normalize()
         recent_past_df = df[
             (df['ExpDate'] < today) &
@@ -246,8 +222,43 @@ if uploaded_file:
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ---------- Footer ----------
-    st.markdown("### 💙 *Stay Safe & Well*")
+    # ---------- Order Status Bar Chart ----------
+    st.markdown("#### 📊 Order Status Breakdown")
+
+    # Aggregate counts by Order Status
+    status_counts = df[df['ExpDate'].dt.date == selected_date]['Order Status'].value_counts()
+
+    # Only show statuses with count > 0
+    filtered_statuses = [s for s in status_map.values() if status_counts.get(s, 0) > 0]
+    filtered_counts = [status_counts.get(s, 0) for s in filtered_statuses]
+
+    # Color map for statuses
+    color_map = {
+        'Open': 'gray',
+        'Processing': 'purple',
+        'Partially Allocated': 'orange',
+        'Fully Allocated': 'blue',
+        'Pick in Progress': 'yellow',
+        'Picked': 'salmon',
+        'Packed': 'green',
+        'Shipped': 'darkcyan'
+    }
+    colors = [color_map.get(s, 'lightgray') for s in filtered_statuses]
+
+    fig_status = go.Figure(go.Bar(
+        x=filtered_statuses,
+        y=filtered_counts,
+        marker_color=colors
+    ))
+    fig_status.update_layout(
+        yaxis_title="Order Count",
+        xaxis_title="Order Status",
+        title="Order Status Breakdown",
+        yaxis_type='linear',  # Use 'log' for log scale if you want
+        margin=dict(t=40, b=40)
+    )
+
+    st.plotly_chart(fig_status, use_container_width=True)
 
 else:
-    st.warning("📄 Please upload an Excel file to begin.")
+    st.info("Please upload an Excel file to display the dashboard.")
