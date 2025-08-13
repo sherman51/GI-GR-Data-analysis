@@ -100,8 +100,9 @@ def daily_overview(df_today):
             count = (ot_df['Order Status'] == seg).sum()
             data[seg].append(count if count > 0 else 0.1)  # minimal value for log scale
 
-    # Calculate percentages
-    total_counts = sum(sum(data[seg] for seg in segments))
+    # Flatten and sum for percentages
+    total_counts = sum([val for seg in segments for val in data[seg]])
+
     percentages = {
         seg: [
             (val / total_counts * 100) if total_counts > 0 else 0
@@ -123,11 +124,11 @@ def daily_overview(df_today):
             marker=dict(color=colors[seg])
         ))
 
-    # Overlay percentage markers (ignore zero counts / 0.1 filler)
+    # Overlay percentage markers (hide for 0.1 filler)
     for seg in segments:
         bar_fig.add_trace(go.Scatter(
             y=order_types,
-            x=[v if v > 0.1 else None for v in data[seg]],  # hide 0.1 bars
+            x=[v if v > 0.1 else None for v in data[seg]],
             mode='markers+text',
             text=[f"{p:.1f}%" if v > 0.1 else "" for v, p in zip(data[seg], percentages[seg])],
             textposition="middle right",
@@ -144,6 +145,7 @@ def daily_overview(df_today):
     )
 
     st.plotly_chart(bar_fig, use_container_width=True)
+
 
 
 def order_status_matrix(df_today):
@@ -239,4 +241,5 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
