@@ -223,29 +223,34 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    col_left, col_right = st.columns([4, 2])
-    with col_left:
-        st.markdown("#### 📦 Daily Outbound Overview")
+    # --- Row 1: Daily Overview & Completed Orders ---
+    st.markdown("#### 📦 Daily Outbound Overview & Completion")
+    col1, col2 = st.columns([3, 2])
+    with col1:
         daily_overview(df_today)
-        st.markdown("#### ✅ Orders Completed Today")
+    with col2:
         daily_completed_pie(df_today)
 
-    with col_right:
-        st.markdown("#### 📋 Order Status Table (Matrix Format)")
-        order_status_matrix(df_today)
-        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
-        adhoc_orders_section(df_today)
-
+    # --- Row 2: Ad-hoc Orders & Order Status ---
     st.markdown("<hr>", unsafe_allow_html=True)
-    col_bottom_left, col_bottom_right = st.columns([3, 2])
-    with col_bottom_left:
-        st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
+    st.markdown("#### 📋 Orders Breakdown")
+    col3, col4 = st.columns([3, 2])
+    with col3:
+        adhoc_orders_section(df_today)
+    with col4:
+        order_status_matrix(df_today)
+
+    # --- Row 3: Expiry Date Summary & Performance Metrics ---
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("#### 📊 Expiry & Performance")
+    col5, col6 = st.columns([3, 2])
+    with col5:
         expiry_date_summary(df)
-    with col_bottom_right:
-        st.markdown("#### 📈 Performance Metrics")
+    with col6:
         performance_metrics(df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
