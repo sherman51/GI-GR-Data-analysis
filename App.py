@@ -223,24 +223,23 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # ====== TWO-COLUMN LAYOUT ======
-    col_left, col_right = st.columns([3, 2])
+    col_left, col_right = st.columns([3.2, 2])  # Slightly more space to left
 
     # --- LEFT COLUMN ---
     with col_left:
         st.markdown("#### ✅ Orders Completed Today")
-        daily_completed_pie(df_today)
+        daily_completed_pie(df_today)  # Ensure pie chart height ~300px
 
         st.markdown("#### 📦 Daily Outbound Overview")
-        daily_overview(df_today)
+        daily_overview(df_today)  # Ensure bar chart height ~400px
 
     # --- RIGHT COLUMN ---
     with col_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
-        order_status_matrix(df_today)
+        order_status_matrix(df_today)  # Compact table height ~300px
 
         st.markdown("#### 🚨 Ad-hoc Orders by GINo")
-        adhoc_orders_section(df_today)
+        adhoc_orders_section(df_today)  # Bar chart height ~400px
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -255,9 +254,10 @@ if uploaded_file:
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
-
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
 
 
