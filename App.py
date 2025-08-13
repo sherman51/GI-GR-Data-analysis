@@ -34,14 +34,17 @@ CONFIG = {
 # ---------- HEADER ----------
 st.markdown(
     """
-    <div style="display: flex; align-items: center;">
+    <div style="display: flex; align-items: center; background-color: #f2f2f2; padding: 8px 12px; border-radius: 6px;">
         <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
              style="max-height:40px; height:auto; width:auto; margin-right:10px;">
-        <h3 style="margin: 0;">SSW Healthcare - <b>Outbound Dashboard</b></h3>
+        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #333333;">
+            SSW Healthcare - <b>Outbound Dashboard</b>
+        </h3>
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
@@ -244,3 +247,4 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
