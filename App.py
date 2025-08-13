@@ -109,34 +109,55 @@ if uploaded_file:
         st.plotly_chart(bar_fig, use_container_width=True)
 
     with col_right:
-        st.markdown("#### 📋 Order Status Table")
+        st.markdown("#### 📋 Order Status Summary")
+
+        # Create data for swapped axis bar chart:
+        # Horizontal axis = Order Status (segments)
+        # Vertical axis = Order Type (order_types)
+
         df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Status', 'Order Type']).size().unstack(fill_value=0)
+
+        # Make sure order of indexes/columns:
         df_status_table = df_status_table.reindex(index=segments, columns=order_types, fill_value=0)
-        st.dataframe(df_status_table)
 
-        st.markdown("#### 🚨 Ad-hoc Priority Summary")
+        # Prepare data for bar chart with swapped axes
+        fig_status = go.Figure()
 
-        adhoc_df = df[
-            (df['ExpDate'].dt.date == selected_date) &
-            (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
-        ]
+        for ot in order_types:
+            fig_status.add_trace(go.Bar(
+                x=segments,
+                y=df_status_table[ot],
+                name=ot,
+                orientation='v'  # vertical bars, so y axis = count, x axis = order status
+            ))
 
-        adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
-        adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
+        fig_status.update_layout(
+            barmode='stack',
+            xaxis_title='Order Status',
+            yaxis_title='Order Count',
+            height=400,
+            margin=dict(l=10, r=10, t=30, b=30)
+        )
+        st.plotly_chart(fig_status, use_container_width=True)
 
-        col_adhoc1, col_adhoc2 = st.columns(2)
+    # --- Ad-hoc KPIs and bar chart under the top row ---
+    st.markdown("#### 🚨 Ad-hoc Priority Summary & Orders by GINo (Urgent & Critical)")
 
-        with col_adhoc1:
-            st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+    adhoc_df = df[
+        (df['ExpDate'].dt.date == selected_date) &
+        (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
+    ]
 
-        with col_adhoc2:
-            st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
+    adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
+    adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
 
-    # Bar chart below the top row showing Ad-hoc Orders by GINo
-    st.markdown("#### 📊 Ad-hoc Orders by GINo (Urgent & Critical)")
+    col_adhoc1, col_adhoc2 = st.columns(2)
 
-    if 'adhoc_df' not in locals():
-        adhoc_df = pd.DataFrame()  # fallback empty dataframe
+    with col_adhoc1:
+        st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+
+    with col_adhoc2:
+        st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
 
     grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
 
@@ -197,7 +218,7 @@ if uploaded_file:
 
     with col_bottom_right:
         st.markdown("#### 📈 Performance Metrics")
-    
+
         def pie_chart(value, label, total_label):
             fig = go.Figure(go.Pie(
                 values=[value, 100 - value],
@@ -216,28 +237,28 @@ if uploaded_file:
                 ]
             )
             return fig
-    
+
         # 🔄 Filter to past 14 days, excluding today and future
         today = pd.Timestamp.today().normalize()
         recent_past_df = df[
             (df['ExpDate'] < today) &
             (df['ExpDate'] >= today - pd.Timedelta(days=14))
         ]
-    
+
         total_expected = recent_past_df['ExpectedQTY'].sum()
         total_shipped = recent_past_df['ShippedQTY'].sum()
         accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
-    
+
         total_variance = recent_past_df['VarianceQTY'].sum()
         backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
-    
+
         col_pie1, col_pie2 = st.columns(2)
-    
+
         with col_pie1:
             st.markdown("**Back Order %**")
             fig_back_order = pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance")
             st.plotly_chart(fig_back_order, use_container_width=True)
-    
+
         with col_pie2:
             st.markdown("**Order Accuracy %**")
             missed = total_expected - total_shipped
