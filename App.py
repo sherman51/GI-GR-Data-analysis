@@ -223,39 +223,44 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    col_left, col_right = st.columns([3.2, 2])  # Slightly more space to left
-
-    # --- LEFT COLUMN ---
-    with col_left:
+    # ====== ROW 1: Orders Completed | Order Status Table ======
+    row1_left, row1_right = st.columns([3, 2])
+    with row1_left:
         st.markdown("#### ✅ Orders Completed Today")
-        daily_completed_pie(df_today)  # Ensure pie chart height ~300px
-
-        st.markdown("#### 📦 Daily Outbound Overview")
-        daily_overview(df_today)  # Ensure bar chart height ~400px
-
-    # --- RIGHT COLUMN ---
-    with col_right:
+        daily_completed_pie(df_today)  # Set height ~300px inside function
+    with row1_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
-        order_status_matrix(df_today)  # Compact table height ~300px
-
-        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
-        adhoc_orders_section(df_today)  # Bar chart height ~400px
+        order_status_matrix(df_today)  # Compact height ~300px
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ====== BOTTOM SECTION ======
-    col_bottom_left, col_bottom_right = st.columns([3, 2])
-    with col_bottom_left:
+    # ====== ROW 2: Daily Outbound Overview | Ad-hoc Orders ======
+    row2_left, row2_right = st.columns([3, 2])
+    with row2_left:
+        st.markdown("#### 📦 Daily Outbound Overview")
+        daily_overview(df_today)  # Height ~400px
+    with row2_right:
+        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
+        adhoc_orders_section(df_today)  # Height ~400px
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ====== ROW 3: Expiry Date Summary | Performance Metrics ======
+    row3_left, row3_right = st.columns([3, 2])
+    with row3_left:
         st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
-        expiry_date_summary(df)
-    with col_bottom_right:
+        expiry_date_summary(df)  # Height ~350px
+    with row3_right:
         st.markdown("#### 📈 Performance Metrics")
-        performance_metrics(df)
+        performance_metrics(df)  # Height ~350px
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
+
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
 
 
 
