@@ -116,23 +116,28 @@ if uploaded_file:
 
         st.markdown("#### 🚨 Ad-hoc Priority Summary")
 
-    adhoc_df = df[
-        (df['ExpDate'].dt.date == selected_date) &
-        (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
-    ]
+        adhoc_df = df[
+            (df['ExpDate'].dt.date == selected_date) &
+            (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
+        ]
 
-    adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
-    adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
+        adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
+        adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
 
-    col_adhoc1, col_adhoc2 = st.columns(2)
+        col_adhoc1, col_adhoc2 = st.columns(2)
 
-    with col_adhoc1:
-        st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+        with col_adhoc1:
+            st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
 
-    with col_adhoc2:
-        st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
+        with col_adhoc2:
+            st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
 
-    # Group by GINo and Order Type for bar chart
+    # Bar chart below the top row showing Ad-hoc Orders by GINo
+    st.markdown("#### 📊 Ad-hoc Orders by GINo (Urgent & Critical)")
+
+    if 'adhoc_df' not in locals():
+        adhoc_df = pd.DataFrame()  # fallback empty dataframe
+
     grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
 
     if not grouped.empty:
@@ -158,7 +163,6 @@ if uploaded_file:
             barmode='group',
             xaxis_title='GINo',
             yaxis_title='Order Count',
-            title='Ad-hoc Urgent & Critical Orders by GINo',
             height=400,
             margin=dict(l=10, r=10, t=30, b=30)
         )
@@ -166,7 +170,6 @@ if uploaded_file:
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
-
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -241,7 +244,6 @@ if uploaded_file:
             fig_order_accuracy = pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed")
             st.plotly_chart(fig_order_accuracy, use_container_width=True)
 
-
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ---------- Footer ----------
@@ -249,8 +251,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
-
