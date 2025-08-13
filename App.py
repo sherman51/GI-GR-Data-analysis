@@ -114,6 +114,60 @@ if uploaded_file:
         df_status_table = df_status_table.reindex(index=segments, columns=order_types, fill_value=0)
         st.dataframe(df_status_table)
 
+            st.markdown("#### 🚨 Ad-hoc Priority Summary")
+
+    adhoc_df = df[
+        (df['ExpDate'].dt.date == selected_date) &
+        (df['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical']))
+    ]
+
+    adhoc_urgent_count = (adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum()
+    adhoc_critical_count = (adhoc_df['Order Type'] == 'Ad-hoc Critical').sum()
+
+    col_adhoc1, col_adhoc2 = st.columns(2)
+
+    with col_adhoc1:
+        st.metric(label="Ad-hoc Urgent Orders", value=adhoc_urgent_count)
+
+    with col_adhoc2:
+        st.metric(label="Ad-hoc Critical Orders", value=adhoc_critical_count)
+
+    # Group by GINo and Order Type for bar chart
+    grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
+
+    if not grouped.empty:
+        fig = go.Figure()
+
+        if 'Ad-hoc Urgent' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped.index,
+                y=grouped['Ad-hoc Urgent'],
+                name='Ad-hoc Urgent',
+                marker_color='orange'
+            ))
+
+        if 'Ad-hoc Critical' in grouped.columns:
+            fig.add_trace(go.Bar(
+                x=grouped.index,
+                y=grouped['Ad-hoc Critical'],
+                name='Ad-hoc Critical',
+                marker_color='crimson'
+            ))
+
+        fig.update_layout(
+            barmode='group',
+            xaxis_title='GINo',
+            yaxis_title='Order Count',
+            title='Ad-hoc Urgent & Critical Orders by GINo',
+            height=400,
+            margin=dict(l=10, r=10, t=30, b=30)
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
+
+
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ---------- Bottom Row ----------
@@ -195,6 +249,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
