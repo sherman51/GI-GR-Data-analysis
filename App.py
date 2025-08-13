@@ -33,6 +33,7 @@ CONFIG = {
 
 # ---------- PAGE HEADER ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
+st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
 selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 
@@ -75,15 +76,16 @@ def pie_chart(value, label, total_label):
     )
     return fig
 
-# ---------- NEW PIE FOR COMPLETED ORDERS ----------
-def daily_completed_pie(df_today):
-    total_orders = df_today.shape[0]
-    completed_orders = df_today[df_today['Order Status'].isin(['Packed','Shipped'])].shape[0]
-    pct_completed = (completed_orders / total_orders * 100) if total_orders else 0
-    st.plotly_chart(pie_chart(pct_completed, "Completed", f"{completed_orders} / {total_orders}"), use_container_width=True)
-
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
+    col_date, col_orders, col_unique = st.columns(3)
+    with col_date:
+        st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
+    with col_orders:
+        st.metric(label="Total Order Lines", value=df_today.shape[0])
+    with col_unique:
+        st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
+
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
@@ -94,27 +96,17 @@ def daily_overview(df_today):
         ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
             count = (ot_df['Order Status'] == seg).sum()
-            data[seg].append(count if count > 0 else 0.1)  # minimal value for log scale
+            data[seg].append(count)
 
-    # Filter to keep only order types with total > 0
+    # Filter to keep only order types where total > 1
     filtered_order_types = []
     filtered_data = {seg: [] for seg in segments}
     for idx, ot in enumerate(order_types):
         total = sum(data[seg][idx] for seg in segments)
-        if total > 0:
+        if total > 1:
             filtered_order_types.append(ot)
             for seg in segments:
                 filtered_data[seg].append(data[seg][idx])
-
-    # Calculate percentages
-    total_counts = sum(sum(filtered_data[seg]) for seg in segments)
-    percentages = {
-        seg: [
-            (val / total_counts * 100) if total_counts > 0 else 0
-            for val in filtered_data[seg]
-        ]
-        for seg in segments
-    }
 
     # Build stacked bar chart
     bar_fig = go.Figure()
@@ -127,18 +119,6 @@ def daily_overview(df_today):
             marker=dict(color=colors[seg])
         ))
 
-    # Overlay percentage markers
-    for seg in segments:
-        bar_fig.add_trace(go.Scatter(
-            y=filtered_order_types,
-            x=[v if v > 0.1 else None for v in filtered_data[seg]],
-            mode='markers+text',
-            text=[f"{p:.1f}%" if v > 0.1 else "" for v, p in zip(filtered_data[seg], percentages[seg])],
-            textposition="middle right",
-            marker=dict(color=colors[seg], size=8, symbol="circle"),
-            showlegend=False
-        ))
-
     bar_fig.update_layout(
         barmode='stack',
         xaxis_title="Order Count (log scale)",
@@ -148,6 +128,28 @@ def daily_overview(df_today):
     )
 
     st.plotly_chart(bar_fig, use_container_width=True)
+
+def daily_completed_pie(df_today):
+    total_orders = df_today.shape[0]
+    # Count orders as completed if status is Packed or Shipped
+    completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
+    completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
+
+    fig = go.Figure(go.Pie(
+        values=[completed_pct, 100 - completed_pct],
+        labels=["Completed (Packed/Shipped)", "Remaining"],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.6,
+        textinfo='none',
+        sort=False
+    ))
+    fig.update_layout(
+        showlegend=True,
+        margin=dict(t=0, b=0, l=0, r=0),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -221,35 +223,20 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # ------------------- TOP SECTION -------------------
-    col_date, col_completed, col_status = st.columns([1, 2, 3])
-    
-    # Date
-    with col_date:
-        st.markdown("### 📅 Date")
-        st.metric(label="Today", value=selected_date.strftime('%d %b %Y'))
-    
-    # Orders Completed Pie
-    with col_completed:
-        st.markdown("### ✅ Orders Completed Today")
+    col_left, col_right = st.columns([4, 2])
+    with col_left:
+        st.markdown("#### 📦 Daily Outbound Overview")
+        daily_overview(df_today)
+        st.markdown("#### ✅ Orders Completed Today")
         daily_completed_pie(df_today)
-    
-    # Orders Status Table & Ad-hoc
-    with col_status:
-        st.markdown("### 📋 Order Status Table")
+
+    with col_right:
+        st.markdown("#### 📋 Order Status Table (Matrix Format)")
         order_status_matrix(df_today)
-        st.markdown("### 🚨 Ad-hoc Orders by GINo")
+        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
         adhoc_orders_section(df_today)
-    
+
     st.markdown("<hr>", unsafe_allow_html=True)
-    
-    # ------------------- DAILY OUTBOUND OVERVIEW -------------------
-    st.markdown("### 📦 Daily Outbound Overview")
-    daily_overview(df_today)
-    
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    # ------------------- BOTTOM SECTION -------------------
     col_bottom_left, col_bottom_right = st.columns([3, 2])
     with col_bottom_left:
         st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
@@ -257,7 +244,7 @@ if uploaded_file:
     with col_bottom_right:
         st.markdown("#### 📈 Performance Metrics")
         performance_metrics(df)
-    
+
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
