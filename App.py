@@ -114,7 +114,7 @@ if uploaded_file:
         df_status_table = df_status_table.reindex(index=segments, columns=order_types, fill_value=0)
         st.dataframe(df_status_table)
 
-            st.markdown("#### 🚨 Ad-hoc Priority Summary")
+        st.markdown("#### 🚨 Ad-hoc Priority Summary")
 
     adhoc_df = df[
         (df['ExpDate'].dt.date == selected_date) &
@@ -249,6 +249,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
