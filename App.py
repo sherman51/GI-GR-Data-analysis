@@ -59,6 +59,10 @@ if uploaded_file:
     }
     df['Order Status'] = df['Status'].map(status_map).fillna('Open')
 
+    # Define order for rows and columns
+    order_types = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
+    segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
+
     # ---------- Top Row ----------
     col_left, col_right = st.columns([4, 2])
 
@@ -78,10 +82,6 @@ if uploaded_file:
             st.metric(label="Unique GINo Today", value=unique_gis_today)
 
         # Prepare bar chart data with +1 to avoid zero for log scale
-        order_types = ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical']
-        segments = ['Tpt Booked', 'Packed', 'Picked', 'Open']
-        colors = ['green', 'blue', 'yellow', 'salmon']
-
         data = {seg: [] for seg in segments}
         for ot in order_types:
             ot_df = df[(df['Order Type'] == ot) & (df['ExpDate'].dt.date == selected_date)]
@@ -90,7 +90,7 @@ if uploaded_file:
                 data[seg].append(count + 1)  # add 1 to avoid zero for log scale
 
         bar_fig = go.Figure()
-        for seg, color in zip(segments, colors):
+        for seg, color in zip(segments, ['green', 'blue', 'yellow', 'salmon']):
             bar_fig.add_trace(go.Bar(
                 y=order_types,
                 x=data[seg],
@@ -111,34 +111,12 @@ if uploaded_file:
     with col_right:
         st.markdown("#### 📋 Order Status Summary")
 
-        # Create data for swapped axis bar chart:
-        # Horizontal axis = Order Status (segments)
-        # Vertical axis = Order Type (order_types)
+        # Swapped axes table: rows = Order Type, columns = Order Status
+        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
 
-        df_status_table = df[df['ExpDate'].dt.date == selected_date].groupby(['Order Status', 'Order Type']).size().unstack(fill_value=0)
+        df_status_table = df_status_table.reindex(index=order_types, columns=segments, fill_value=0)
 
-        # Make sure order of indexes/columns:
-        df_status_table = df_status_table.reindex(index=segments, columns=order_types, fill_value=0)
-
-        # Prepare data for bar chart with swapped axes
-        fig_status = go.Figure()
-
-        for ot in order_types:
-            fig_status.add_trace(go.Bar(
-                x=segments,
-                y=df_status_table[ot],
-                name=ot,
-                orientation='v'  # vertical bars, so y axis = count, x axis = order status
-            ))
-
-        fig_status.update_layout(
-            barmode='stack',
-            xaxis_title='Order Status',
-            yaxis_title='Order Count',
-            height=400,
-            margin=dict(l=10, r=10, t=30, b=30)
-        )
-        st.plotly_chart(fig_status, use_container_width=True)
+        st.dataframe(df_status_table.style.format("{:,}"))
 
     # --- Ad-hoc KPIs and bar chart under the top row ---
     st.markdown("#### 🚨 Ad-hoc Priority Summary & Orders by GINo (Urgent & Critical)")
