@@ -181,7 +181,7 @@ def adhoc_orders_section(df_today):
         xaxis_title='GINo',
         yaxis_title='Order Count',
         title='Ad-hoc Urgent & Critical Orders by GINo',
-        height=400,
+        height=500,
         margin=dict(l=10, r=10, t=30, b=30)
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -256,6 +256,7 @@ if uploaded_file:
     st.markdown("### 💙 *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
