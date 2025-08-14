@@ -34,12 +34,14 @@ def upload_to_github(file_name, file_content):
     # Send the request to GitHub API
     response = requests.put(url, json=payload, headers=headers)
 
-    if response.status_code == 201:
-        st.success(f"File '{file_name}' uploaded successfully to GitHub!")
-        return True
-    else:
-        st.error(f"Failed to upload file: {response.json()['message']}")
+    # Debugging info
+    if response.status_code != 201:
+        st.error(f"Failed to upload file: {response.json().get('message', 'No detailed message')}")
+        st.write(response.json())  # Print the full response for debugging
         return False
+
+    st.success(f"File '{file_name}' uploaded successfully to GitHub!")
+    return True
 
 # Streamlit app
 st.title("Upload File to GitHub")
@@ -66,5 +68,3 @@ if uploaded_file:
                 st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
     except Exception as e:
         st.error(f"Error reading the file: {str(e)}")
-
-
