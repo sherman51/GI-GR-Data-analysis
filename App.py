@@ -45,11 +45,6 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown(
-    f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
-    unsafe_allow_html=True
-)
-
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
@@ -237,6 +232,11 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
+    st.markdown(
+    f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
+    unsafe_allow_html=True
+)
+
     # ====== ROW 1 ======
     row1_left, row1_right = st.columns([3, 2])
     with row1_left:
@@ -273,5 +273,6 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
