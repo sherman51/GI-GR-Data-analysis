@@ -422,17 +422,14 @@ if uploaded_file:
         if i != len(date_list) - 1:
             with cols[col_index + 1]:
                 st.markdown(
-                    "<div style='height: 100%; border-left: 1px solid lightgray;'></div>",
-                    unsafe_allow_html=True
-                )
+                """
+                <div style='height: 100vh; border-left: 2px solid #888; margin: auto;'></div>
+                """,
+                unsafe_allow_html=True
+            )
         col_index += 2  # move to next content column
 
-    st.markdown(
-    """
-    <div style='height: 100vh; border-left: 2px solid #888; margin: auto;'></div>
-    """,
-    unsafe_allow_html=True
-)
+
 
     # Bottom section (once only)
     col1, col2 = st.columns(2)
@@ -450,6 +447,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
