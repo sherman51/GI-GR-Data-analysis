@@ -21,7 +21,7 @@ CONFIG = {
         '98-Cancelled': 'Cancelled'  # NEW
     },
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
-    "status_segments": [ 'Cancelled','Shipped', 'Packed', 'Picked', 'Open'],  
+    "status_segments": [  'Open', 'Picked', 'Packed','Shipped', 'Cancelled' ],  
     "colors": {
         'Shipped': 'green',
         'Cancelled': 'red',  # NEW color
@@ -374,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
