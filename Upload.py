@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 
-UPLOAD_DIR = "C:\Users\ShermanANG\OneDrive - Singapore Storage & Warehouse Pte Ltd\Dashboardupload test"
+UPLOAD_DIR = r"C:\Users\ShermanANG\OneDrive - Singapore Storage & Warehouse Pte Ltd\Dashboardupload test"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 st.title("📤 Upload Excel File")
@@ -13,3 +13,4 @@ if uploaded_file:
     with open(save_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     st.success(f"Uploaded and saved as 'latest.xlsx'")
+
