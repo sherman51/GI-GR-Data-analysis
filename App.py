@@ -141,24 +141,19 @@ def daily_overview(df_today):
     st.plotly_chart(bar_fig, use_container_width=True)
 
 def daily_completed_pie(df_today):
-    total_orders = df_today.shape[0]
-    completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
-    completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
+    completed = df_today[df_today['Order Status'] == 'Completed'].shape[0]
+    total = df_today.shape[0]
 
-    fig = go.Figure(go.Pie(
-        values=[completed_pct, 100 - completed_pct],
-        labels=["Completed (Packed/Shipped)", "Outstanding"],
-        marker_colors=['mediumseagreen', 'lightgray'],
-        hole=0.6,
-        textinfo='none',
-        sort=False
-    ))
-    fig.update_layout(
-        showlegend=True,
-        margin=dict(t=0, b=0, l=0, r=0),
-        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+    fig = px.pie(
+        names=["Completed", "Outstanding"],
+        values=[completed, total - completed],
+        hole=0.4
     )
-    st.plotly_chart(fig, use_container_width=True)
+
+    # Smaller chart dimensions
+    fig.update_layout(width=300, height=300, margin=dict(l=20, r=20, t=20, b=20))
+    st.plotly_chart(fig, use_container_width=False)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -240,7 +235,7 @@ if uploaded_file:
     # ====== ROW 1 ======
     row1_left, row1_right = st.columns([3, 2])
     with row1_left:
-        st.markdown("#### ✅ Orders Completed Today")
+        st.markdown("#### ✅ % Completion")
         daily_completed_pie(df_today)
     with row1_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
@@ -273,6 +268,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
