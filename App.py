@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -294,6 +294,33 @@ def performance_metrics(df, key_prefix=""):
 if uploaded_file:
     df = load_data(uploaded_file)
     df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
+    # Build a smart date list
+date_list = []
+days_checked = 0
+current_date = datetime.today().date()
+
+while len(date_list) < 3 and days_checked < 7:  # safety limit
+    weekday = current_date.weekday()  # Monday=0, Sunday=6
+
+    if weekday == 6:  # Sunday
+        current_date += timedelta(days=1)
+        days_checked += 1
+        continue
+
+    if weekday == 5:  # Saturday
+        df_day = df[df['ExpDate'].dt.date == current_date]
+        if df_day.empty:
+            # Skip to Monday
+            days_to_monday = (0 - weekday) % 7  # always 2 days from Saturday
+            current_date += timedelta(days=days_to_monday)
+            days_checked += days_to_monday
+            continue
+
+    # Passed all checks
+    date_list.append(current_date)
+    current_date += timedelta(days=1)
+    days_checked += 1
+
 
     # Create list of 3 dates
     date_list = [datetime.today().date() + pd.Timedelta(days=i) for i in range(3)]
@@ -301,32 +328,32 @@ if uploaded_file:
     # Side-by-side columns for 3 days
     col1, col2, col3 = st.columns(3)
 
-    for i, (dash_date, col) in enumerate(zip(date_list, [col1, col2, col3])):
+    # Create columns based on the number of valid dates
+    cols = st.columns(len(date_list))
+    
+    for i, (dash_date, col) in enumerate(zip(date_list, cols)):
         with col:
             df_day = df[df['ExpDate'].dt.date == dash_date]
-
+    
             st.markdown(
                 f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
                 unsafe_allow_html=True
             )
-
-            # % Completion
+    
             st.markdown("##### ✅ % completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
-
-            # Order Status Table
+    
             st.markdown("##### 📋 Order Status Table")
             order_status_matrix(df_day, key_prefix=f"day{i}")
-
+    
             st.markdown("<hr>", unsafe_allow_html=True)
-
-            # Orders breakdown
+    
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
-
-            # Urgent and Critical
+    
             st.markdown("##### 🚨 Urgent and Critical")
             adhoc_orders_section(df_day, key_prefix=f"day{i}")
+
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -341,5 +368,6 @@ if uploaded_file:
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
