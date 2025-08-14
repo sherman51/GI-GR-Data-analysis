@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # ---------- CONFIG ----------
-st.set_page_config(layout="wide", page_title="Outbound Dashboard")
+st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
 
 CONFIG = {
     "priority_map": {
@@ -374,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
