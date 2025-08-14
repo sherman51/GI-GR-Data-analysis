@@ -249,7 +249,7 @@ def expiry_date_summary(df):
 def order_volume_summary(df):
     today = pd.Timestamp.today().normalize()
     recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
-    daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo']
+    daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].count()
 
     if daily_counts.empty:
         st.info("No orders found for the past 14 days.")
@@ -333,4 +333,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
