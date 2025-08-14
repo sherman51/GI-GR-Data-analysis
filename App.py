@@ -361,16 +361,21 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # Bottom section (once only)
-    st.markdown("### 📊 Order lines (Past 14 Days)")
-    order_volume_summary(df, key_prefix="overall")
-    expiry_date_summary(df, key_prefix="overall")
-
-    st.markdown("### 📈 Performance Metrics")
-    performance_metrics(df, key_prefix="overall")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### 📊 Order lines (Past 14 Days)")
+        order_volume_summary(df, key_prefix="overall")
+        expiry_date_summary(df, key_prefix="overall")
+    
+    with col2:
+        st.markdown("### 📈 Performance Metrics")
+        performance_metrics(df, key_prefix="overall")
 
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
