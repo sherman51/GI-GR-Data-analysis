@@ -280,33 +280,69 @@ def order_volume_summary(df, key_prefix=""):
 def performance_metrics(df, key_prefix=""):
     today = pd.Timestamp.today().normalize()
     recent_past_df = df[(df['ExpDate'] < today) & (df['ExpDate'] >= today - pd.Timedelta(days=14))]
+
     total_expected = recent_past_df['ExpectedQTY'].sum()
     total_shipped = recent_past_df['ShippedQTY'].sum()
-    accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
     total_variance = recent_past_df['VarianceQTY'].sum()
-    backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
     missed = total_expected - total_shipped
 
-    with st.container():
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.markdown("**Back Order %**")
-            pie_chart(
-                backorder_pct,
-                "Back Order",
-                f"{int(total_variance)} Variance",
-                key_prefix=f"{key_prefix}_backorder"
-            )
+    accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
+    backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
 
-        with col2:
-            st.markdown("**Order Accuracy %**")
-            pie_chart(
-                accuracy_pct,
-                "Accuracy",
-                f"{int(missed)} Missed",
-                key_prefix=f"{key_prefix}_accuracy"
-            )
+    st.markdown("""
+    <style>
+    .metric-box {
+        background-color: #f7f7f7;
+        padding: 8px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown('<div class="metric-box">📦 Back Order %</div>', unsafe_allow_html=True)
+        fig1 = go.Figure(go.Pie(
+            values=[backorder_pct, 100 - backorder_pct],
+            hole=0.65,
+            marker_colors=['#ff9999', '#e6e6e6'],
+            textinfo='none'
+        ))
+        fig1.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=250,
+            annotations=[
+                dict(text=f"{backorder_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False, font_color="black"),
+                dict(text=f"{int(total_variance)} Variance", x=0.5, y=0.35, font_size=12, showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        st.markdown('<div class="metric-box">✅ Order Accuracy %</div>', unsafe_allow_html=True)
+        fig2 = go.Figure(go.Pie(
+            values=[accuracy_pct, 100 - accuracy_pct],
+            hole=0.65,
+            marker_colors=['#7cd992', '#e6e6e6'],
+            textinfo='none'
+        ))
+        fig2.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=250,
+            annotations=[
+                dict(text=f"{accuracy_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False, font_color="black"),
+                dict(text=f"{int(missed)} Missed", x=0.5, y=0.35, font_size=12, showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
 
 # ---------- MAIN ----------
 if uploaded_file:
@@ -384,6 +420,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
