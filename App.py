@@ -45,7 +45,6 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(
     f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
     unsafe_allow_html=True
@@ -274,4 +273,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
