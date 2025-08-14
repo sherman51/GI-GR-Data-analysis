@@ -370,8 +370,9 @@ if uploaded_file:
         performance_metrics(df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("### 💙 *Stay Safe & Well*")
+    st.markdown("###  *Stay Safe & Well*")
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
