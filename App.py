@@ -313,41 +313,34 @@ if uploaded_file:
     df = load_data(uploaded_file)
     aircon_zones = ['aircon', 'controlled drug room', 'strong room']
     df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
-    # Build a smart date list
-date_list = []
-days_checked = 0
-current_date = datetime.today().date()
 
-while len(date_list) < 3 and days_checked < 7:  # safety limit
-    weekday = current_date.weekday()  # Monday=0, Sunday=6
+    # Smart date list logic
+    date_list = []
+    days_checked = 0
+    current_date = datetime.today().date()
 
-    if weekday == 6:  # Sunday
-        current_date += timedelta(days=1)
-        days_checked += 1
-        continue
+    while len(date_list) < 3 and days_checked < 7:  # safety limit
+        weekday = current_date.weekday()  # Monday=0, Sunday=6
 
-    if weekday == 5:  # Saturday
-        df_day = df[df['ExpDate'].dt.date == current_date]
-        if df_day.empty:
-            # Skip to Monday
-            days_to_monday = (0 - weekday) % 7  # always 2 days from Saturday
-            current_date += timedelta(days=days_to_monday)
-            days_checked += days_to_monday
+        if weekday == 6:  # Sunday
+            current_date += timedelta(days=1)
+            days_checked += 1
             continue
 
-    # Passed all checks
-    date_list.append(current_date)
-    current_date += timedelta(days=1)
-    days_checked += 1
+        if weekday == 5:  # Saturday
+            df_day = df[df['ExpDate'].dt.date == current_date]
+            if df_day.empty:
+                # Skip to Monday
+                current_date += timedelta(days=2)
+                days_checked += 2
+                continue
 
+        # Passed all checks
+        date_list.append(current_date)
+        current_date += timedelta(days=1)
+        days_checked += 1
 
-    # Create list of 3 dates
-    date_list = [datetime.today().date() + pd.Timedelta(days=i) for i in range(3)]
-
-    # Side-by-side columns for 3 days
-    col1, col2, col3 = st.columns(3)
-
-    # Create columns based on the number of valid dates
+    # Side-by-side columns for each valid date
     cols = st.columns(len(date_list))
     
     for i, (dash_date, col) in enumerate(zip(date_list, cols)):
@@ -372,9 +365,6 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
-    
-
-
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -391,8 +381,10 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
         performance_metrics(df, key_prefix="overall")
 
     st.markdown("###  *Stay Safe & Well*")
+
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
