@@ -321,7 +321,7 @@ if uploaded_file:
     # ====== ROW 3 ======
     row3_left, row3_right = st.columns([3, 2])
     with row3_left:
-        st.markdown("#### 📊 Orders (Past 14 Days)")
+        st.markdown("#### 📊 Order lines (Past 14 Days)")
         order_volume_summary(df)  # now directly under title
         expiry_date_summary(df)
     with row3_right:
@@ -333,5 +333,6 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
