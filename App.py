@@ -423,7 +423,7 @@ if uploaded_file:
             with cols[col_index + 1]:
                 st.markdown(
                 """
-                <div style='height: 100vh; border-left: 2px solid #888; margin: auto;'></div>
+                <div style='height: 130vh; border-left: 2px solid #888; margin: auto;'></div>
                 """,
                 unsafe_allow_html=True
             )
@@ -447,6 +447,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
