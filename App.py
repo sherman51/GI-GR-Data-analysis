@@ -145,14 +145,20 @@ def daily_completed_pie(df_today):
     total = df_today.shape[0]
 
     fig = px.pie(
-        names=["Completed", "Outstanding"],
+        names=["Completed", "Remaining"],
         values=[completed, total - completed],
         hole=0.4
     )
 
-    # Smaller chart dimensions
-    fig.update_layout(width=300, height=300, margin=dict(l=20, r=20, t=20, b=20))
+    # Make the pie chart smaller
+    fig.update_layout(
+        width=300,   # pixels
+        height=300,  # pixels
+        margin=dict(l=10, r=10, t=30, b=10)
+    )
+
     st.plotly_chart(fig, use_container_width=False)
+
 
 
 def order_status_matrix(df_today):
@@ -268,6 +274,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
