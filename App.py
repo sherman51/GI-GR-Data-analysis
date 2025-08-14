@@ -313,7 +313,7 @@ if uploaded_file:
         st.markdown("#### ✅ % completion")
         daily_completed_pie(df_today)
     with row1_right:
-        st.markdown("#### 📋 Order Status Table (Matrix Format)")
+        st.markdown("#### 📋 Order Status Table")
         order_status_matrix(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -344,6 +344,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
