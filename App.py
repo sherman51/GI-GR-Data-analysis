@@ -215,32 +215,71 @@ def order_status_matrix(df_today):
 
 
 def adhoc_orders_section(df_today):
-    adhoc_df = df_today[df_today['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical'])]
-    col1, col2 = st.columns(2)
-    col1.metric(label="Ad-hoc Urgent Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum())
-    col2.metric(label="Ad-hoc Critical Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Critical').sum())
+    urgent_df = df_today[df_today['Order Type'] == 'Ad-hoc Urgent']
+    critical_df = df_today[df_today['Order Type'] == 'Ad-hoc Critical']
 
-    grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
-    if grouped.empty:
-        st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
-        return
-    fig = go.Figure()
-    for col in grouped.columns:
-        fig.add_trace(go.Bar(
-            x=grouped.index,
-            y=grouped[col],
-            name=col,
-            marker_color=CONFIG['colors'][col]
-        ))
-    fig.update_layout(
-        barmode='group',
-        xaxis_title='GINo',
-        yaxis_title='Order Count',
-        title='Ad-hoc Urgent & Critical Orders by GINo',
-        height=500,
-        margin=dict(l=10, r=10, t=30, b=30)
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        urgent_selected = st.button(
+            f"⚠ Urgent Orders: {urgent_df['GINo'].nunique()}",
+            key="urgent_btn",
+            help="Click to view Urgent GI Nos",
+            use_container_width=True
+        )
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stButton"] button {
+                background-color: #f8e5a1; /* muted yellow */
+                color: black;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 8px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+        critical_selected = st.button(
+            f"🚨 Critical Orders: {critical_df['GINo'].nunique()}",
+            key="critical_btn",
+            help="Click to view Critical GI Nos",
+            use_container_width=True
+        )
+        st.markdown(
+            """
+            <style>
+            div[data-testid="stButton"] button {
+                background-color: #f5a1a1; /* muted red */
+                color: black;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 8px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+    if urgent_selected:
+        if urgent_df.empty:
+            st.info("No Urgent orders found.")
+        else:
+            st.subheader("Urgent GI Nos")
+            st.dataframe(pd.DataFrame({"GINo": urgent_df['GINo'].unique()}))
+
+    if critical_selected:
+        if critical_df.empty:
+            st.info("No Critical orders found.")
+        else:
+            st.subheader("Critical GI Nos")
+            st.dataframe(pd.DataFrame({"GINo": critical_df['GINo'].unique()}))
+
 
 
 def expiry_date_summary(df):
@@ -346,6 +385,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
