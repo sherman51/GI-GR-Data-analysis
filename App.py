@@ -189,7 +189,7 @@ def daily_completed_pie(df_today):
 
     fig = go.Figure(go.Pie(
         values=[completed_pct, 100 - completed_pct],
-        labels=["Completed (Packed/Shipped)", "Outstanding"],
+        labels=["Completed", "Outstanding"],
         marker_colors=['mediumseagreen', 'lightgray'],
         hole=0.6,
         textinfo='none',
@@ -374,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
