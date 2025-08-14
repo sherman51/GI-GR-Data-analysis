@@ -76,7 +76,7 @@ def load_data(file):
 def pie_chart(value, label, total_label):
     fig = go.Figure(go.Pie(
         values=[value, 100 - value],
-        labels=[label, 'Remaining'],
+        labels=[label, 'Outstanding'],
         marker_colors=['mediumseagreen', 'lightgray'],
         hole=0.7,
         textinfo='none',
@@ -149,7 +149,7 @@ def daily_completed_pie(df_today):
 
     fig = go.Figure(go.Pie(
         values=[completed_pct, 100 - completed_pct],
-        labels=["Completed (Packed/Shipped)", "Remaining"],
+        labels=["Completed (Packed/Shipped)", "Outstanding"],
         marker_colors=['mediumseagreen', 'lightgray'],
         hole=0.6,
         textinfo='none',
@@ -270,4 +270,5 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
