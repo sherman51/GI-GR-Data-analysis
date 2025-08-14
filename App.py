@@ -34,32 +34,18 @@ CONFIG = {
 }
 
 # ---------- PAGE HEADER ----------
-st.markdown("""
-    <style>
-    /* Top full-width section */
-    .appview-container::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 120px;
-        background-color: #e3f2f0;
-        z-index: -1;
-    }
-
-    /* Match sidebar color */
-    section[data-testid="stSidebar"] {
-        background-color: #e3f2f0 !important;
-    }
-
-    /* Remove top padding so header is flush */
-    .block-container {
-        padding-top: 0rem;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
+        <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
+             style="max-height:40px; height:auto; width:auto; margin-right:10px;">
+        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #ffffff;">
+            - <b>Outbound Dashboard</b>
+        </h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 uploaded_file = st.sidebar.file_uploader(
     "📂 Upload Excel File", 
     type=["xlsx", "xls"]
@@ -388,15 +374,4 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
-
-
-
-
-
-
-
 
