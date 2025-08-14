@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -32,8 +32,11 @@ CONFIG = {
 }
 
 # ---------- PAGE HEADER ----------
+st.markdown("<h1 style='text-align:center; font-size:48px;'>"
+            f"{datetime.now().strftime('%d %b %Y')}"
+            "</h1>", unsafe_allow_html=True)
+
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 uploaded_file = st.sidebar.file_uploader(
     "📂 Upload Excel File", 
     type=["xlsx", "xls"]
@@ -94,7 +97,7 @@ def pie_chart(value, label, total_label):
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
-    col_date, col_orders, col_unique = st.columns(2)
+    col_orders, col_unique = st.columns(2)
     with col_orders:
         st.metric(label="Total Order Lines", value=df_today.shape[0])
     with col_unique:
@@ -268,6 +271,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
