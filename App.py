@@ -293,7 +293,8 @@ def performance_metrics(df, key_prefix=""):
 # ---------- MAIN ----------
 if uploaded_file:
     df = load_data(uploaded_file)
-    df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
+    aircon_zones = ['aircon', 'controlled drug room', 'strong room']
+    df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
     # Build a smart date list
 date_list = []
 days_checked = 0
@@ -370,6 +371,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
