@@ -47,14 +47,14 @@ st.markdown(
 
 
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
-uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
-selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
-
-# Allow both .xlsx and .xls
 uploaded_file = st.sidebar.file_uploader(
     "📂 Upload Excel File",
     type=["xlsx", "xls"]
 )
+
+selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
+
+
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
@@ -241,6 +241,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
