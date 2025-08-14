@@ -384,30 +384,29 @@ if uploaded_file:
     # Side-by-side columns for each valid date
     cols = st.columns(len(date_list))
     
-    for i, (dash_date, col) in enumerate(zip(date_list, cols)):
-
-        if i != len(cols) - 1:
-            st.markdown("""
-                <style>
-                div[data-testid="column"] > div:nth-child(1) {
-                    border-right: 1px solid #ccc;
-                    padding-right: 10px;
-                    margin-right: 10px;
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            
-        with col:
+    # Create layout: main column -> divider -> main column -> divider -> main column
+    layout = []
+    for i in range(len(date_list)):
+        layout.append(5)  # width of main content column
+        if i != len(date_list) - 1:
+            layout.append(0.5)  # width of vertical divider
+    
+    cols = st.columns(layout)
+    
+    # Now fill the columns accordingly
+    col_index = 0
+    for i, dash_date in enumerate(date_list):
+        with cols[col_index]:
             df_day = df[df['ExpDate'].dt.date == dash_date]
     
             st.markdown(
                 f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
                 unsafe_allow_html=True
             )
-
+    
             st.markdown("##### 🚨 Urgent and Critical")
             adhoc_orders_section(df_day, key_prefix=f"day{i}")
-            
+    
             st.markdown("##### ✅ % completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
     
@@ -418,6 +417,15 @@ if uploaded_file:
     
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
+    
+        # Add vertical divider (if not the last column)
+        if i != len(date_list) - 1:
+            with cols[col_index + 1]:
+                st.markdown(
+                    "<div style='height: 100%; border-left: 1px solid lightgray;'></div>",
+                    unsafe_allow_html=True
+                )
+        col_index += 2  # move to next content column
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -437,6 +445,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
