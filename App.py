@@ -385,20 +385,21 @@ if uploaded_file:
     cols = st.columns(len(date_list))
     
     # Create layout: main column -> divider -> main column -> divider -> main column
-    layout = []
-    for i in range(len(date_list)):
-        layout.append(5)  # width of main content column
-        if i != len(date_list) - 1:
-            layout.append(0.5)  # width of vertical divider
+    cols = []
+    num_dates = len(date_list)
+    for i in range(num_dates):
+        # For all but the last date, add a small divider column after each main column
+        if i < num_dates - 1:
+            cols.extend(st.columns([4, 0.1]))  # 4 parts content, 0.1 part divider
+        else:
+            cols.append(st.columns(1)[0])  # Just the last content column
     
-    cols = st.columns(layout)
-    
-    # Now fill the columns accordingly
-    col_index = 0
+    col_idx = 0
     for i, dash_date in enumerate(date_list):
-        with cols[col_index]:
+        col = cols[col_idx]
+        with col:
             df_day = df[df['ExpDate'].dt.date == dash_date]
-    
+            
             st.markdown(
                 f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
                 unsafe_allow_html=True
@@ -406,7 +407,7 @@ if uploaded_file:
     
             st.markdown("##### 🚨 Urgent and Critical")
             adhoc_orders_section(df_day, key_prefix=f"day{i}")
-    
+            
             st.markdown("##### ✅ % completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
     
@@ -418,16 +419,19 @@ if uploaded_file:
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
     
-        # Add vertical divider (if not the last column)
-        if i != len(date_list) - 1:
-            with cols[col_index + 1]:
+        col_idx += 1
+    
+        # Add vertical line after every section except the last
+        if i < num_dates - 1:
+            with cols[col_idx]:
                 st.markdown(
-                """
-                <div style='height: 100vh; border-left: 2px solid #888; margin: auto;'></div>
-                """,
-                unsafe_allow_html=True
-            )
-        col_index += 2  # move to next content column
+                    """
+                    <div style='height: 100%; border-left: 2px solid #aaa; margin: auto;'></div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            col_idx += 1
+
 
 
 
@@ -447,6 +451,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
