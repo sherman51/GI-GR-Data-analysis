@@ -295,48 +295,51 @@ if uploaded_file:
     df = load_data(uploaded_file)
     df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
 
-    # Loop for 3 days: today, tomorrow, day after
+    # Create list of 3 dates
     date_list = [datetime.today().date() + pd.Timedelta(days=i) for i in range(3)]
 
-    for i, dash_date in enumerate(date_list):
-        df_day = df[df['ExpDate'].dt.date == dash_date]
+    # Side-by-side columns for 3 days
+    col1, col2, col3 = st.columns(3)
 
-        st.markdown(f"<h5 style='margin-top:10px; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>", unsafe_allow_html=True)
+    for i, (dash_date, col) in enumerate(zip(date_list, [col1, col2, col3])):
+        with col:
+            df_day = df[df['ExpDate'].dt.date == dash_date]
 
-        # ====== ROW 1 ======
-        row1_left, row1_right = st.columns([3, 2])
-        with row1_left:
-            st.markdown("#### ✅ % completion")
-            daily_completed_pie(df_day, key_prefix=f"{i}_completedpie")
-        with row1_right:
-            st.markdown("#### 📋 Order Status Table")
-            order_status_matrix(df_day, key_prefix=f"{i}_statusmatrix")
+            st.markdown(
+                f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
+                unsafe_allow_html=True
+            )
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+            # % Completion
+            st.markdown("##### ✅ % completion")
+            daily_completed_pie(df_day, key_prefix=f"day{i}")
 
-        # ====== ROW 2 ======
-        row2_left, row2_right = st.columns([3, 2])
-        with row2_left:
-            st.markdown("#### 📦 Orders breakdown")
-            daily_overview(df_day, key_prefix=f"{i}_overview")
-        with row2_right:
-            st.markdown("#### 🚨 Urgent and Critical")
-            adhoc_orders_section(df_day, key_prefix=f"{i}_adhoc")
+            # Order Status Table
+            st.markdown("##### 📋 Order Status Table")
+            order_status_matrix(df_day, key_prefix=f"day{i}")
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown("<hr>", unsafe_allow_html=True)
 
-        # ====== ROW 3 ======
-        row3_left, row3_right = st.columns([3, 2])
-        with row3_left:
-            st.markdown("#### 📊 Order lines (Past 14 Days)")
-            order_volume_summary(df, key_prefix=f"{i}_ordervolume")
-            expiry_date_summary(df, key_prefix=f"{i}_expiry")
-        with row3_right:
-            st.markdown("#### 📈 Performance Metrics")
-            performance_metrics(df, key_prefix=f"{i}_performance")
+            # Orders breakdown
+            st.markdown("##### 📦 Orders breakdown")
+            daily_overview(df_day, key_prefix=f"day{i}")
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+            # Urgent and Critical
+            st.markdown("##### 🚨 Urgent and Critical")
+            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # Bottom section (once only)
+    st.markdown("### 📊 Order lines (Past 14 Days)")
+    order_volume_summary(df, key_prefix="overall")
+    expiry_date_summary(df, key_prefix="overall")
+
+    st.markdown("### 📈 Performance Metrics")
+    performance_metrics(df, key_prefix="overall")
 
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
+
