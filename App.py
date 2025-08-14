@@ -18,13 +18,13 @@ CONFIG = {
         '45-Picked': 'Picked',
         '65-Packed': 'Packed',
         '75-Shipped': 'Shipped',
-        '98-Cancelled': 'Cancelled'
+        '98-Cancelled': 'Cancelled'  # NEW
     },
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
-    "status_segments": ['Open', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
+    "status_segments": [  'Open', 'Picked', 'Packed','Shipped', 'Cancelled' ],  
     "colors": {
         'Shipped': 'green',
-        'Cancelled': 'red',
+        'Cancelled': 'red',  # NEW color
         'Packed': 'blue',
         'Picked': 'yellow',
         'Open': 'salmon',
@@ -46,11 +46,12 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx", "xls"])
+uploaded_file = st.sidebar.file_uploader(
+    "📂 Upload Excel File", 
+    type=["xlsx", "xls"]
+)
 selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 
-# ---------- STYLES ----------
 st.markdown("""
 <style>
 hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
@@ -71,6 +72,7 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
+
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
     file_ext = file.name.split('.')[-1].lower()
@@ -79,7 +81,7 @@ def load_data(file):
             df = pd.read_excel(file, skiprows=6, engine='xlrd')
         else:
             df = pd.read_excel(file, skiprows=6, engine='openpyxl')
-    except ImportError:
+    except ImportError as e:
         st.error("⚠ Missing dependency: Install `xlrd==1.2.0` for .xls files.")
         st.stop()
 
@@ -118,6 +120,7 @@ def pie_chart(value, label, total_label):
     return fig
 
 
+# ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
     total_order_lines = df_today.shape[0]
     unique_gino = df_today['GINo'].nunique()
@@ -184,7 +187,23 @@ def daily_completed_pie(df_today):
     completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
 
-    st.plotly_chart(pie_chart(completed_pct, "Completed", f"{completed_orders} Done"), use_container_width=True)
+    fig = go.Figure(go.Pie(
+        values=[completed_pct, 100 - completed_pct],
+        labels=["Completed", "Outstanding"],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.6,
+        textinfo='none',
+        sort=False
+    ))
+
+    fig.update_layout(
+        width=300,
+        height=300,
+        margin=dict(l=10, r=10, t=30, b=10),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def order_status_matrix(df_today):
@@ -196,7 +215,9 @@ def order_status_matrix(df_today):
 
 
 def adhoc_orders_section(df_today):
+    # Keep only rows where Status is NOT Packed or Shipped
     not_completed_df = df_today[~df_today['Status'].isin(['Packed', 'Shipped'])]
+
     urgent_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Urgent']
     critical_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Critical']
 
@@ -205,11 +226,20 @@ def adhoc_orders_section(df_today):
     with col1:
         st.markdown(
             f"""
-            <div style="background-color: #f8e5a1; color: black; font-weight: bold; padding: 10px; 
-            border-radius: 8px; text-align: center; margin-bottom: 5px;">
+            <div style="
+                background-color: #f8e5a1; 
+                color: black; 
+                font-weight: bold; 
+                padding: 10px; 
+                border-radius: 8px; 
+                text-align: center;
+                margin-bottom: 5px;">
                 ⚠ Urgent Orders: {urgent_df['GINo'].nunique()}
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
         if urgent_df.empty:
             st.info("No GI to display")
         else:
@@ -218,15 +248,27 @@ def adhoc_orders_section(df_today):
     with col2:
         st.markdown(
             f"""
-            <div style="background-color: #f5a1a1; color: black; font-weight: bold; padding: 10px; 
-            border-radius: 8px; text-align: center; margin-bottom: 5px;">
+            <div style="
+                background-color: #f5a1a1; 
+                color: black; 
+                font-weight: bold; 
+                padding: 10px; 
+                border-radius: 8px; 
+                text-align: center;
+                margin-bottom: 5px;">
                 🚨 Critical Orders: {critical_df['GINo'].nunique()}
             </div>
-            """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
         if critical_df.empty:
             st.info("No GI to display")
         else:
             st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}))
+
+
+
 
 
 def expiry_date_summary(df):
@@ -291,36 +333,46 @@ if uploaded_file:
     df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    st.markdown(f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>", unsafe_allow_html=True)
+    st.markdown(
+    f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
+    unsafe_allow_html=True
+    )
 
-    col1, col2, col3 = st.columns(3)
-    for col in [col1, col2, col3]:
-        with col:
-            st.markdown("#### ✅ Orders Completed Today")
-            daily_completed_pie(df_today)
-
-            st.markdown("#### 📋 Orders Status Table")
-            order_status_matrix(df_today)
-
-            st.markdown("#### 📦 Daily Outbound Overview")
-            daily_overview(df_today)
-
-            st.markdown("#### 🚨 Ad-hoc Orders by GINo")
-            adhoc_orders_section(df_today)
+    # ====== ROW 1 ======
+    row1_left, row1_right = st.columns([3, 2])
+    with row1_left:
+        st.markdown("#### ✅ % completion")
+        daily_completed_pie(df_today)
+    with row1_right:
+        st.markdown("#### 📋 Order Status Table")
+        order_status_matrix(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    st.markdown("#### 📊 Order lines (Past 14 Days)")
-    order_volume_summary(df)
-    expiry_date_summary(df)
+    # ====== ROW 2 ======
+    row2_left, row2_right = st.columns([3, 2])
+    with row2_left:
+        st.markdown("#### 📦 Orders breakdown")
+        daily_overview(df_today)
+    with row2_right:
+        st.markdown("#### 🚨 Urgent and Critical")
+        adhoc_orders_section(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    st.markdown("#### 📈 Performance Metrics")
-    performance_metrics(df)
+    # ====== ROW 3 ======
+    row3_left, row3_right = st.columns([3, 2])
+    with row3_left:
+        st.markdown("#### 📊 Order lines (Past 14 Days)")
+        order_volume_summary(df)  # now directly under title
+        expiry_date_summary(df)
+    with row3_right:
+        st.markdown("#### 📈 Performance Metrics")
+        performance_metrics(df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("### *Stay Safe & Well*")
+    st.markdown("###  *Stay Safe & Well*")
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+    
