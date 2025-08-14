@@ -50,9 +50,21 @@ st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 uploaded_file = st.sidebar.file_uploader("📂 Upload Excel File", type=["xlsx"])
 selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 
+# Allow both .xlsx and .xls
+uploaded_file = st.sidebar.file_uploader(
+    "📂 Upload Excel File",
+    type=["xlsx", "xls"]
+)
+
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
-    df = pd.read_excel(file, skiprows=6)
+    # Use engine='xlrd' for .xls, otherwise default to openpyxl
+    file_ext = file.name.split('.')[-1].lower()
+    if file_ext == 'xls':
+        df = pd.read_excel(file, skiprows=6, engine='xlrd')
+    else:
+        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
@@ -64,25 +76,6 @@ def load_data(file):
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
     return df
 
-def pie_chart(value, label, total_label, height=300):
-    fig = go.Figure(go.Pie(
-        values=[value, 100 - value],
-        labels=[label, 'Remaining'],
-        marker_colors=['mediumseagreen', 'lightgray'],
-        hole=0.7,
-        textinfo='none',
-        sort=False
-    ))
-    fig.update_layout(
-        showlegend=False,
-        margin=dict(t=0, b=0, l=0, r=0),
-        height=height,
-        annotations=[
-            dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
-            dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)
-        ]
-    )
-    return fig
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
@@ -248,6 +241,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
