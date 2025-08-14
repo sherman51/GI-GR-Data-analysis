@@ -15,13 +15,17 @@ CONFIG = {
     },
     "status_map": {
         '10-Open': 'Open',
+        '15-Processing': 'Open',
+        '20-Partially Allocated': 'Open',
+        '25-Fully Allocated': 'Pick-In Progress',
+        '35-Pick in Progress': 'Pick-In Progress',
         '45-Picked': 'Picked',
         '65-Packed': 'Packed',
         '75-Shipped': 'Shipped',
         '98-Cancelled': 'Cancelled'
     },
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
-    "status_segments": ['Open', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
+    "status_segments": ['Open','Pick-In Progress', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
     "colors": {
         'Shipped': 'green',
         'Cancelled': 'red',
@@ -420,6 +424,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
