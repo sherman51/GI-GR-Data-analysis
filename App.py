@@ -33,7 +33,7 @@ CONFIG = {
 
 # ---------- PAGE HEADER ----------
 st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
-st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
+st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
 uploaded_file = st.sidebar.file_uploader(
     "📂 Upload Excel File", 
     type=["xlsx", "xls"]
@@ -94,9 +94,7 @@ def pie_chart(value, label, total_label):
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
-    col_date, col_orders, col_unique = st.columns(3)
-    with col_date:
-        st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
+    col_date, col_orders, col_unique = st.columns(2)
     with col_orders:
         st.metric(label="Total Order Lines", value=df_today.shape[0])
     with col_unique:
@@ -270,5 +268,6 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
