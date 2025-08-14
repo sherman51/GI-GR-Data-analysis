@@ -1,4 +1,4 @@
-from datetime import datetime 
+from datetime import datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -42,6 +42,20 @@ selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 st.markdown("""
 <style>
 hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
+.metric-container {
+    background-color: #f4f4f4;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.metric-label {
+    font-size: 0.9rem;
+    color: #555;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,6 +154,7 @@ def daily_overview(df_today):
 
     st.plotly_chart(bar_fig, use_container_width=True)
 
+
 def daily_completed_pie(df_today):
     total_orders = df_today.shape[0]
     completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
@@ -154,15 +169,15 @@ def daily_completed_pie(df_today):
         sort=False
     ))
 
-    # Make the pie chart smaller
     fig.update_layout(
-        width=300,   # pixels
-        height=300,  # pixels
+        width=300,
+        height=300,
         margin=dict(l=10, r=10, t=30, b=10),
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 def order_status_matrix(df_today):
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
@@ -170,6 +185,7 @@ def order_status_matrix(df_today):
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
     st.dataframe(df_status_table)
+
 
 def adhoc_orders_section(df_today):
     adhoc_df = df_today[df_today['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical'])]
@@ -199,6 +215,7 @@ def adhoc_orders_section(df_today):
     )
     st.plotly_chart(fig, use_container_width=True)
 
+
 def expiry_date_summary(df):
     recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
     daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
@@ -209,10 +226,33 @@ def expiry_date_summary(df):
     orders_cancelled = [cancelled_summary.get(date, 0) for date in dates]
     fig = go.Figure(data=[
         go.Bar(name='Orders Received', x=dates, y=orders_received, marker_color='lightgreen'),
-        go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='red')
+        go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='indianred')
     ])
     fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
     st.plotly_chart(fig, use_container_width=True)
+
+
+def order_volume_summary(df):
+    today = pd.Timestamp.today().normalize()
+    recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
+    daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].nunique()
+
+    if daily_counts.empty:
+        st.info("No orders found for the past 14 days.")
+        return
+
+    peak_day_vol = daily_counts.max()
+    avg_vol = daily_counts.mean()
+    low_day_vol = daily_counts.min()
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"<div class='metric-container' style='background-color:#dce6dc;'><div class='metric-value'>{peak_day_vol}</div><div class='metric-label'>📈 Peak Day Volume</div></div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div class='metric-container' style='background-color:#e6e1dc;'><div class='metric-value'>{avg_vol:.1f}</div><div class='metric-label'>📊 Average Daily Volume</div></div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<div class='metric-container' style='background-color:#e6dcdc;'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
+
 
 def performance_metrics(df):
     today = pd.Timestamp.today().normalize()
@@ -231,6 +271,7 @@ def performance_metrics(df):
     missed = total_expected - total_shipped
     col2.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed"), use_container_width=True)
 
+
 # ---------- MAIN ----------
 if uploaded_file:
     df = load_data(uploaded_file)
@@ -239,7 +280,7 @@ if uploaded_file:
     st.markdown(
     f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
     unsafe_allow_html=True
-)
+    )
 
     # ====== ROW 1 ======
     row1_left, row1_right = st.columns([3, 2])
@@ -268,6 +309,8 @@ if uploaded_file:
     with row3_left:
         st.markdown("#### 📊 Orders (Past 14 Days)")
         expiry_date_summary(df)
+        st.markdown("##### 📌 Volume Summary (Last 14 Days)")
+        order_volume_summary(df)
     with row3_right:
         st.markdown("#### 📈 Performance Metrics")
         performance_metrics(df)
@@ -277,8 +320,3 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
-
