@@ -215,8 +215,11 @@ def order_status_matrix(df_today):
 
 
 def adhoc_orders_section(df_today):
-    urgent_df = df_today[df_today['Order Type'] == 'Ad-hoc Urgent']
-    critical_df = df_today[df_today['Order Type'] == 'Ad-hoc Critical']
+    # Keep only rows where Status is NOT Packed or Shipped
+    not_completed_df = df_today[~df_today['Status'].isin(['Packed', 'Shipped'])]
+
+    urgent_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Urgent']
+    critical_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Critical']
 
     col1, col2 = st.columns(2)
 
@@ -263,6 +266,7 @@ def adhoc_orders_section(df_today):
             st.info("No GI to display")
         else:
             st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}))
+
 
 
 
@@ -370,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
