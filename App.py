@@ -68,7 +68,7 @@ def load_data(file):
             df = pd.read_excel(file, skiprows=6, engine='xlrd')
         else:
             df = pd.read_excel(file, skiprows=6, engine='openpyxl')
-    except ImportError as e:
+    except ImportError:
         st.error("⚠ Missing dependency: Install `xlrd==1.2.0` for .xls files.")
         st.stop()
 
@@ -79,10 +79,27 @@ def load_data(file):
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         df[col] = pd.to_datetime(df[col], errors='coerce')
 
+    # --- Normalize GI No to avoid duplicates like '123', '123.0', ' 123 ' ---
+    # Keep original GINo for display, add a normalized copy for counting uniqueness
+    df['GINo_orig'] = df.get('GINo')
+    df['GINo'] = df['GINo'].where(df['GINo'].notna())  # preserve NaN
+    df['GINo_norm'] = (
+        df['GINo'].astype(str)
+        .str.strip()
+        .str.replace(r'\.0$', '', regex=True)  # remove trailing .0 from Excel floats
+        .str.upper()
+    )
+    # Put NaN back where original was NaN/blank
+    df.loc[df['GINo'].isna() | (df['GINo_norm'].str.lower().isin(['nan', 'none', ''])), 'GINo_norm'] = pd.NA
+
+    # Business mappings
     df = df[df['ExpDate'].notna()]
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
+
+    # Precompute date-only to avoid repeated .dt.date calls
+    df['ExpDate_date'] = df['ExpDate'].dt.date
 
     return df
 
@@ -110,7 +127,7 @@ def pie_chart(value, label, total_label):
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
     total_order_lines = df_today.shape[0]
-    unique_gino = df_today['GINo'].nunique()
+    unique_gino = df_today['GINo_norm'].nunique()  # use normalized GI No
 
     col1, col2 = st.columns(2)
     with col1:
@@ -207,7 +224,8 @@ def adhoc_orders_section(df_today):
     col1.metric(label="Ad-hoc Urgent Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum())
     col2.metric(label="Ad-hoc Critical Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Critical').sum())
 
-    grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
+    # Use normalized GI No for grouping to avoid duplicated labels
+    grouped = adhoc_df.groupby(['GINo_norm', 'Order Type']).size().unstack(fill_value=0)
     if grouped.empty:
         st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
         return
@@ -231,6 +249,7 @@ def adhoc_orders_section(df_today):
 
 
 def expiry_date_summary(df):
+    # This chart still shows line counts; change to .nunique() if you prefer unique GI No here too
     recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
     daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
     cancelled_summary = recent_df[recent_df['Status'] == '98-Cancelled'] \
@@ -247,25 +266,44 @@ def expiry_date_summary(df):
 
 
 def order_volume_summary(df):
+    # Last 14 days inclusive, unique by normalized GI No per day
     today = pd.Timestamp.today().normalize()
-    recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
-    daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].nunique()
+    start = today - pd.Timedelta(days=14)
+    recent_df = df[(df['ExpDate'] >= start) & (df['ExpDate'] <= today)]
+
+    # Use precomputed date-only and normalized GI No
+    daily_counts = recent_df.groupby('ExpDate_date')['GINo_norm'].nunique(dropna=True)
 
     if daily_counts.empty:
         st.info("No orders found for the past 14 days.")
         return
 
-    peak_day_vol = daily_counts.max()
-    avg_vol = daily_counts.mean()
-    low_day_vol = daily_counts.min()
+    peak_day_vol = int(daily_counts.max())
+    avg_vol = float(daily_counts.mean())
+    low_day_vol = int(daily_counts.min())
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(f"<div class='metric-container' style='background-color:#dce6dc;'><div class='metric-value'>{peak_day_vol}</div><div class='metric-label'>📈 Peak Day Volume</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-container' style='background-color:#dce6dc;'>"
+            f"<div class='metric-value'>{peak_day_vol}</div>"
+            f"<div class='metric-label'>📈 Peak Day Volume (Unique GI)</div>"
+            f"</div>", unsafe_allow_html=True
+        )
     with col2:
-        st.markdown(f"<div class='metric-container' style='background-color:#e6e1dc;'><div class='metric-value'>{avg_vol:.1f}</div><div class='metric-label'>📊 Average Daily Volume</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-container' style='background-color:#e6e1dc;'>"
+            f"<div class='metric-value'>{avg_vol:.1f}</div>"
+            f"<div class='metric-label'>📊 Average Daily Volume (Unique GI)</div>"
+            f"</div>", unsafe_allow_html=True
+        )
     with col3:
-        st.markdown(f"<div class='metric-container' style='background-color:#e6dcdc;'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-container' style='background-color:#e6dcdc;'>"
+            f"<div class='metric-value'>{low_day_vol}</div>"
+            f"<div class='metric-label'>📉 Lowest Day Volume (Unique GI)</div>"
+            f"</div>", unsafe_allow_html=True
+        )
 
 
 def performance_metrics(df):
@@ -289,11 +327,11 @@ def performance_metrics(df):
 # ---------- MAIN ----------
 if uploaded_file:
     df = load_data(uploaded_file)
-    df_today = df[df['ExpDate'].dt.date == selected_date]
+    df_today = df[df['ExpDate_date'] == selected_date]
 
     st.markdown(
-    f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
-    unsafe_allow_html=True
+        f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
+        unsafe_allow_html=True
     )
 
     # ====== ROW 1 ======
@@ -322,7 +360,7 @@ if uploaded_file:
     row3_left, row3_right = st.columns([3, 2])
     with row3_left:
         st.markdown("#### 📊 Orders (Past 14 Days)")
-        order_volume_summary(df)  # now directly under title
+        order_volume_summary(df)   # directly under the title
         expiry_date_summary(df)
     with row3_right:
         st.markdown("#### 📈 Performance Metrics")
