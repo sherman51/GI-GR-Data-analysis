@@ -6,8 +6,8 @@ from io import StringIO
 import pandas as pd
 
 # Replace with your GitHub info
-GITHUB_USERNAME = "sherman51"  # Your GitHub username
-GITHUB_REPO = "GI-GR-Data-analysis"  # Your GitHub repository name
+GITHUB_USERNAME = "sherman51"
+GITHUB_REPO = "GI-GR-Data-analysis"
 GITHUB_ACCESS_TOKEN = "your_personal_access_token_here"  # Optional for private repos
 
 # Function to upload a file to GitHub
@@ -48,18 +48,21 @@ st.title("Upload File to GitHub")
 uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt", "xlsx"])
 
 if uploaded_file:
-    # Convert uploaded file to string content (assuming it's CSV or text)
-    file_name = uploaded_file.name
-    file_content = uploaded_file.getvalue().decode("utf-8")
-
-    # Upload the file to GitHub
-    if upload_to_github(file_name, file_content):
-        # Read the file into a pandas DataFrame for display
-        if file_name.endswith(".csv"):
-            data = pd.read_csv(StringIO(file_content))
-            st.write(data)
-        elif file_name.endswith(".xlsx"):
-            data = pd.read_excel(StringIO(file_content))
-            st.write(data)
-        else:
-            st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
+    try:
+        # Try to read the file content as a string (for CSV or text files)
+        file_name = uploaded_file.name
+        file_content = uploaded_file.getvalue().decode("utf-8", errors='ignore')  # Graceful handling of errors
+        
+        # Upload the file to GitHub
+        if upload_to_github(file_name, file_content):
+            # Read the file into a pandas DataFrame for display
+            if file_name.endswith(".csv"):
+                data = pd.read_csv(StringIO(file_content))
+                st.write(data)
+            elif file_name.endswith(".xlsx"):
+                data = pd.read_excel(StringIO(file_content))
+                st.write(data)
+            else:
+                st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
+    except Exception as e:
+        st.error(f"Error reading the file: {str(e)}")
