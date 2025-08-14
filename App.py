@@ -17,12 +17,14 @@ CONFIG = {
         '10-Open': 'Open',
         '45-Picked': 'Picked',
         '65-Packed': 'Packed',
-        '75-Shipped': 'Shipped'
+        '75-Shipped': 'Shipped',
+        '98-Cancelled': 'Cancelled'  # NEW
     },
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
-    "status_segments": ['Shipped', 'Packed', 'Picked', 'Open'],
+    "status_segments": ['Shipped', 'Cancelled', 'Packed', 'Picked', 'Open'],  # NEW order
     "colors": {
         'Shipped': 'green',
+        'Cancelled': 'red',  # NEW color
         'Packed': 'blue',
         'Picked': 'yellow',
         'Open': 'salmon',
@@ -344,6 +346,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
