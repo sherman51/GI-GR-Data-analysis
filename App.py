@@ -96,19 +96,22 @@ def pie_chart(value, label, total_label, key_prefix=""):
         values=[value, 100 - value],
         labels=[label, 'Outstanding'],
         marker_colors=['mediumseagreen', 'lightgray'],
-        hole=0.7,
+        hole=0.6,
         textinfo='none',
         sort=False
     ))
     fig.update_layout(
         showlegend=False,
         margin=dict(t=0, b=0, l=0, r=0),
+        width=250,
+        height=250,
         annotations=[
-            dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
+            dict(text=f"{value:.1f}%", x=0.5, y=0.5, font_size=18, showarrow=False),
             dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)
         ]
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_pie")
+    st.plotly_chart(fig, use_container_width=False, key=f"{key_prefix}_pie")
+
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today, key_prefix=""):
@@ -282,13 +285,28 @@ def performance_metrics(df, key_prefix=""):
     accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
     total_variance = recent_past_df['VarianceQTY'].sum()
     backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
-
-    col1, col2 = st.columns(2)
-    col1.markdown("**Back Order %**")
-    pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance", key_prefix=f"{key_prefix}_backorder")
-    col2.markdown("**Order Accuracy %**")
     missed = total_expected - total_shipped
-    pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed", key_prefix=f"{key_prefix}_accuracy")
+
+    with st.container():
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown("**Back Order %**")
+            pie_chart(
+                backorder_pct,
+                "Back Order",
+                f"{int(total_variance)} Variance",
+                key_prefix=f"{key_prefix}_backorder"
+            )
+
+        with col2:
+            st.markdown("**Order Accuracy %**")
+            pie_chart(
+                accuracy_pct,
+                "Accuracy",
+                f"{int(missed)} Missed",
+                key_prefix=f"{key_prefix}_accuracy"
+            )
 
 # ---------- MAIN ----------
 if uploaded_file:
@@ -375,6 +393,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
