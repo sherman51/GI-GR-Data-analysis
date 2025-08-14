@@ -137,7 +137,7 @@ def daily_overview(df_today):
         st.markdown(
             f"<div class='metric-container' style='background-color:#e6e1dc;'>"
             f"<div class='metric-value'>{unique_gino}</div>"
-            f"<div class='metric-label'>🔢 Unique GINo Today</div>"
+            f"<div class='metric-label'>🔢 Total GINo</div>"
             f"</div>", unsafe_allow_html=True
         )
 
@@ -374,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
