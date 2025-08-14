@@ -427,7 +427,12 @@ if uploaded_file:
                 )
         col_index += 2  # move to next content column
 
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown(
+    """
+    <div style='height: 100vh; border-left: 2px solid #888; margin: auto;'></div>
+    """,
+    unsafe_allow_html=True
+)
 
     # Bottom section (once only)
     col1, col2 = st.columns(2)
@@ -445,6 +450,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
