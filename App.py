@@ -106,13 +106,27 @@ def pie_chart(value, label, total_label):
     )
     return fig
 
+
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
-    col_orders, col_unique = st.columns(2)
-    with col_orders:
-        st.metric(label="Total Order Lines", value=df_today.shape[0])
-    with col_unique:
-        st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
+    total_order_lines = df_today.shape[0]
+    unique_gino = df_today['GINo'].nunique()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            f"<div class='metric-container' style='background-color:#dce6dc;'>"
+            f"<div class='metric-value'>{total_order_lines}</div>"
+            f"<div class='metric-label'>📦 Total Order Lines</div>"
+            f"</div>", unsafe_allow_html=True
+        )
+    with col2:
+        st.markdown(
+            f"<div class='metric-container' style='background-color:#e6e1dc;'>"
+            f"<div class='metric-value'>{unique_gino}</div>"
+            f"<div class='metric-label'>🔢 Unique GINo Today</div>"
+            f"</div>", unsafe_allow_html=True
+        )
 
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
@@ -308,9 +322,8 @@ if uploaded_file:
     row3_left, row3_right = st.columns([3, 2])
     with row3_left:
         st.markdown("#### 📊 Orders (Past 14 Days)")
+        order_volume_summary(df)  # now directly under title
         expiry_date_summary(df)
-        st.markdown("##### 📌 Volume Summary (Last 14 Days)")
-        order_volume_summary(df)
     with row3_right:
         st.markdown("#### 📈 Performance Metrics")
         performance_metrics(df)
