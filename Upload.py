@@ -8,7 +8,7 @@ import pandas as pd
 # Replace with your GitHub info
 GITHUB_USERNAME = "sherman51"
 GITHUB_REPO = "GI-GR-Data-analysis"
-GITHUB_ACCESS_TOKEN = "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"
+GITHUB_ACCESS_TOKEN = "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"
 
 # Function to upload a file to GitHub
 def upload_to_github(file_name, file_content):
@@ -68,3 +68,4 @@ if uploaded_file:
                 st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
     except Exception as e:
         st.error(f"Error reading the file: {str(e)}")
+
