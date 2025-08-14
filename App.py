@@ -331,7 +331,19 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     # Create columns based on the number of valid dates
     cols = st.columns(len(date_list))
     
-    for i, (dash_date, col) in enumerate(zip(date_list, cols)):
+    # Create layout with dividers between sections
+    for i, dash_date in enumerate(date_list):
+        # Only add divider after the first column
+        if i > 0:
+            st.markdown(
+                """
+                <div style='height: 100%; width: 1px; background-color: #d3d3d3; margin: 0 1rem; display: inline-block;'></div>
+                """,
+                unsafe_allow_html=True
+            )
+        
+        # Wrap each day in a column
+        col = st.columns(1)[0]  # create single-column layout for isolation
         with col:
             df_day = df[df['ExpDate'].dt.date == dash_date]
     
@@ -339,10 +351,10 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
                 f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
                 unsafe_allow_html=True
             )
-
+    
             st.markdown("##### 🚨 Urgent and Critical")
             adhoc_orders_section(df_day, key_prefix=f"day{i}")
-            
+    
             st.markdown("##### ✅ % completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
     
@@ -353,6 +365,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
+
     
 
 
@@ -370,6 +383,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
