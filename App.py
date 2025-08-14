@@ -31,34 +31,23 @@ CONFIG = {
     }
 }
 
-# ---------- HEADER ----------
-st.markdown(
-    """
-    <div style="display: flex; align-items: center; background-color: #e3f2f0; padding: 8px 12px; border-radius: 6px;">
-        <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
-             style="max-height:40px; height:auto; width:auto; margin-right:10px;">
-        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #333333;">
-            - <b>Outbound Dashboard</b>
-        </h3>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
+# ---------- PAGE HEADER ----------
+st.markdown("### 🏥 SSW Healthcare - **Outbound Dashboard**")
 st.markdown(f"**Date:** {datetime.now().strftime('%d %b %Y')}")
 uploaded_file = st.sidebar.file_uploader(
-    "📂 Upload Excel File",
+    "📂 Upload Excel File", 
     type=["xlsx", "xls"]
 )
-
 selected_date = st.sidebar.date_input("Select Date to View", datetime.today())
 
-
+st.markdown("""
+<style>
+hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
+</style>
+""", unsafe_allow_html=True)
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
-    # Use engine='xlrd' for .xls, otherwise default to openpyxl
     file_ext = file.name.split('.')[-1].lower()
     if file_ext == 'xls':
         df = pd.read_excel(file, skiprows=6, engine='xlrd')
@@ -76,9 +65,35 @@ def load_data(file):
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
     return df
 
+def pie_chart(value, label, total_label):
+    fig = go.Figure(go.Pie(
+        values=[value, 100 - value],
+        labels=[label, 'Remaining'],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.7,
+        textinfo='none',
+        sort=False
+    ))
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        annotations=[
+            dict(text=f"{value:.2f}%", x=0.5, y=0.5, font_size=20, showarrow=False),
+            dict(text=total_label, x=0.5, y=0.2, font_size=12, showarrow=False)
+        ]
+    )
+    return fig
 
 # ---------- SECTION FUNCTIONS ----------
 def daily_overview(df_today):
+    col_date, col_orders, col_unique = st.columns(3)
+    with col_date:
+        st.metric(label="Date", value=selected_date.strftime('%d %b %Y'))
+    with col_orders:
+        st.metric(label="Total Order Lines", value=df_today.shape[0])
+    with col_unique:
+        st.metric(label="Unique GINo Today", value=df_today['GINo'].nunique())
+
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
@@ -116,6 +131,7 @@ def daily_overview(df_today):
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
     )
+
     st.plotly_chart(bar_fig, use_container_width=True)
 
 def daily_completed_pie(df_today):
@@ -134,7 +150,6 @@ def daily_completed_pie(df_today):
     fig.update_layout(
         showlegend=True,
         margin=dict(t=0, b=0, l=0, r=0),
-        height=300,
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -144,10 +159,14 @@ def order_status_matrix(df_today):
     df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
-    st.dataframe(df_status_table, height=300)
+    st.dataframe(df_status_table)
 
 def adhoc_orders_section(df_today):
     adhoc_df = df_today[df_today['Order Type'].isin(['Ad-hoc Urgent', 'Ad-hoc Critical'])]
+    col1, col2 = st.columns(2)
+    col1.metric(label="Ad-hoc Urgent Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Urgent').sum())
+    col2.metric(label="Ad-hoc Critical Orders", value=(adhoc_df['Order Type'] == 'Ad-hoc Critical').sum())
+
     grouped = adhoc_df.groupby(['GINo', 'Order Type']).size().unstack(fill_value=0)
     if grouped.empty:
         st.info("No Ad-hoc Urgent or Critical orders for the selected date.")
@@ -164,7 +183,8 @@ def adhoc_orders_section(df_today):
         barmode='group',
         xaxis_title='GINo',
         yaxis_title='Order Count',
-        height=400,
+        title='Ad-hoc Urgent & Critical Orders by GINo',
+        height=500,
         margin=dict(l=10, r=10, t=30, b=30)
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -181,12 +201,7 @@ def expiry_date_summary(df):
         go.Bar(name='Orders Received', x=dates, y=orders_received, marker_color='lightgreen'),
         go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='red')
     ])
-    fig.update_layout(
-        barmode='group',
-        xaxis_title='Expiry Date',
-        yaxis_title='Order Count',
-        height=350
-    )
+    fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
     st.plotly_chart(fig, use_container_width=True)
 
 def performance_metrics(df):
@@ -200,51 +215,50 @@ def performance_metrics(df):
 
     col1, col2 = st.columns(2)
     col1.markdown("**Back Order %**")
-    col1.plotly_chart(pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance", height=350), use_container_width=True)
+    col1.plotly_chart(pie_chart(backorder_pct, "Back Order", f"{int(total_variance)} Variance"), use_container_width=True)
 
     col2.markdown("**Order Accuracy %**")
     missed = total_expected - total_shipped
-    col2.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed", height=350), use_container_width=True)
+    col2.plotly_chart(pie_chart(accuracy_pct, "Accuracy", f"{int(missed)} Missed"), use_container_width=True)
 
-# ---------- MAIN LAYOUT ----------
+# ---------- MAIN ----------
 if uploaded_file:
     df = load_data(uploaded_file)
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    # Top Date Display
-    st.markdown(f"### Date: {datetime.now().strftime('%d %b %Y')}")
-    st.markdown("---")
-
-    # Create main 2-column layout
-    left_col, right_col = st.columns([2, 2])
-
-    # ===== LEFT COLUMN =====
-    with left_col:
-        st.subheader("Orders Completed Today")
+    # ====== ROW 1 ======
+    row1_left, row1_right = st.columns([3, 2])
+    with row1_left:
+        st.markdown("#### ✅ Orders Completed Today")
         daily_completed_pie(df_today)
-        st.subheader("Daily Outbound Overview")
-        daily_overview(df_today)
-        st.subheader("Expiry Date Summary")
-        expiry_date_summary(df)
-
-    # ===== RIGHT COLUMN =====
-    with right_col:
-        st.subheader("Orders Status Table")
+    with row1_right:
+        st.markdown("#### 📋 Order Status Table (Matrix Format)")
         order_status_matrix(df_today)
-        st.subheader("Ad-hoc Orders by GINo")
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ====== ROW 2 ======
+    row2_left, row2_right = st.columns([3, 2])
+    with row2_left:
+        st.markdown("#### 📦 Daily Outbound Overview")
+        daily_overview(df_today)
+    with row2_right:
+        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
         adhoc_orders_section(df_today)
-        st.subheader("Performance Metrics")
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    # ====== ROW 3 ======
+    row3_left, row3_right = st.columns([3, 2])
+    with row3_left:
+        st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
+        expiry_date_summary(df)
+    with row3_right:
+        st.markdown("#### 📈 Performance Metrics")
         performance_metrics(df)
 
-    st.markdown("---")
+    st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("### 💙 *Stay Safe & Well*")
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
-
-
-
-
-
