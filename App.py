@@ -330,7 +330,7 @@ def performance_metrics(df):
 # ---------- MAIN ----------
 if uploaded_file:
     df = load_data(uploaded_file)
-    df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'Aircon']
+    df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
     df_today = df[df['ExpDate'].dt.date == selected_date]
 
     st.markdown(
@@ -375,6 +375,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
