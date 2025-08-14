@@ -1,10 +1,15 @@
 import streamlit as st
 import os
 
-UPLOAD_DIR = "shared_uploads"
+UPLOAD_DIR = "C:\Users\ShermanANG\OneDrive - Singapore Storage & Warehouse Pte Ltd\Dashboardupload test"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-uploaded_file = st.file_uploader("Upload your file")
+st.title("📤 Upload Excel File")
+uploaded_file = st.file_uploader("Choose an Excel file", type=["xlsx", "xls"])
+
 if uploaded_file:
-    with open(os.path.join(UPLOAD_DIR, uploaded_file.name), "wb") as f:
+    # Save the file to shared location
+    save_path = os.path.join(UPLOAD_DIR, "latest.xlsx")
+    with open(save_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-    st.success("File uploaded!")
+    st.success(f"Uploaded and saved as 'latest.xlsx'")
