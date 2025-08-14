@@ -331,48 +331,55 @@ def performance_metrics(df):
 if uploaded_file:
     df = load_data(uploaded_file)
     df = df[df['StorageZone'].astype(str).str.strip().str.lower() == 'aircon']
-    df_today = df[df['ExpDate'].dt.date == selected_date]
 
-    st.markdown(
-    f"<h5 style='margin-top:-10px; color:gray;'>{selected_date.strftime('%d %b %Y')}</h5>",
-    unsafe_allow_html=True
-    )
+    # Create list of 3 dates: today, tomorrow, day after
+    date_list = [datetime.today().date() + pd.Timedelta(days=i) for i in range(3)]
 
-    # ====== ROW 1 ======
-    row1_left, row1_right = st.columns([3, 2])
-    with row1_left:
-        st.markdown("#### ✅ % completion")
-        daily_completed_pie(df_today)
-    with row1_right:
-        st.markdown("#### 📋 Order Status Table")
-        order_status_matrix(df_today)
+    for dash_date in date_list:
+        df_day = df[df['ExpDate'].dt.date == dash_date]
 
-    st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(
+            f"<h5 style='margin-top:10px; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
+            unsafe_allow_html=True
+        )
 
-    # ====== ROW 2 ======
-    row2_left, row2_right = st.columns([3, 2])
-    with row2_left:
-        st.markdown("#### 📦 Orders breakdown")
-        daily_overview(df_today)
-    with row2_right:
-        st.markdown("#### 🚨 Urgent and Critical")
-        adhoc_orders_section(df_today)
+        # ====== ROW 1 ======
+        row1_left, row1_right = st.columns([3, 2])
+        with row1_left:
+            st.markdown("#### ✅ % completion")
+            daily_completed_pie(df_day)
+        with row1_right:
+            st.markdown("#### 📋 Order Status Table")
+            order_status_matrix(df_day)
 
-    st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<hr>", unsafe_allow_html=True)
 
-    # ====== ROW 3 ======
-    row3_left, row3_right = st.columns([3, 2])
-    with row3_left:
-        st.markdown("#### 📊 Order lines (Past 14 Days)")
-        order_volume_summary(df)  # now directly under title
-        expiry_date_summary(df)
-    with row3_right:
-        st.markdown("#### 📈 Performance Metrics")
-        performance_metrics(df)
+        # ====== ROW 2 ======
+        row2_left, row2_right = st.columns([3, 2])
+        with row2_left:
+            st.markdown("#### 📦 Orders breakdown")
+            daily_overview(df_day)
+        with row2_right:
+            st.markdown("#### 🚨 Urgent and Critical")
+            adhoc_orders_section(df_day)
 
-    st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<hr>", unsafe_allow_html=True)
+
+        # ====== ROW 3 ======
+        row3_left, row3_right = st.columns([3, 2])
+        with row3_left:
+            st.markdown("#### 📊 Order lines (Past 14 Days)")
+            order_volume_summary(df)
+            expiry_date_summary(df)
+        with row3_right:
+            st.markdown("#### 📈 Performance Metrics")
+            performance_metrics(df)
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+
     st.markdown("###  *Stay Safe & Well*")
-
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
     
+
