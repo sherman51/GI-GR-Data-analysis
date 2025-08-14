@@ -221,64 +221,49 @@ def adhoc_orders_section(df_today):
     col1, col2 = st.columns(2)
 
     with col1:
-        urgent_selected = st.button(
-            f"⚠ Urgent Orders: {urgent_df['GINo'].nunique()}",
-            key="urgent_btn",
-            help="Click to view Urgent GI Nos",
-            use_container_width=True
-        )
         st.markdown(
-            """
-            <style>
-            div[data-testid="stButton"] button {
-                background-color: #f8e5a1; /* muted yellow */
-                color: black;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 8px;
-            }
-            </style>
+            f"""
+            <div style="
+                background-color: #f8e5a1; 
+                color: black; 
+                font-weight: bold; 
+                padding: 10px; 
+                border-radius: 8px; 
+                text-align: center;
+                margin-bottom: 5px;">
+                ⚠ Urgent Orders: {urgent_df['GINo'].nunique()}
+            </div>
             """,
             unsafe_allow_html=True
         )
+
+        if urgent_df.empty:
+            st.info("No GI to display")
+        else:
+            st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}))
 
     with col2:
-        critical_selected = st.button(
-            f"🚨 Critical Orders: {critical_df['GINo'].nunique()}",
-            key="critical_btn",
-            help="Click to view Critical GI Nos",
-            use_container_width=True
-        )
         st.markdown(
-            """
-            <style>
-            div[data-testid="stButton"] button {
-                background-color: #f5a1a1; /* muted red */
-                color: black;
-                font-weight: bold;
-                padding: 10px;
-                border-radius: 8px;
-            }
-            </style>
+            f"""
+            <div style="
+                background-color: #f5a1a1; 
+                color: black; 
+                font-weight: bold; 
+                padding: 10px; 
+                border-radius: 8px; 
+                text-align: center;
+                margin-bottom: 5px;">
+                🚨 Critical Orders: {critical_df['GINo'].nunique()}
+            </div>
             """,
             unsafe_allow_html=True
         )
 
-    st.markdown("---")
-
-    if urgent_selected:
-        if urgent_df.empty:
-            st.info("No Urgent orders found.")
-        else:
-            st.subheader("Urgent GI Nos")
-            st.dataframe(pd.DataFrame({"GINo": urgent_df['GINo'].unique()}))
-
-    if critical_selected:
         if critical_df.empty:
-            st.info("No Critical orders found.")
+            st.info("No GI to display")
         else:
-            st.subheader("Critical GI Nos")
-            st.dataframe(pd.DataFrame({"GINo": critical_df['GINo'].unique()}))
+            st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}))
+
 
 
 
@@ -385,6 +370,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
