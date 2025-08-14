@@ -244,7 +244,7 @@ if uploaded_file:
     # ====== ROW 1 ======
     row1_left, row1_right = st.columns([3, 2])
     with row1_left:
-        st.markdown("#### ✅ Orders Completed Today")
+        st.markdown("#### ✅ % completion")
         daily_completed_pie(df_today)
     with row1_right:
         st.markdown("#### 📋 Order Status Table (Matrix Format)")
@@ -255,10 +255,10 @@ if uploaded_file:
     # ====== ROW 2 ======
     row2_left, row2_right = st.columns([3, 2])
     with row2_left:
-        st.markdown("#### 📦 Daily Outbound Overview")
+        st.markdown("#### 📦 Orders breakdown")
         daily_overview(df_today)
     with row2_right:
-        st.markdown("#### 🚨 Ad-hoc Orders by GINo")
+        st.markdown("#### 🚨 Urgent and Critical")
         adhoc_orders_section(df_today)
 
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -266,7 +266,7 @@ if uploaded_file:
     # ====== ROW 3 ======
     row3_left, row3_right = st.columns([3, 2])
     with row3_left:
-        st.markdown("#### 📊 Orders by Expiry Date (Past 14 Days)")
+        st.markdown("#### 📊 Orders (Past 14 Days)")
         expiry_date_summary(df)
     with row3_right:
         st.markdown("#### 📈 Performance Metrics")
@@ -277,6 +277,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
