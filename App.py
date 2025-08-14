@@ -36,10 +36,10 @@ CONFIG = {
 # ---------- PAGE HEADER ----------
 st.markdown(
     """
-    <div style="display: flex; align-items: center; background-color: #e3f2f0; padding: 8px 12px; border-radius: 6px;">
+    <div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
         <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
              style="max-height:40px; height:auto; width:auto; margin-right:10px;">
-        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #333333;">
+        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #ffffff;">
             - <b>Outbound Dashboard</b>
         </h3>
     </div>
@@ -374,6 +374,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
