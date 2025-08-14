@@ -385,6 +385,18 @@ if uploaded_file:
     cols = st.columns(len(date_list))
     
     for i, (dash_date, col) in enumerate(zip(date_list, cols)):
+
+        if i != len(cols) - 1:
+            st.markdown("""
+                <style>
+                div[data-testid="column"] > div:nth-child(1) {
+                    border-right: 1px solid #ccc;
+                    padding-right: 10px;
+                    margin-right: 10px;
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
         with col:
             df_day = df[df['ExpDate'].dt.date == dash_date]
     
@@ -425,6 +437,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
