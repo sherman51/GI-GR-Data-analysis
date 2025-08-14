@@ -153,11 +153,15 @@ def daily_completed_pie(df_today):
         textinfo='none',
         sort=False
     ))
+
+    # Make the pie chart smaller
     fig.update_layout(
-        showlegend=True,
-        margin=dict(t=0, b=0, l=0, r=0),
+        width=300,   # pixels
+        height=300,  # pixels
+        margin=dict(l=10, r=10, t=30, b=10)
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
+
     st.plotly_chart(fig, use_container_width=True)
 
 def order_status_matrix(df_today):
@@ -273,5 +277,6 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
