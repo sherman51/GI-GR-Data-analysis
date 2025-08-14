@@ -332,33 +332,28 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     # Create columns based on the number of valid dates
     cols = st.columns(len(date_list))
     
-for i, (dash_date, col) in enumerate(zip(date_list, cols)):
-    with col:
-        df_day = df[df['ExpDate'].dt.date == dash_date]
+    for i, (dash_date, col) in enumerate(zip(date_list, cols)):
+        with col:
+            df_day = df[df['ExpDate'].dt.date == dash_date]
+    
+            st.markdown(
+                f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
+                unsafe_allow_html=True
+            )
 
-        st.markdown(
-            f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
-            unsafe_allow_html=True
-        )
-
-        st.markdown("##### 🚨 Urgent and Critical")
-        adhoc_orders_section(df_day, key_prefix=f"day{i}")
-        
-        st.markdown("<hr>", unsafe_allow_html=True)  # ADD THIS
-
-        st.markdown("##### ✅ % completion")
-        daily_completed_pie(df_day, key_prefix=f"day{i}")
-
-        st.markdown("<hr>", unsafe_allow_html=True)  # ADD THIS
-
-        st.markdown("##### 📋 Order Status Table")
-        order_status_matrix(df_day, key_prefix=f"day{i}")
-
-        st.markdown("<hr>", unsafe_allow_html=True)  # Already here
-
-        st.markdown("##### 📦 Orders breakdown")
-        daily_overview(df_day, key_prefix=f"day{i}")
-
+            st.markdown("##### 🚨 Urgent and Critical")
+            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+            
+            st.markdown("##### ✅ % completion")
+            daily_completed_pie(df_day, key_prefix=f"day{i}")
+    
+            st.markdown("##### 📋 Order Status Table")
+            order_status_matrix(df_day, key_prefix=f"day{i}")
+    
+            st.markdown("<hr>", unsafe_allow_html=True)
+    
+            st.markdown("##### 📦 Orders breakdown")
+            daily_overview(df_day, key_prefix=f"day{i}")
     
 
 
@@ -376,8 +371,6 @@ for i, (dash_date, col) in enumerate(zip(date_list, cols)):
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
-
-
 
 
 
