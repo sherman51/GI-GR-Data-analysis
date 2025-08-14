@@ -49,21 +49,29 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
     file_ext = file.name.split('.')[-1].lower()
-    if file_ext == 'xls':
-        df = pd.read_excel(file, skiprows=6, engine='xlrd')
-    else:
-        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+    try:
+        if file_ext == 'xls':
+            df = pd.read_excel(file, skiprows=6, engine='xlrd')
+        else:
+            df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+    except ImportError as e:
+        st.error("⚠ Missing dependency: Install `xlrd==1.2.0` for .xls files.")
+        st.stop()
 
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
+
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         df[col] = pd.to_datetime(df[col], errors='coerce')
+
     df = df[df['ExpDate'].notna()]
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
+
     return df
+
 
 def pie_chart(value, label, total_label):
     fig = go.Figure(go.Pie(
@@ -262,3 +270,4 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
