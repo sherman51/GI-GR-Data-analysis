@@ -10,6 +10,24 @@ GITHUB_USERNAME = "sherman51"
 GITHUB_REPO = "GI-GR-Data-analysis"
 GITHUB_ACCESS_TOKEN = "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"
 
+# Function to check token validity
+def check_token_validity():
+    url = "https://api.github.com/user"
+    headers = {
+        "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        st.write("Token is valid!")
+        st.write(response.json())  # Show user info for verification
+        return True
+    else:
+        st.error(f"Failed to authenticate with GitHub. Status code: {response.status_code}")
+        st.write(response.json())  # Show the full response for debugging
+        return False
+
 # Function to upload a file to GitHub
 def upload_to_github(file_name, file_content):
     """
@@ -46,6 +64,10 @@ def upload_to_github(file_name, file_content):
 # Streamlit app
 st.title("Upload File to GitHub")
 
+# Check token validity before proceeding
+if not check_token_validity():
+    st.stop()  # Stop execution if the token is invalid
+
 # File uploader widget
 uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt", "xlsx"])
 
@@ -68,4 +90,3 @@ if uploaded_file:
                 st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
     except Exception as e:
         st.error(f"Error reading the file: {str(e)}")
-
