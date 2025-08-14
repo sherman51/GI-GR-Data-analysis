@@ -339,7 +339,10 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
                 f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
                 unsafe_allow_html=True
             )
-    
+
+            st.markdown("##### 🚨 Urgent and Critical")
+            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+            
             st.markdown("##### ✅ % completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
     
@@ -351,8 +354,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
             st.markdown("##### 📦 Orders breakdown")
             daily_overview(df_day, key_prefix=f"day{i}")
     
-            st.markdown("##### 🚨 Urgent and Critical")
-            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+
 
 
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -368,6 +370,7 @@ while len(date_list) < 3 and days_checked < 7:  # safety limit
     st.markdown("###  *Stay Safe & Well*")
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
