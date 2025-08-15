@@ -252,7 +252,7 @@ def order_volume_summary(df, key_prefix=""):
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_order_volume")
 
 
-def expiry_date_summary(df, key_prefix=""):
+def order_line_summary(df, key_prefix=""):
     """Shows number of orders vs cancelled by expiry date (past 14 days)."""
     recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
     if recent_df.empty:
@@ -381,11 +381,11 @@ for i,dash_date in enumerate(date_list):
 col1,col2=st.columns(2)
 with col1:
     st.markdown("### 📊 Order lines (Past 14 Days)")
-    order_volume_summary(df, key_prefix="overall")
-    expiry_date_summary(df, key_prefix="overall")
+    order_line_summary(df, key_prefix="overall")
 with col2:
     st.markdown("### 📈 Performance Metrics")
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
