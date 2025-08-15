@@ -208,9 +208,128 @@ def adhoc_orders_section(df_today, key_prefix=""):
             st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{key_prefix}_critical")
 
 # Placeholder stubs for remaining functions (expiry, volume, performance)
-def expiry_date_summary(df, key_prefix=""): pass
-def order_volume_summary(df, key_prefix=""): pass
-def performance_metrics(df, key_prefix=""): pass
+# ---------- BOTTOM SECTION FUNCTIONS ----------
+
+def order_volume_summary(df, key_prefix=""):
+    """Displays past 14-day order line volume summary."""
+    today = pd.Timestamp.today().normalize()
+    recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
+    
+    if recent_df.empty:
+        st.info("No orders found for the past 14 days.")
+        return
+
+    daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].count()
+    dates = pd.date_range(end=today, periods=14).date
+    orders = [daily_counts.get(d, 0) for d in dates]
+
+    peak_day_vol = max(orders)
+    avg_vol = sum(orders)/len(orders)
+    low_day_vol = min(orders)
+
+    # Metrics
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"<div class='metric-container' style='background-color:#dce6dc;'><div class='metric-value'>{peak_day_vol}</div><div class='metric-label'>📈 Peak Day Volume</div></div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div class='metric-container' style='background-color:#e6e1dc;'><div class='metric-value'>{avg_vol:.1f}</div><div class='metric-label'>📊 Average Daily Volume</div></div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<div class='metric-container' style='background-color:#e6dcdc;'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
+
+    # Bar chart
+    fig = go.Figure(go.Bar(
+        x=[d.strftime("%d-%b") for d in dates],
+        y=orders,
+        marker_color='lightgreen',
+        name='Orders'
+    ))
+    fig.update_layout(
+        title="Orders Past 14 Days",
+        xaxis_title="Date",
+        yaxis_title="Order Count",
+        margin=dict(t=30, b=30, l=10, r=10)
+    )
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_order_volume")
+
+
+def expiry_date_summary(df, key_prefix=""):
+    """Shows number of orders vs cancelled by expiry date (past 14 days)."""
+    recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
+    if recent_df.empty:
+        st.info("No expiry data for past 14 days.")
+        return
+
+    daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
+    cancelled_summary = recent_df[recent_df['Status'] == '98-Cancelled'] \
+        .groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
+    
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=14).strftime("%d-%b")
+    orders_received = [daily_summary.get(date, 0) for date in dates]
+    orders_cancelled = [cancelled_summary.get(date, 0) for date in dates]
+
+    fig = go.Figure(data=[
+        go.Bar(name='Orders Received', x=dates, y=orders_received, marker_color='lightgreen'),
+        go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='indianred')
+    ])
+    fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_expiry_summary")
+
+
+def performance_metrics(df, key_prefix=""):
+    """Shows Back Order % and Order Accuracy %."""
+    today = pd.Timestamp.today().normalize()
+    recent_df = df[(df['ExpDate'] < today) & (df['ExpDate'] >= today - pd.Timedelta(days=14))]
+    if recent_df.empty:
+        st.info("No past performance data available.")
+        return
+
+    total_expected = recent_df['ExpectedQTY'].sum()
+    total_shipped = recent_df['ShippedQTY'].sum()
+    total_variance = recent_df['VarianceQTY'].sum()
+    missed = total_expected - total_shipped
+
+    accuracy_pct = (total_shipped / total_expected * 100) if total_expected else 0
+    backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown('<div class="metric-box">📦 Back Order %</div>', unsafe_allow_html=True)
+        fig1 = go.Figure(go.Pie(
+            values=[backorder_pct, 100 - backorder_pct],
+            hole=0.65,
+            marker_colors=['#ff9999', '#e6e6e6'],
+            textinfo='none'
+        ))
+        fig1.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=250,
+            annotations=[
+                dict(text=f"{backorder_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False, font_color="black"),
+                dict(text=f"{int(total_variance)} Variance", x=0.5, y=0.35, font_size=12, showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        st.markdown('<div class="metric-box">✅ Order Accuracy %</div>', unsafe_allow_html=True)
+        fig2 = go.Figure(go.Pie(
+            values=[accuracy_pct, 100 - accuracy_pct],
+            hole=0.65,
+            marker_colors=['#7cd992', '#e6e6e6'],
+            textinfo='none'
+        ))
+        fig2.update_layout(
+            showlegend=False,
+            margin=dict(t=0, b=0, l=0, r=0),
+            height=250,
+            annotations=[
+                dict(text=f"{accuracy_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False, font_color="black"),
+                dict(text=f"{int(missed)} Missed", x=0.5, y=0.35, font_size=12, showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+
 
 # ---------- LOAD DATA ----------
 df = load_data(file_stream)
@@ -258,6 +377,7 @@ for i,dash_date in enumerate(date_list):
     col_index+=2
 
 # ---------- BOTTOM SECTION ----------
+
 col1,col2=st.columns(2)
 with col1:
     st.markdown("### 📊 Order lines (Past 14 Days)")
@@ -268,3 +388,4 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
