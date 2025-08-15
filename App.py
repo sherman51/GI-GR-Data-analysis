@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
+from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
@@ -135,16 +136,7 @@ aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
 
 # ---------- DASHBOARD FUNCTIONS ----------
-# (Keep all your daily_overview, daily_completed_pie, etc. functions exactly the same)
-
-# Paste all your existing functions here (unchanged)...
-# daily_overview(...)
-# daily_completed_pie(...)
-# order_status_matrix(...)
-# adhoc_orders_section(...)
-# expiry_date_summary(...)
-# order_volume_summary(...)
-# performance_metrics(...)
+# Paste all your existing functions here (daily_overview, daily_completed_pie, etc.)
 
 # ---------- DATE LOGIC ----------
 date_list = []
@@ -187,7 +179,7 @@ for i, dash_date in enumerate(date_list):
         st.markdown("##### 🚨 Urgent and Critical")
         adhoc_orders_section(df_day, key_prefix=f"day{i}")
         st.markdown("##### ✅ % completion")
-        daily_completed_pie(df_day, key_prefix=f"day{i"])
+        daily_completed_pie(df_day, key_prefix=f"day{i}")
         st.markdown("##### 📋 Order Status Table")
         order_status_matrix(df_day, key_prefix=f"day{i}")
         st.markdown("<hr>", unsafe_allow_html=True)
@@ -215,4 +207,3 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
