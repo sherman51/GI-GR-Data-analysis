@@ -279,19 +279,34 @@ def performance_metrics(df, key_prefix=""):
                                         dict(text=f"{int(missed)} Missed", x=0.5, y=0.35, font_size=12, showarrow=False)])
         st.plotly_chart(fig2, use_container_width=True)
 
+
 # ---------- DATE LOGIC ----------
 date_list = []
 days_checked = 0
 current_date = datetime.today().date()
+
 while len(date_list) < 3 and days_checked < 7:
-    weekday = current_date.weekday()
-    if weekday == 6:  # Sunday
+    weekday = current_date.weekday()  # Monday = 0, Sunday = 6
+
+    if weekday == 6:  # Sunday - always skip
         current_date += timedelta(days=1)
         days_checked += 1
         continue
+
+    if weekday == 5:  # Saturday
+        # Filter to see if there are any GINo entries for this Saturday
+        df_day = df[df['ExpDate'].dt.date == current_date]
+        if df_day['GINo'].count() == 0:
+            # No orders — skip Saturday
+            current_date += timedelta(days=1)
+            days_checked += 1
+            continue
+
+    # Valid day to display
     date_list.append(current_date)
     current_date += timedelta(days=1)
     days_checked += 1
+
 
 # ---------- DISPLAY ----------
 layout = []
@@ -341,4 +356,5 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
