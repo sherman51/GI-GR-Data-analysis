@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from google.cloud import storage
 from google.oauth2 import service_account
-from tempfile import NamedTemporaryFile
 
 # --- GCP Authentication ---
 credentials = service_account.Credentials.from_service_account_info(
@@ -14,7 +13,7 @@ bucket_name = "testbucket352"  # Replace with your actual bucket name
 client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
 bucket = client.bucket(bucket_name)
 
-st.title("📁 Upload and Download Excel Files to Google Cloud Storage")
+st.title("📁 Upload Excel Files to Google Cloud Storage")
 
 # --- Upload Section ---
 st.header("Upload Excel File (.xls or .xlsx)")
@@ -45,32 +44,3 @@ if uploaded_file is not None:
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
-
-# --- Download Section ---
-st.header("Download Excel File from GCS")
-
-# List available Excel files in bucket
-blobs = list(bucket.list_blobs())
-excel_files = [blob.name for blob in blobs if blob.name.endswith((".xls", ".xlsx"))]
-
-if excel_files:
-    selected_file = st.selectbox("Select a file to download", excel_files)
-
-    if st.button("Download"):
-        blob = bucket.blob(selected_file)
-        with NamedTemporaryFile(delete=False) as temp:
-            blob.download_to_filename(temp.name)
-            with open(temp.name, "rb") as f:
-                # Use correct MIME type for download button
-                mime = (
-                    "application/vnd.ms-excel" if selected_file.endswith(".xls")
-                    else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-                st.download_button(
-                    label="Click to download",
-                    data=f,
-                    file_name=selected_file,
-                    mime=mime
-                )
-else:
-    st.info("No Excel files found in the bucket.")
