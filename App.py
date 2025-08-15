@@ -5,10 +5,7 @@ import plotly.graph_objects as go
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
-
-# ---------- AUTO REFRESH ----------
 from streamlit_autorefresh import st_autorefresh
-st_autorefresh(interval=10 * 1000, limit=None, key="data_refresh")
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
@@ -45,6 +42,9 @@ CONFIG = {
     }
 }
 
+# ---------- AUTO REFRESH ----------
+st_autorefresh(interval=10*1000, limit=None, key="data_refresh")
+
 # ---------- GCP AUTH ----------
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
@@ -62,10 +62,6 @@ def download_latest_excel(bucket):
     file_bytes = latest_blob.download_as_bytes()
     return io.BytesIO(file_bytes), latest_blob.name
 
-# ---------- AUTO REFRESH ----------
-st_autorefresh_interval = 10 * 1000
-st.experimental_rerun()  # auto-refresh placeholder
-
 # ---------- FETCH LATEST FILE ----------
 file_stream, file_name = download_latest_excel(bucket)
 if file_stream:
@@ -75,23 +71,36 @@ else:
     st.stop()
 
 # ---------- PAGE HEADER ----------
-st.markdown("""
-<div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
-    <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
-         style="max-height:40px; height:auto; width:auto; margin-right:10px;">
-    <h3 style="margin: 0; font-family: Arial, sans-serif; color: #ffffff;">
-        - <b>Outbound Dashboard Aircon</b>
-    </h3>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
+        <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
+             style="max-height:40px; height:auto; width:auto; margin-right:10px;">
+        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #ffffff;">
+            - <b>Outbound Dashboard Aircon</b>
+        </h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("""
 <style>
 hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
-.metric-container { background-color: #f4f4f4; padding: 12px; border-radius: 8px; text-align: center; }
-.metric-value { font-size: 1.5rem; font-weight: bold; }
-.metric-label { font-size: 0.9rem; color: #555; }
-.metric-box { background-color: #f7f7f7; padding: 8px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+.metric-container {
+    background-color: #f4f4f4;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.metric-label {
+    font-size: 0.9rem;
+    color: #555;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,28 +111,27 @@ def load_data(file):
     except Exception:
         st.error("❌ Failed to read Excel file. Make sure it's a valid .xlsx file.")
         st.stop()
-
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
-
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-
     df = df[df['ExpDate'].notna()]
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
     return df
 
+# Load data
 df = load_data(file_stream)
 
-# ---------- FILTER AIRCON ----------
+# Filter aircon zones
 aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
 
 # ---------- DASHBOARD FUNCTIONS ----------
+# Daily overview
 def daily_overview(df_today, key_prefix=""):
     total_order_lines = df_today.shape[0]
     unique_gino = df_today['GINo'].nunique()
@@ -132,7 +140,7 @@ def daily_overview(df_today, key_prefix=""):
         st.markdown(f"<div class='metric-container'><div class='metric-value'>{total_order_lines}</div><div class='metric-label'>📦 Total Order Lines</div></div>", unsafe_allow_html=True)
     with col2:
         st.markdown(f"<div class='metric-container'><div class='metric-value'>{unique_gino}</div><div class='metric-label'>🔢 Total GINo</div></div>", unsafe_allow_html=True)
-    
+
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
@@ -143,7 +151,6 @@ def daily_overview(df_today, key_prefix=""):
         for seg in segments:
             count = (ot_df['Order Status'] == seg).sum()
             data[seg].append(count)
-
     filtered_order_types = []
     filtered_data = {seg: [] for seg in segments}
     for idx, ot in enumerate(order_types):
@@ -152,7 +159,6 @@ def daily_overview(df_today, key_prefix=""):
             filtered_order_types.append(ot)
             for seg in segments:
                 filtered_data[seg].append(data[seg][idx])
-
     bar_fig = go.Figure()
     for seg in segments:
         bar_fig.add_trace(go.Bar(
@@ -162,60 +168,94 @@ def daily_overview(df_today, key_prefix=""):
             orientation='h',
             marker=dict(color=colors[seg])
         ))
-
-    bar_fig.update_layout(barmode='stack', xaxis_title="Order Count", xaxis_type="log", margin=dict(l=10,r=10,t=30,b=30), height=400)
+    bar_fig.update_layout(
+        barmode='stack',
+        xaxis_title="Order Count",
+        margin=dict(l=10, r=10, t=30, b=30),
+        height=400
+    )
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
 
+# Daily completed pie
 def daily_completed_pie(df_today, key_prefix=""):
     total_orders = df_today.shape[0]
     completed_orders = df_today['Order Status'].isin(['Packed', 'Shipped']).sum()
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
-    fig = go.Figure(go.Pie(values=[completed_pct, 100-completed_pct], labels=["Completed","Outstanding"], marker_colors=['mediumseagreen','lightgray'], hole=0.6, textinfo='none'))
-    fig.update_layout(width=300, height=300, margin=dict(l=10,r=10,t=30,b=10), annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)])
+    fig = go.Figure(go.Pie(
+        values=[completed_pct, 100 - completed_pct],
+        labels=["Completed", "Outstanding"],
+        marker_colors=['mediumseagreen', 'lightgray'],
+        hole=0.6,
+        textinfo='none',
+        sort=False
+    ))
+    fig.update_layout(
+        width=300,
+        height=300,
+        margin=dict(l=10, r=10, t=30, b=10),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+    )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
 
+# Order status matrix
 def order_status_matrix(df_today, key_prefix=""):
-    df_status_table = df_today.groupby(['Order Type','Order Status']).size().unstack(fill_value=0)
-    df_status_table = df_status_table.reindex(index=CONFIG['order_types'], columns=CONFIG['status_segments'], fill_value=0)
+    df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
+    df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
+                                              columns=CONFIG['status_segments'],
+                                              fill_value=0)
     st.dataframe(df_status_table, key=f"{key_prefix}_status")
 
+# Ad-hoc orders
 def adhoc_orders_section(df_today, key_prefix=""):
-    not_completed_df = df_today[~df_today['Status'].isin(['Packed','Shipped'])]
+    not_completed_df = df_today[~df_today['Status'].isin(['Packed', 'Shipped'])]
     urgent_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Urgent']
     critical_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Critical']
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown(f"<div style='background-color: #f8e5a1; color: black; font-weight: bold; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 5px;'>⚠ Urgent Orders: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-        if not urgent_df.empty: st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{key_prefix}_urgent")
+        st.markdown(f"<div style='background-color: #f8e5a1; padding:10px; border-radius:8px; text-align:center;'>⚠ Urgent Orders: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+        if not urgent_df.empty:
+            st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{key_prefix}_urgent")
     with col2:
-        st.markdown(f"<div style='background-color: #f5a1a1; color: black; font-weight: bold; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 5px;'>🚨 Critical Orders: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-        if not critical_df.empty: st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{key_prefix}_critical")
+        st.markdown(f"<div style='background-color: #f5a1a1; padding:10px; border-radius:8px; text-align:center;'>🚨 Critical Orders: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+        if not critical_df.empty:
+            st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{key_prefix}_critical")
 
+# Expiry date summary
 def expiry_date_summary(df, key_prefix=""):
     recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
     daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
-    cancelled_summary = recent_df[recent_df['Status']=='98-Cancelled'].groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
+    cancelled_summary = recent_df[recent_df['Status'] == '98-Cancelled'] \
+        .groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
     dates = pd.date_range(end=datetime.today(), periods=14).strftime("%d-%b")
-    orders_received = [daily_summary.get(date,0) for date in dates]
-    orders_cancelled = [cancelled_summary.get(date,0) for date in dates]
-    fig = go.Figure(data=[go.Bar(name='Orders Received', x=dates, y=orders_received, marker_color='lightgreen'),
-                          go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='indianred')])
+    orders_received = [daily_summary.get(date, 0) for date in dates]
+    orders_cancelled = [cancelled_summary.get(date, 0) for date in dates]
+    fig = go.Figure(data=[
+        go.Bar(name='Orders Received', x=dates, y=orders_received, marker_color='lightgreen'),
+        go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='indianred')
+    ])
     fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_expiry")
 
+# Order volume summary
 def order_volume_summary(df, key_prefix=""):
     today = pd.Timestamp.today().normalize()
     recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
     daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].count()
-    if daily_counts.empty: st.info("No orders found for the past 14 days."); return
+    if daily_counts.empty:
+        st.info("No orders found for the past 14 days.")
+        return
     peak_day_vol = daily_counts.max()
     avg_vol = daily_counts.mean()
     low_day_vol = daily_counts.min()
     col1, col2, col3 = st.columns(3)
-    with col1: st.markdown(f"<div class='metric-container'><div class='metric-value'>{peak_day_vol}</div><div class='metric-label'>📈 Peak Day Volume</div></div>", unsafe_allow_html=True)
-    with col2: st.markdown(f"<div class='metric-container'><div class='metric-value'>{avg_vol:.1f}</div><div class='metric-label'>📊 Average Daily Volume</div></div>", unsafe_allow_html=True)
-    with col3: st.markdown(f"<div class='metric-container'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
+    with col1:
+        st.markdown(f"<div class='metric-container'><div class='metric-value'>{peak_day_vol}</div><div class='metric-label'>📈 Peak Day Volume</div></div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div class='metric-container'><div class='metric-value'>{avg_vol:.1f}</div><div class='metric-label'>📊 Average Daily Volume</div></div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"<div class='metric-container'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
 
+# Performance metrics
 def performance_metrics(df, key_prefix=""):
     today = pd.Timestamp.today().normalize()
     recent_past_df = df[(df['ExpDate'] < today) & (df['ExpDate'] >= today - pd.Timedelta(days=14))]
@@ -227,36 +267,49 @@ def performance_metrics(df, key_prefix=""):
     backorder_pct = (total_variance / total_expected * 100) if total_expected else 0
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown('<div class="metric-box">📦 Back Order %</div>', unsafe_allow_html=True)
-        fig1 = go.Figure(go.Pie(values=[backorder_pct,100-backorder_pct], hole=0.65, marker_colors=['#ff9999','#e6e6e6'], textinfo='none'))
-        fig1.update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=250, annotations=[dict(text=f"{backorder_pct:.1f}%", x=0.5,y=0.55,font_size=22,showarrow=False,font_color="black"), dict(text=f"{int(total_variance)} Variance", x=0.5,y=0.35,font_size=12,showarrow=False)])
+        fig1 = go.Figure(go.Pie(values=[backorder_pct, 100 - backorder_pct], hole=0.65, marker_colors=['#ff9999', '#e6e6e6'], textinfo='none'))
+        fig1.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=250,
+                           annotations=[dict(text=f"{backorder_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False),
+                                        dict(text=f"{int(total_variance)} Variance", x=0.5, y=0.35, font_size=12, showarrow=False)])
         st.plotly_chart(fig1, use_container_width=True)
     with col2:
-        st.markdown('<div class="metric-box">✅ Order Accuracy %</div>', unsafe_allow_html=True)
-        fig2 = go.Figure(go.Pie(values=[accuracy_pct,100-accuracy_pct], hole=0.65, marker_colors=['#7cd992','#e6e6e6'], textinfo='none'))
-        fig2.update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=250, annotations=[dict(text=f"{accuracy_pct:.1f}%", x=0.5,y=0.55,font_size=22,showarrow=False,font_color="black"), dict(text=f"{int(missed)} Missed", x=0.5,y=0.35,font_size=12,showarrow=False)])
+        fig2 = go.Figure(go.Pie(values=[accuracy_pct, 100 - accuracy_pct], hole=0.65, marker_colors=['#7cd992', '#e6e6e6'], textinfo='none'))
+        fig2.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=250,
+                           annotations=[dict(text=f"{accuracy_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False),
+                                        dict(text=f"{int(missed)} Missed", x=0.5, y=0.35, font_size=12, showarrow=False)])
         st.plotly_chart(fig2, use_container_width=True)
 
 # ---------- DATE LOGIC ----------
-date_list, days_checked, current_date = [], 0, datetime.today().date()
+date_list = []
+days_checked = 0
+current_date = datetime.today().date()
 while len(date_list) < 3 and days_checked < 7:
     weekday = current_date.weekday()
-    if weekday == 6: current_date += timedelta(days=1); days_checked +=1; continue
-    df_day = df[df['ExpDate'].dt.date == current_date]
-    if weekday == 5 and df_day.empty: current_date += timedelta(days=2); days_checked +=2; continue
-    date_list.append(current_date); current_date += timedelta(days=1); days_checked +=1
+    if weekday == 6:  # Sunday
+        current_date += timedelta(days=1)
+        days_checked += 1
+        continue
+    date_list.append(current_date)
+    current_date += timedelta(days=1)
+    days_checked += 1
 
 # ---------- DISPLAY ----------
 layout = []
 for i in range(len(date_list)):
     layout.append(5)
-    if i != len(date_list)-1: layout.append(0.5)
+    if i != len(date_list) - 1:
+        layout.append(0.5)
 cols = st.columns(layout)
+
 col_index = 0
 for i, dash_date in enumerate(date_list):
     with cols[col_index]:
         df_day = df[df['ExpDate'].dt.date == dash_date]
-        st.markdown(f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>", unsafe_allow_html=True)
+
+        st.markdown(
+            f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
+            unsafe_allow_html=True
+        )
         st.markdown("##### 🚨 Urgent and Critical")
         adhoc_orders_section(df_day, key_prefix=f"day{i}")
         st.markdown("##### ✅ % completion")
@@ -266,10 +319,16 @@ for i, dash_date in enumerate(date_list):
         st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown("##### 📦 Orders breakdown")
         daily_overview(df_day, key_prefix=f"day{i}")
-    if i != len(date_list)-1:
-        with cols[col_index+1]:
-            st.markdown("<div style='height: 135vh; border-left: 2px solid #888; margin: auto;'></div>", unsafe_allow_html=True)
-    col_index +=2
+
+    if i != len(date_list) - 1:
+        with cols[col_index + 1]:
+            st.markdown(
+            """
+            <div style='height: 135vh; border-left: 2px solid #888; margin: auto;'></div>
+            """,
+            unsafe_allow_html=True
+        )
+    col_index += 2
 
 # ---------- BOTTOM SECTION ----------
 col1, col2 = st.columns(2)
@@ -282,4 +341,3 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
