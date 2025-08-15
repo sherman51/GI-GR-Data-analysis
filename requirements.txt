@@ -2,7 +2,7 @@ streamlit
 pandas
 numpy
 openpyxl>=3.1.0
-xlrd>=2.0.1
+xlrd==1.2.0
 plotly.express
 streamlit_autorefresh
 google-cloud-storage
