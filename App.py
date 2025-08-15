@@ -43,7 +43,7 @@ CONFIG = {
 }
 
 # ---------- AUTO REFRESH ----------
-st_autorefresh(interval=10*1000, limit=None, key="data_refresh")
+st_autorefresh(interval=300*1000, limit=None, key="data_refresh")
 
 # ---------- GCP AUTH ----------
 credentials = service_account.Credentials.from_service_account_info(
@@ -341,3 +341,4 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
