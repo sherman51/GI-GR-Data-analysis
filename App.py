@@ -6,6 +6,10 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import io
 
+# ---------- AUTO REFRESH ----------
+from streamlit_autorefresh import st_autorefresh
+st_autorefresh(interval=10 * 1000, limit=None, key="data_refresh")
+
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
 
@@ -278,3 +282,4 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
