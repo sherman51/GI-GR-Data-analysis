@@ -116,13 +116,23 @@ def order_status_matrix(df_day, key_prefix):
         return
     # Pivot table of counts by Order Type and Status
     pivot = pd.pivot_table(
-        df_day,
-        index='Order Type',
-        columns='Order Status',
-        values='Order Number',
-        aggfunc='count',
-        fill_value=0
-    ).reindex(index=CONFIG['order_types'], columns=CONFIG['status_segments'], fill_value=0)
+    df_day,
+    index='Order Type',
+    columns='Order Status',
+    values='Order Number',
+    aggfunc='count',
+    fill_value=0
+)
+
+# Reindex only if pivot table is not empty
+if not pivot.empty:
+    pivot = pivot.reindex(index=CONFIG['order_types'], columns=CONFIG['status_segments'], fill_value=0)
+else:
+    st.info("No data available for pivot table.")
+    return
+
+st.dataframe(pivot.style.background_gradient(cmap='Blues'))
+
 
     st.dataframe(pivot.style.background_gradient(cmap='Blues'))
 
@@ -254,5 +264,6 @@ if 'df' in locals():
         performance_metrics(df, key_prefix="overall")
 
     st.markdown("###  *Stay Safe & Well*")
+
 
 
