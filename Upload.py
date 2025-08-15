@@ -8,7 +8,7 @@ from tempfile import NamedTemporaryFile
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
-bucket_name = "your-bucket-name"  # Replace with your actual bucket name
+bucket_name = "testbucket352"  # Replace with your actual bucket name
 
 # Initialize GCS client
 client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
@@ -64,3 +64,4 @@ if excel_files:
                 )
 else:
     st.info("No Excel files found in the bucket.")
+
