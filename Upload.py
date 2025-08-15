@@ -24,18 +24,23 @@ if uploaded_file is not None:
     file_name = uploaded_file.name
 
     try:
-        # Try to read the file to verify it's a valid Excel
+        # Read file using correct engine
         if file_name.endswith(".xls"):
             df = pd.read_excel(uploaded_file, engine="xlrd")
-        else:
+            content_type = "application/vnd.ms-excel"
+        elif file_name.endswith(".xlsx"):
             df = pd.read_excel(uploaded_file, engine="openpyxl")
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        else:
+            st.error("Unsupported file format!")
+            st.stop()
 
         st.dataframe(df.head())  # Show preview
 
         # Upload to GCS
         uploaded_file.seek(0)  # Reset buffer
         blob = bucket.blob(file_name)
-        blob.upload_from_file(uploaded_file, content_type="application/vnd.ms-excel")
+        blob.upload_from_file(uploaded_file, content_type=content_type)
 
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
     except Exception as e:
@@ -64,4 +69,5 @@ if excel_files:
                 )
 else:
     st.info("No Excel files found in the bucket.")
+
 
