@@ -47,7 +47,6 @@ credentials = service_account.Credentials.from_service_account_info(
 )
 BUCKET_NAME = "testbucket352"
 
-# Initialize GCS client
 gcs_client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
 bucket = gcs_client.bucket(BUCKET_NAME)
 
@@ -60,11 +59,8 @@ def download_latest_excel(bucket):
     file_bytes = latest_blob.download_as_bytes()
     return io.BytesIO(file_bytes), latest_blob.name
 
-# Auto-refresh every 60 sec
-st_autorefresh = st.experimental_rerun  # Placeholder in case needed
-st_autorefresh_interval = 60 * 1000
-st_autorefresh_key = "data_refresh"
-st_autorefresh_enabled = st.experimental_data_editor  # Not used here; for structure
+# ---------- AUTO REFRESH ----------
+st_autorefresh(interval=10 * 1000, key="data_refresh")
 
 # ---------- FETCH LATEST FILE ----------
 file_stream, file_name = download_latest_excel(bucket)
@@ -219,3 +215,4 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
