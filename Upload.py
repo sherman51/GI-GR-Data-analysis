@@ -1,30 +1,30 @@
 import streamlit as st
 import pandas as pd
 from google.cloud import storage
-import os
+from google.oauth2 import service_account
 from tempfile import NamedTemporaryFile
 
-# Load service account key
-GCP_SERVICE_ACCOUNT_JSON = "path/to/your-service-account.json"
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GCP_SERVICE_ACCOUNT_JSON
-
-# Set your bucket name
-BUCKET_NAME = "your-bucket-name"
+# --- GCP Authentication ---
+credentials = service_account.Credentials.from_service_account_info(
+    st.secrets["gcp_service_account"]
+)
+bucket_name = "your-bucket-name"  # Replace with your actual bucket name
 
 # Initialize GCS client
-client = storage.Client()
-bucket = client.bucket(BUCKET_NAME)
+client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
+bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload and Download Excel Files to Google Cloud Storage")
 
-# --- File Upload ---
+# --- Upload Section ---
 st.header("Upload Excel File (.xls or .xlsx)")
 uploaded_file = st.file_uploader("Choose an Excel file", type=["xls", "xlsx"])
 
 if uploaded_file is not None:
     file_name = uploaded_file.name
-    # Validate Excel by trying to read
+
     try:
+        # Try to read the file to verify it's a valid Excel
         if file_name.endswith(".xls"):
             df = pd.read_excel(uploaded_file, engine="xlrd")
         else:
@@ -33,22 +33,23 @@ if uploaded_file is not None:
         st.dataframe(df.head())  # Show preview
 
         # Upload to GCS
-        blob = bucket.blob(file_name)
         uploaded_file.seek(0)  # Reset buffer
+        blob = bucket.blob(file_name)
         blob.upload_from_file(uploaded_file, content_type="application/vnd.ms-excel")
+
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
     except Exception as e:
-        st.error(f"Failed to process Excel file: {e}")
+        st.error(f"Failed to read or upload Excel file: {e}")
 
-# --- File Retrieval ---
+# --- Download Section ---
 st.header("Download Excel File from GCS")
 
-# List files
+# List available Excel files in bucket
 blobs = list(bucket.list_blobs())
-excel_files = [b.name for b in blobs if b.name.endswith((".xls", ".xlsx"))]
+excel_files = [blob.name for blob in blobs if blob.name.endswith((".xls", ".xlsx"))]
 
 if excel_files:
-    selected_file = st.selectbox("Select file to download", excel_files)
+    selected_file = st.selectbox("Select a file to download", excel_files)
 
     if st.button("Download"):
         blob = bucket.blob(selected_file)
@@ -62,4 +63,4 @@ if excel_files:
                     mime="application/vnd.ms-excel"
                 )
 else:
-    st.info("No Excel files found in bucket.")
+    st.info("No Excel files found in the bucket.")
