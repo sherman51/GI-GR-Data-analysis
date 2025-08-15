@@ -174,7 +174,7 @@ def daily_overview(df_today, key_prefix=""):
 
     bar_fig.update_layout(
         barmode='stack',
-        xaxis_title="Order Count (log scale)",
+        xaxis_title="Order Count",
         xaxis_type="log",
         margin=dict(l=10, r=10, t=30, b=30),
         height=400
@@ -450,6 +450,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
