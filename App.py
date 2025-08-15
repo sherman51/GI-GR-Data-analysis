@@ -76,18 +76,20 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
-    file_ext = file.name.split('.')[-1].lower()
-    if file_ext == 'xls':
-        df = pd.read_excel(file, skiprows=6, engine='xlrd')
-    else:
+    try:
+        # Use only openpyxl for .xlsx files
         df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+    except Exception as e:
+        st.error("❌ Failed to read Excel file. Make sure it's a valid .xlsx file.")
+        st.stop()
 
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
 
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
-        df[col] = pd.to_datetime(df[col], errors='coerce')
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
 
     df = df[df['ExpDate'].notna()]
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
@@ -95,6 +97,7 @@ def load_data(file):
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
 
     return df
+
 
 def pie_chart(value, label, total_label, key_prefix=""):
     fig = go.Figure(go.Pie(
@@ -447,6 +450,7 @@ if uploaded_file:
 
 else:
     st.warning("📄 Please upload an Excel file to begin.")
+
 
 
 
