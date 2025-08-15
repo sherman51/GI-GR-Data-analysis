@@ -1,92 +1,65 @@
 import streamlit as st
-import os
-import base64
-import requests
-from io import StringIO
 import pandas as pd
+from google.cloud import storage
+import os
+from tempfile import NamedTemporaryFile
 
-# Replace with your GitHub info
-GITHUB_USERNAME = "sherman51"
-GITHUB_REPO = "GI-GR-Data-analysis"
-GITHUB_ACCESS_TOKEN = "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"
+# Load service account key
+GCP_SERVICE_ACCOUNT_JSON = "path/to/your-service-account.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GCP_SERVICE_ACCOUNT_JSON
 
-# Function to check token validity
-def check_token_validity():
-    url = "https://api.github.com/user"
-    headers = {
-        "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
-    }
+# Set your bucket name
+BUCKET_NAME = "your-bucket-name"
 
-    response = requests.get(url, headers=headers)
+# Initialize GCS client
+client = storage.Client()
+bucket = client.bucket(BUCKET_NAME)
 
-    if response.status_code == 200:
-        st.write("Token is valid!")
-        st.write(response.json())  # Show user info for verification
-        return True
-    else:
-        st.error(f"Failed to authenticate with GitHub. Status code: {response.status_code}")
-        st.write(response.json())  # Show the full response for debugging
-        return False
+st.title("📁 Upload and Download Excel Files to Google Cloud Storage")
 
-# Function to upload a file to GitHub
-def upload_to_github(file_name, file_content):
-    """
-    Uploads a file to a GitHub repository using the GitHub API.
-    """
-    url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{GITHUB_REPO}/contents/{file_name}"
-    
-    # Create the content in base64 encoding
-    content = base64.b64encode(file_content.encode()).decode()
+# --- File Upload ---
+st.header("Upload Excel File (.xls or .xlsx)")
+uploaded_file = st.file_uploader("Choose an Excel file", type=["xls", "xlsx"])
 
-    # Prepare the payload for GitHub API
-    payload = {
-        "message": f"Upload {file_name}",
-        "content": content
-    }
-
-    # Optional: Add authentication for private repos
-    headers = {
-        "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
-    }
-
-    # Send the request to GitHub API
-    response = requests.put(url, json=payload, headers=headers)
-
-    # Debugging info
-    if response.status_code != 201:
-        st.error(f"Failed to upload file: {response.json().get('message', 'No detailed message')}")
-        st.write(response.json())  # Print the full response for debugging
-        return False
-
-    st.success(f"File '{file_name}' uploaded successfully to GitHub!")
-    return True
-
-# Streamlit app
-st.title("Upload File to GitHub")
-
-# Check token validity before proceeding
-if not check_token_validity():
-    st.stop()  # Stop execution if the token is invalid
-
-# File uploader widget
-uploaded_file = st.file_uploader("Choose a file", type=["csv", "txt", "xlsx"])
-
-if uploaded_file:
+if uploaded_file is not None:
+    file_name = uploaded_file.name
+    # Validate Excel by trying to read
     try:
-        # Try to read the file content as a string (for CSV or text files)
-        file_name = uploaded_file.name
-        file_content = uploaded_file.getvalue().decode("utf-8", errors='ignore')  # Graceful handling of errors
-        
-        # Upload the file to GitHub
-        if upload_to_github(file_name, file_content):
-            # Read the file into a pandas DataFrame for display
-            if file_name.endswith(".csv"):
-                data = pd.read_csv(StringIO(file_content))
-                st.write(data)
-            elif file_name.endswith(".xlsx"):
-                data = pd.read_excel(StringIO(file_content))
-                st.write(data)
-            else:
-                st.text("Uploaded file content is not displayed as it's not a CSV or Excel file.")
+        if file_name.endswith(".xls"):
+            df = pd.read_excel(uploaded_file, engine="xlrd")
+        else:
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
+
+        st.dataframe(df.head())  # Show preview
+
+        # Upload to GCS
+        blob = bucket.blob(file_name)
+        uploaded_file.seek(0)  # Reset buffer
+        blob.upload_from_file(uploaded_file, content_type="application/vnd.ms-excel")
+        st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
     except Exception as e:
-        st.error(f"Error reading the file: {str(e)}")
+        st.error(f"Failed to process Excel file: {e}")
+
+# --- File Retrieval ---
+st.header("Download Excel File from GCS")
+
+# List files
+blobs = list(bucket.list_blobs())
+excel_files = [b.name for b in blobs if b.name.endswith((".xls", ".xlsx"))]
+
+if excel_files:
+    selected_file = st.selectbox("Select file to download", excel_files)
+
+    if st.button("Download"):
+        blob = bucket.blob(selected_file)
+        with NamedTemporaryFile(delete=False) as temp:
+            blob.download_to_filename(temp.name)
+            with open(temp.name, "rb") as f:
+                st.download_button(
+                    label="Click to download",
+                    data=f,
+                    file_name=selected_file,
+                    mime="application/vnd.ms-excel"
+                )
+else:
+    st.info("No Excel files found in bucket.")
