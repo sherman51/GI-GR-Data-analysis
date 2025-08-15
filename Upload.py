@@ -61,13 +61,16 @@ if excel_files:
         with NamedTemporaryFile(delete=False) as temp:
             blob.download_to_filename(temp.name)
             with open(temp.name, "rb") as f:
+                # Use correct MIME type for download button
+                mime = (
+                    "application/vnd.ms-excel" if selected_file.endswith(".xls")
+                    else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
                 st.download_button(
                     label="Click to download",
                     data=f,
                     file_name=selected_file,
-                    mime="application/vnd.ms-excel"
+                    mime=mime
                 )
 else:
     st.info("No Excel files found in the bucket.")
-
-
