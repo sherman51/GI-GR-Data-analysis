@@ -6,3 +6,4 @@ xlrd==1.2.0
 plotly.express
 streamlit_autorefresh
 google-cloud-storage
+google-auth
