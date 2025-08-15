@@ -186,11 +186,12 @@ if not excel_files:
     st.stop()
 
 selected_file = st.sidebar.selectbox("Select Excel file from GCS", excel_files)
-if st.sidebar.button("Load Data from GCS"):
+if selected_file:
     df = load_data_from_gcs(selected_file)
     st.success(f"Loaded data from {selected_file}")
 else:
-    st.info("Please select a file and click 'Load Data from GCS'.")
+    st.info("Please select an Excel file from the list.")
+
 
 if 'df' in locals():
     # Filter only aircon related zones (case insensitive)
@@ -253,3 +254,4 @@ if 'df' in locals():
         performance_metrics(df, key_prefix="overall")
 
     st.markdown("###  *Stay Safe & Well*")
+
