@@ -5,4 +5,4 @@ openpyxl
 xlrd==1.2.0
 plotly.express
 streamlit_autorefresh
-boto3
+google-cloud-storage
