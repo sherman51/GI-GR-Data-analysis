@@ -13,7 +13,7 @@ bucket_name = "testbucket352"  # Replace with your actual bucket name
 client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
 bucket = client.bucket(bucket_name)
 
-st.title("📁 Upload Excel Files to Google Cloud Storage")
+st.title("📁 Upload Excel Files to Dashboard")
 
 # --- Upload Section ---
 st.header("Upload Excel File (.xls or .xlsx)")
@@ -44,3 +44,4 @@ if uploaded_file is not None:
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
+
