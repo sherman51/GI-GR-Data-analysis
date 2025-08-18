@@ -42,6 +42,17 @@ if uploaded_file is not None:
         blob.upload_from_file(uploaded_file, content_type=content_type)
 
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
+
+        # --- Delete all other blobs except the newly uploaded one ---
+        st.info("Cleaning up old files in the bucket...")
+        blobs = bucket.list_blobs()
+        deleted_count = 0
+        for b in blobs:
+            if b.name != file_name:
+                b.delete()
+                deleted_count += 1
+
+        st.success(f"Deleted {deleted_count} old file(s) from the bucket.")
+
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
-
