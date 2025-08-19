@@ -281,7 +281,7 @@ def order_status_matrix(df_today, key_prefix=""):
                      {'selector': 'th, td',
                       'props': [
                           ('padding', '3px 6px'),
-                          ('font-size', '10px'),
+                          ('font-size', '8px'),
                           ('border-collapse', 'collapse'),
                           ('text-align', 'center'),
                       ]},
@@ -481,6 +481,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
