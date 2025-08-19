@@ -172,7 +172,7 @@ def daily_overview(df_today, key_prefix=""):
         barmode='stack',
         xaxis_title="Order Count",
         margin=dict(l=10, r=10, t=30, b=30),
-        height=400
+        height=300
     )
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
 
@@ -356,5 +356,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
