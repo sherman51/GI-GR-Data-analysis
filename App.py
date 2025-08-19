@@ -253,16 +253,25 @@ def order_status_matrix(df_today, key_prefix=""):
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
 
-    # 🔸 Highlight Ad-hoc Urgent rows that are not fully shipped
-    def highlight_adhoc_urgent(row):
-        if row.name == 'Ad-hoc Urgent' and row.get('Shipped', 0) == 0:
-            return ['background-color: orange'] * len(row)
-        else:
-            return [''] * len(row)
+    # 🔸 Highlight only cells > 0 in Ad-hoc Urgent row (except 'Shipped')
+    def highlight_cells(val, row_name, col_name):
+        if row_name == 'Ad-hoc Urgent' and col_name != 'Shipped' and val > 0:
+            return 'background-color: orange'
+        return ''
 
-    styled_df = df_status_table.style.apply(highlight_adhoc_urgent, axis=1)
+    # Apply the styling function element-wise
+    styled_df = df_status_table.style.apply(
+        lambda df: pd.DataFrame(
+            [[highlight_cells(df.iloc[i, j], df.index[i], df.columns[j])
+              for j in range(df.shape[1])]
+             for i in range(df.shape[0])],
+            index=df.index,
+            columns=df.columns
+        )
+    )
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 # Ad-hoc orders
@@ -442,6 +451,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
