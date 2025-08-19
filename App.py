@@ -309,7 +309,6 @@ while len(date_list) < 3 and days_checked < 7:
 
 
 # ---------- DISPLAY ----------
-# ---------- DISPLAY (More compact top section) ----------
 layout = []
 for i in range(len(date_list)):
     layout.append(5)
@@ -328,14 +327,15 @@ for i, dash_date in enumerate(date_list):
             unsafe_allow_html=True
         )
 
-        # --- TOP ROW: Urgent/Critical + Completion Pie side by side ---
-        top1, top2 = st.columns([1.2, 1])
-        with top1:
-            adhoc_orders_section(df_day, key_prefix=f"day{i}")
-        with top2:
-            daily_completed_pie(df_day, key_prefix=f"day{i}")
+        # --- Urgent/Critical Orders ---
+        st.markdown("##### 🚨 Urgent & Critical")
+        adhoc_orders_section(df_day, key_prefix=f"day{i}")
 
-        # --- SECOND ROW: Order Status Table + Orders Breakdown ---
+        # --- Completion Pie under it ---
+        st.markdown("##### ✅ % Completion")
+        daily_completed_pie(df_day, key_prefix=f"day{i}")
+
+        # --- Second Row: Status Table + Orders Breakdown side by side ---
         mid1, mid2 = st.columns([1, 1])
         with mid1:
             st.markdown("📋 **Order Status Table**")
@@ -365,6 +365,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
