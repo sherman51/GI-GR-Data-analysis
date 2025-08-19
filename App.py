@@ -244,19 +244,14 @@ def order_status_matrix(df_today, key_prefix=""):
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
     
-    # Add total column (sum across statuses for each Order Type)
     df_status_table['Total'] = df_status_table.sum(axis=1)
-    
-    # Add total row (sum across order types for each status)
     total_row = df_status_table.sum(axis=0)
     total_row.name = 'Total'
     df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
     
-    # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
         if col_name == 'Shipped' or val <= 0:
-            return '' 
-
+            return ''
         if row_name == 'Ad-hoc Urgent':
             return 'background-color: #f8e5a1'
         elif row_name == 'Ad-hoc Critical':
@@ -266,7 +261,6 @@ def order_status_matrix(df_today, key_prefix=""):
         else:
             return ''
 
-    # Build full style DataFrame
     def highlight_df(df):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
@@ -274,9 +268,18 @@ def order_status_matrix(df_today, key_prefix=""):
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
-    styled_df = df_status_table.style.apply(highlight_df, axis=None)
+    styled_df = (df_status_table.style
+                 .apply(highlight_df, axis=None)
+                 .set_table_styles([
+                     {'selector': 'th, td',
+                      'props': [('padding', '4px 8px'),
+                                ('font-size', '12px'),
+                                ('border-collapse', 'collapse'),
+                                ('text-align', 'center')]}])
+                 .set_properties(**{'max-width': '80px', 'white-space': 'nowrap'}))
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 
@@ -459,6 +462,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
