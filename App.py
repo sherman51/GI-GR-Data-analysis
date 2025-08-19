@@ -243,11 +243,19 @@ def order_status_matrix(df_today, key_prefix=""):
     df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
-
+    
+    # Add total column (sum across statuses for each Order Type)
+    df_status_table['Total'] = df_status_table.sum(axis=1)
+    
+    # Add total row (sum across order types for each status)
+    total_row = df_status_table.sum(axis=0)
+    total_row.name = 'Total'
+    df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
+    
     # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
         if col_name == 'Shipped' or val <= 0:
-            return ''
+            return '' 
 
         if row_name == 'Ad-hoc Urgent':
             return 'background-color: #f8e5a1'
@@ -269,6 +277,7 @@ def order_status_matrix(df_today, key_prefix=""):
     styled_df = df_status_table.style.apply(highlight_df, axis=None)
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 
@@ -450,6 +459,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
