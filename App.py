@@ -145,55 +145,60 @@ def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    order_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal', 'normal']
-    order_data = {seg: {ot: 0 for ot in order_types} for seg in segments}
+    # Define order types
+    normal_type = 'normal'
+    adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
+    all_order_types = [normal_type] + adhoc_types
 
-    for ot in order_types:
+    # Prepare data structure
+    order_data = {seg: {ot: 0 for ot in all_order_types} for seg in segments}
+    for ot in all_order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
-            count = (ot_df['Order Status'] == seg).sum()
-            order_data[seg][ot] = count
+            order_data[seg][ot] = (ot_df['Order Status'] == seg).sum()
 
     fig = go.Figure()
 
-    # Group ad-hoc and normal order types
-    adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
-    normal_type = 'normal'
-
+    # --- Plot normal orders on PRIMARY x-axis ---
     for seg in segments:
-        # Ad-hoc bars (primary axis)
-        fig.add_trace(go.Bar(
-            y=adhoc_types,
-            x=[order_data[seg][ot] for ot in adhoc_types],
-            name=f"{seg} (Ad-hoc)",
-            orientation='h',
-            marker_color=colors.get(seg, None),
-            legendgroup=seg,
-        ))
-
-        # Normal bars (secondary axis)
         fig.add_trace(go.Bar(
             y=[normal_type],
             x=[order_data[seg][normal_type]],
             name=f"{seg} (Normal)",
             orientation='h',
-            marker_color=colors.get(seg, None),
+            marker_color=colors.get(seg),
+            legendgroup=seg
+        ))
+
+    # --- Plot Ad-hoc orders on SECONDARY x-axis ---
+    for seg in segments:
+        fig.add_trace(go.Bar(
+            y=adhoc_types,
+            x=[order_data[seg][ot] for ot in adhoc_types],
+            name=f"{seg} (Ad-hoc)",
+            orientation='h',
+            marker_color=colors.get(seg),
             legendgroup=seg,
             xaxis='x2',
-            showlegend=False  # avoid duplicate legend
+            showlegend=False  # avoid duplicate legends
         ))
 
     fig.update_layout(
-        title=dict(text="📦 Ad-hoc + Normal Orders Breakdown", x=0.5),
+        title=dict(text="📦 Orders Breakdown (Normal vs Ad-hoc)", x=0.5),
         barmode='stack',
-        height=300,
-        xaxis=dict(title='Ad-hoc Order Count'),
-        xaxis2=dict(title='Normal Order Count', overlaying='x', side='top', showgrid=False),
-        yaxis=dict(categoryorder='array', categoryarray=adhoc_types + [normal_type]),
+        height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
+        xaxis=dict(title='Normal Order Count'),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
+        yaxis=dict(
+            categoryorder='array',
+            categoryarray=adhoc_types[::-1] + [normal_type],  # controls order of bars top to bottom
+            automargin=True
+        ),
     )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
 
 
 
@@ -476,6 +481,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
