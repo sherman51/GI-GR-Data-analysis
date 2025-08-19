@@ -192,18 +192,24 @@ def daily_overview(df_today, key_prefix=""):
             x=filtered_data[seg],
             name=seg,
             orientation='h',
-            marker=dict(color=colors[seg])
+            marker=dict(color=colors[seg]),
         ))
+
+    # dynamically adjust bar thickness
+    n_cats = len(filtered_order_types)
+    bar_width = min(0.6, 0.8 / max(1, n_cats))  # thinner bars if more categories
+
+    bar_fig.update_traces(width=bar_width)
 
     # layout improvements
     bar_fig.update_layout(
         barmode='stack',
-        bargap=0.2,  # control spacing between bars
         xaxis_title="Order Count",
         margin=dict(l=10, r=10, t=20, b=20),
-        height=250,  # shorter height to save space
+        height=40 * n_cats + 100,  # auto-scale chart height
         yaxis=dict(automargin=True)
     )
+
 
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
 
@@ -412,6 +418,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
