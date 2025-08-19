@@ -199,7 +199,7 @@ def daily_overview(df_today, key_prefix=""):
     # layout improvements
     bar_fig.update_layout(
         barmode='stack',
-        bargap=0,
+        bargap=0.2,
         xaxis=dict(
             title="Order Count",
             type="log"  # ✅ Correct location for log scale
@@ -419,6 +419,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
