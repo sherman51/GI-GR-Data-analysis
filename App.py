@@ -142,64 +142,59 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 # ---------- DASHBOARD FUNCTIONS ----------
 # Daily overview
 def daily_overview(df_today, key_prefix=""):
-    order_types_group1 = ['Back Orders', 'Ad-hoc Urgent', 'Ad-hoc Critical', 'Ad-hoc Normal']  # High Priority
-    order_types_group2 = ['normal']                         # Standard Orders
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    total_orders = len(df_today)
-    unique_gi_count = df_today['GINo'].nunique() if 'GINo' in df_today.columns else 0
+    order_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal', 'normal']
+    order_data = {seg: {ot: 0 for ot in order_types} for seg in segments}
 
-    # Display total orders and GI count with a small gap before charts
-    st.markdown(f"### Total Orders: {total_orders} &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; Unique GI Count: {unique_gi_count}")
-    st.markdown("<br>", unsafe_allow_html=True)  # small gap
-
-    def build_chart(order_types_subset, chart_title, chart_key):
-        data = {seg: [] for seg in segments}
-        filtered_order_types = []
-
-        for ot in order_types_subset:
-            ot_df = df_today[df_today['Order Type'] == ot]
-            total = 0
-            for seg in segments:
-                count = (ot_df['Order Status'] == seg).sum()
-                data[seg].append(count)
-                total += count
-            if total > 0:
-                filtered_order_types.append(ot)
-
-        if not filtered_order_types:
-            return  # no chart
-
-        filtered_data = {seg: [] for seg in segments}
-        for idx, ot in enumerate(order_types_subset):
-            if ot in filtered_order_types:
-                for seg in segments:
-                    filtered_data[seg].append(data[seg][idx])
-
-        bar_fig = go.Figure()
+    for ot in order_types:
+        ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
-            bar_fig.add_trace(go.Bar(
-                y=filtered_order_types,
-                x=filtered_data[seg],
-                name=seg,
-                orientation='h',
-                marker=dict(color=colors[seg])
-            ))
+            count = (ot_df['Order Status'] == seg).sum()
+            order_data[seg][ot] = count
 
-        bar_fig.update_layout(
-            barmode='stack',
-            bargap=0.2,
-            title=dict(text=chart_title, x=0.5),
-            xaxis=dict(title="Order Count"),
-            margin=dict(l=10, r=10, t=40, b=20),
-            height=40 * len(filtered_order_types) + 100,
-            yaxis=dict(automargin=True)
-        )
-        st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
+    fig = go.Figure()
 
-    build_chart(order_types_group1, "🚨 Ad-hoc Orders", f"{key_prefix}_high_priority")
-    build_chart(order_types_group2, "📦 Normal Orders", f"{key_prefix}_standard")
+    # Group ad-hoc and normal order types
+    adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
+    normal_type = 'normal'
+
+    for seg in segments:
+        # Ad-hoc bars (primary axis)
+        fig.add_trace(go.Bar(
+            y=adhoc_types,
+            x=[order_data[seg][ot] for ot in adhoc_types],
+            name=f"{seg} (Ad-hoc)",
+            orientation='h',
+            marker_color=colors.get(seg, None),
+            legendgroup=seg,
+        ))
+
+        # Normal bars (secondary axis)
+        fig.add_trace(go.Bar(
+            y=[normal_type],
+            x=[order_data[seg][normal_type]],
+            name=f"{seg} (Normal)",
+            orientation='h',
+            marker_color=colors.get(seg, None),
+            legendgroup=seg,
+            xaxis='x2',
+            showlegend=False  # avoid duplicate legend
+        ))
+
+    fig.update_layout(
+        title=dict(text="📦 Ad-hoc + Normal Orders Breakdown", x=0.5),
+        barmode='stack',
+        height=300,
+        xaxis=dict(title='Ad-hoc Order Count'),
+        xaxis2=dict(title='Normal Order Count', overlaying='x', side='top', showgrid=False),
+        yaxis=dict(categoryorder='array', categoryarray=adhoc_types + [normal_type]),
+        margin=dict(l=10, r=10, t=40, b=20),
+    )
+
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
 
 
 
@@ -481,6 +476,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
