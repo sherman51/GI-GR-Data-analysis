@@ -199,13 +199,16 @@ def daily_overview(df_today, key_prefix=""):
     # layout improvements
     bar_fig.update_layout(
         barmode='stack',
-        bargap=0,  # 🔥 remove vertical space between bars
-        xaxis_title="Order Count",
-        type = "log",
+        bargap=0,
+        xaxis=dict(
+            title="Order Count",
+            type="log"  # ✅ Correct location for log scale
+        ),
         margin=dict(l=10, r=10, t=20, b=20),
         height=40 * len(filtered_order_types) + 100,
         yaxis=dict(automargin=True)
     )
+
 
 
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
@@ -416,6 +419,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
