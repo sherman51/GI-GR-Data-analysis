@@ -144,12 +144,25 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 def daily_overview(df_today, key_prefix=""):
     total_order_lines = df_today.shape[0]
     unique_gino = df_today['GINo'].nunique()
+
+    # --- Smaller metric cards ---
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown(f"<div class='metric-container'><div class='metric-value'>{total_order_lines}</div><div class='metric-label'>📦 Total Order Lines</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-container' style='padding:8px;'>"
+            f"<div class='metric-value' style='font-size:1.1rem;'>{total_order_lines}</div>"
+            f"<div class='metric-label' style='font-size:0.75rem;'>📦 Total Order Lines</div></div>",
+            unsafe_allow_html=True
+        )
     with col2:
-        st.markdown(f"<div class='metric-container'><div class='metric-value'>{unique_gino}</div><div class='metric-label'>🔢 Total GINo</div></div>", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-container' style='padding:8px;'>"
+            f"<div class='metric-value' style='font-size:1.1rem;'>{unique_gino}</div>"
+            f"<div class='metric-label' style='font-size:0.75rem;'>🔢 Total GINo</div></div>",
+            unsafe_allow_html=True
+        )
 
+    # --- Stacked horizontal bar chart ---
     order_types = CONFIG['order_types']
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
@@ -160,6 +173,8 @@ def daily_overview(df_today, key_prefix=""):
         for seg in segments:
             count = (ot_df['Order Status'] == seg).sum()
             data[seg].append(count)
+
+    # filter out order types with zero total
     filtered_order_types = []
     filtered_data = {seg: [] for seg in segments}
     for idx, ot in enumerate(order_types):
@@ -168,6 +183,8 @@ def daily_overview(df_today, key_prefix=""):
             filtered_order_types.append(ot)
             for seg in segments:
                 filtered_data[seg].append(data[seg][idx])
+
+    # build figure
     bar_fig = go.Figure()
     for seg in segments:
         bar_fig.add_trace(go.Bar(
@@ -177,12 +194,17 @@ def daily_overview(df_today, key_prefix=""):
             orientation='h',
             marker=dict(color=colors[seg])
         ))
+
+    # layout improvements
     bar_fig.update_layout(
         barmode='stack',
+        bargap=0.2,  # control spacing between bars
         xaxis_title="Order Count",
-        margin=dict(l=10, r=10, t=30, b=30),
-        height=200
+        margin=dict(l=10, r=10, t=20, b=20),
+        height=250,  # shorter height to save space
+        yaxis=dict(automargin=True)
     )
+
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
 
 # Daily completed pie
@@ -390,6 +412,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
