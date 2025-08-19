@@ -327,11 +327,27 @@ for i, dash_date in enumerate(date_list):
             unsafe_allow_html=True
         )
 
-        # --- TOP ROW: Urgent/Critical + Completion Pie ---
-        top1, top2 = st.columns([1.3, 1])
+        # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
+        top1, top2 = st.columns([1, 1.5])   # pie gets more space
         with top1:
-            st.markdown("##### 🚨 Urgent & Critical")
-            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+            st.markdown("##### 🚨 Critical Orders")
+            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                 (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+            st.markdown(
+                f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
+                f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+            if not critical_df.empty:
+                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
+
+            st.markdown("##### ⚠ Urgent Orders")
+            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                               (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+            st.markdown(
+                f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
+                f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+            if not urgent_df.empty:
+                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
+
         with top2:
             st.markdown("##### ✅ % Completion")
             daily_completed_pie(df_day, key_prefix=f"day{i}")
@@ -354,7 +370,6 @@ for i, dash_date in enumerate(date_list):
     col_index += 2
 
 
-
 # ---------- BOTTOM SECTION ----------
 col1, col2 = st.columns(2)
 with col1:
@@ -366,6 +381,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
