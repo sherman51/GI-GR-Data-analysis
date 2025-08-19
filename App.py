@@ -190,8 +190,8 @@ def daily_completed_pie(df_today, key_prefix=""):
         sort=False
     ))
     fig.update_layout(
-        width=300,
-        height=300,
+        width=200,
+        height=200,
         margin=dict(l=10, r=10, t=30, b=10),
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
@@ -365,6 +365,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
