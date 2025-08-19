@@ -146,80 +146,58 @@ def daily_overview(df_today, key_prefix=""):
 
     normal_type = 'normal'
     adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
+    all_order_types = [normal_type] + adhoc_types
 
-    fig = go.Figure()
-
-    # Determine if there are any normal or ad-hoc orders
-    has_normal = not df_today[df_today['Order Type'] == normal_type].empty
-    has_adhoc = not df_today[df_today['Order Type'].isin(adhoc_types)].empty
-
-    y_order = []
-    if has_normal:
-        y_order.append(normal_type)
-    if has_adhoc:
-        y_order += adhoc_types
-
-    if not y_order:
-        st.info("No orders found for Normal or Ad-hoc categories.")
-        return
-
-    # Build data dict
-    order_data = {seg: {ot: 0 for ot in y_order} for seg in segments}
-    for ot in y_order:
+    order_data = {seg: {ot: 0 for ot in all_order_types} for seg in segments}
+    for ot in all_order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
         for seg in segments:
             order_data[seg][ot] = (ot_df['Order Status'] == seg).sum()
 
-    # Add bars
+    fig = go.Figure()
+
+    # Primary axis: Normal orders
     for seg in segments:
-        if has_normal:
-            fig.add_trace(go.Bar(
-                y=[normal_type],
-                x=[order_data[seg][normal_type]],
-                name=f"{seg} (Normal)",
-                orientation='h',
-                marker_color=colors.get(seg),
-                legendgroup=seg
-            ))
+        fig.add_trace(go.Bar(
+            y=[normal_type],
+            x=[order_data[seg][normal_type]],
+            name=f"{seg} (Normal)",
+            orientation='h',
+            marker_color=colors.get(seg),
+            legendgroup=seg
+        ))
 
-        if has_adhoc:
-            fig.add_trace(go.Bar(
-                y=[ot for ot in adhoc_types if ot in y_order],
-                x=[order_data[seg][ot] for ot in adhoc_types if ot in y_order],
-                name=f"{seg} (Ad-hoc)",
-                orientation='h',
-                marker_color=colors.get(seg),
-                legendgroup=seg,
-                xaxis='x2' if has_normal else 'x',  # use secondary only if both exist
-                showlegend=not has_normal  # show only one legend set
-            ))
+    # Secondary axis: Ad-hoc orders
+    for seg in segments:
+        fig.add_trace(go.Bar(
+            y=adhoc_types,
+            x=[order_data[seg][ot] for ot in adhoc_types],
+            name=f"{seg} (Ad-hoc)",
+            orientation='h',
+            marker_color=colors.get(seg),
+            legendgroup=seg,
+            xaxis='x2',
+            showlegend=False
+        ))
 
-    layout = {
-        "barmode": "stack",
-        "title": dict(text="📦 Orders Breakdown (Normal vs Ad-hoc)", x=0.5),
-        "margin": dict(l=10, r=10, t=40, b=20),
-        "height": 40 * len(y_order) + 100,
-        "yaxis": dict(
+    fig.update_layout(
+        title=dict(text="📦 Orders Breakdown (Normal vs Ad-hoc)", x=0.5),
+        barmode='stack',
+        height=40 * len(all_order_types) + 100,
+        margin=dict(l=10, r=10, t=40, b=20),
+        xaxis=dict(title='Normal Order Count'),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
+        yaxis=dict(
             categoryorder='array',
-            categoryarray=y_order,
+            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
             automargin=True
-        )
-    }
-
-    # Configure axis titles based on presence
-    if has_normal:
-        layout["xaxis"] = dict(title='Normal Order Count')
-    if has_adhoc:
-        layout["xaxis2"] = dict(
-            title='Ad-hoc Order Count',
-            overlaying='x',
-            side='top',
-            showgrid=False
-        )
-
-    fig.update_layout(**layout)
+        ),
+    )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
+
+
 
 
 
@@ -501,8 +479,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
 
 
 
