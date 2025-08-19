@@ -268,24 +268,24 @@ def order_status_matrix(df_today, key_prefix=""):
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
-       styled_df = (df_status_table.style
-                 .apply(highlight_df, axis=None)
-                 .set_table_styles([
-                     {'selector': 'th, td',
-                      'props': [
-                          ('padding', '3px 6px'),
-                          ('font-size', '12px'),
-                          ('border-collapse', 'collapse'),
-                          ('text-align', 'center'),
-                      ]},
-                     {'selector': 'table',
-                      'props': [
-                          ('table-layout', 'auto'),   # Let columns size to content
-                          ('width', 'auto'),          # Avoid forcing full width
-                          ('border-collapse', 'collapse')
-                      ]}
-                 ])
-                )
+   styled_df = (df_status_table.style
+             .apply(highlight_df, axis=None)
+             .set_table_styles([
+                 {'selector': 'th, td',
+                  'props': [
+                      ('padding', '3px 6px'),
+                      ('font-size', '12px'),
+                      ('border-collapse', 'collapse'),
+                      ('text-align', 'center'),
+                  ]},
+                 {'selector': 'table',
+                  'props': [
+                      ('table-layout', 'auto'),   # Let columns size to content
+                      ('width', 'auto'),          # Avoid forcing full width
+                      ('border-collapse', 'collapse')
+                  ]}
+             ])
+            )
 
     st.write(styled_df, key=f"{key_prefix}_status")
 
@@ -471,6 +471,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
