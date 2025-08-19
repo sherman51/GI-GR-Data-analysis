@@ -250,7 +250,8 @@ def order_status_matrix(df_today, key_prefix=""):
 
     # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
-        if col_name == 'Shipped' or val <= 0:
+        exclude_status = ['Shipped', 'Cancelled', 'Total']
+        if col_name.isin(exclude_status) or val <= 0:
             return ''
         if row_name == 'Ad-hoc Urgent':
             return 'background-color: #f8e5a1'
@@ -478,6 +479,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
