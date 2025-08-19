@@ -141,76 +141,58 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 # ---------- DASHBOARD FUNCTIONS ----------
 # Daily overview
 def daily_overview(df_today, key_prefix=""):
-    total_order_lines = df_today.shape[0]
-    unique_gino = df_today['GINo'].nunique()
-
-    # --- Smaller metric cards ---
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown(
-            f"<div class='metric-container' style='padding:8px;'>"
-            f"<div class='metric-value' style='font-size:1.1rem;'>{total_order_lines}</div>"
-            f"<div class='metric-label' style='font-size:0.75rem;'>📦 Total Order Lines</div></div>",
-            unsafe_allow_html=True
-        )
-    with col2:
-        st.markdown(
-            f"<div class='metric-container' style='padding:8px;'>"
-            f"<div class='metric-value' style='font-size:1.1rem;'>{unique_gino}</div>"
-            f"<div class='metric-label' style='font-size:0.75rem;'>🔢 Total GINo</div></div>",
-            unsafe_allow_html=True
-        )
-
-    # --- Stacked horizontal bar chart ---
-    order_types = CONFIG['order_types']
+    order_types_group1 = ['Back Orders', 'Ad-hoc Urgent', 'Ad-hoc Critical']  # High Priority
+    order_types_group2 = ['normal', 'Ad-hoc Normal']                         # Standard Orders
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    data = {seg: [] for seg in segments}
-    for ot in order_types:
-        ot_df = df_today[df_today['Order Type'] == ot]
-        for seg in segments:
-            count = (ot_df['Order Status'] == seg).sum()
-            data[seg].append(count)
+    def build_chart(order_types_subset, chart_title, chart_key):
+        data = {seg: [] for seg in segments}
+        filtered_order_types = []
 
-    # filter out order types with zero total
-    filtered_order_types = []
-    filtered_data = {seg: [] for seg in segments}
-    for idx, ot in enumerate(order_types):
-        total = sum(data[seg][idx] for seg in segments)
-        if total > 0:
-            filtered_order_types.append(ot)
+        for ot in order_types_subset:
+            ot_df = df_today[df_today['Order Type'] == ot]
+            total = 0
             for seg in segments:
-                filtered_data[seg].append(data[seg][idx])
+                count = (ot_df['Order Status'] == seg).sum()
+                data[seg].append(count)
+                total += count
+            if total > 0:
+                filtered_order_types.append(ot)
 
-    # build figure
-    bar_fig = go.Figure()
-    for seg in segments:
-        bar_fig.add_trace(go.Bar(
-            y=filtered_order_types,
-            x=filtered_data[seg],
-            name=seg,
-            orientation='h',
-            marker=dict(color=colors[seg]),
-            # 🔴 Removed: width=1.0
-        ))
+        # Remove order types with zero total
+        filtered_data = {seg: [] for seg in segments}
+        for idx, ot in enumerate(order_types_subset):
+            if ot in filtered_order_types:
+                for seg in segments:
+                    filtered_data[seg].append(data[seg][idx])
 
-    # layout improvements
-    bar_fig.update_layout(
-        barmode='stack',
-        bargap=0.2,
-        xaxis=dict(
-            title="Order Count",
-            type="log"  # ✅ Correct location for log scale
-        ),
-        margin=dict(l=10, r=10, t=20, b=20),
-        height=40 * len(filtered_order_types) + 100,
-        yaxis=dict(automargin=True)
-    )
+        # Create stacked bar chart
+        bar_fig = go.Figure()
+        for seg in segments:
+            bar_fig.add_trace(go.Bar(
+                y=filtered_order_types,
+                x=filtered_data[seg],
+                name=seg,
+                orientation='h',
+                marker=dict(color=colors[seg])
+            ))
 
+        bar_fig.update_layout(
+            barmode='stack',
+            bargap=0.2,
+            title=dict(text=chart_title, x=0.5),
+            xaxis=dict(title="Order Count"),
+            margin=dict(l=10, r=10, t=40, b=20),
+            height=40 * len(filtered_order_types) + 100,
+            yaxis=dict(automargin=True)
+        )
+        st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
 
+    # Render both charts
+    build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
+    build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
 
-    st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
 
 
 # Daily completed pie
@@ -459,6 +441,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
