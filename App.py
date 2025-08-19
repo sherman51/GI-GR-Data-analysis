@@ -309,11 +309,12 @@ while len(date_list) < 3 and days_checked < 7:
 
 
 # ---------- DISPLAY ----------
+# ---------- DISPLAY (More compact top section) ----------
 layout = []
 for i in range(len(date_list)):
     layout.append(5)
     if i != len(date_list) - 1:
-        layout.append(0.5)
+        layout.append(0.3)  # thinner divider
 cols = st.columns(layout)
 
 col_index = 0
@@ -321,29 +322,37 @@ for i, dash_date in enumerate(date_list):
     with cols[col_index]:
         df_day = df[df['ExpDate'].dt.date == dash_date]
 
+        # --- Date Header ---
         st.markdown(
-            f"<h5 style='text-align:center; color:gray;'>{dash_date.strftime('%d %b %Y')}</h5>",
+            f"<h5 style='text-align:center; color:gray; margin-bottom:10px;'>{dash_date.strftime('%d %b %Y')}</h5>",
             unsafe_allow_html=True
         )
-        st.markdown("##### 🚨 Urgent and Critical")
-        adhoc_orders_section(df_day, key_prefix=f"day{i}")
-        st.markdown("##### ✅ % completion")
-        daily_completed_pie(df_day, key_prefix=f"day{i}")
-        st.markdown("##### 📋 Order Status Table")
-        order_status_matrix(df_day, key_prefix=f"day{i}")
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("##### 📦 Orders breakdown")
-        daily_overview(df_day, key_prefix=f"day{i}")
 
+        # --- TOP ROW: Urgent/Critical + Completion Pie side by side ---
+        top1, top2 = st.columns([1.2, 1])
+        with top1:
+            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+        with top2:
+            daily_completed_pie(df_day, key_prefix=f"day{i}")
+
+        # --- SECOND ROW: Order Status Table + Orders Breakdown ---
+        mid1, mid2 = st.columns([1, 1])
+        with mid1:
+            st.markdown("📋 **Order Status Table**")
+            order_status_matrix(df_day, key_prefix=f"day{i}")
+        with mid2:
+            st.markdown("📦 **Orders Breakdown**")
+            daily_overview(df_day, key_prefix=f"day{i}")
+
+    # vertical divider between dates
     if i != len(date_list) - 1:
         with cols[col_index + 1]:
             st.markdown(
-            """
-            <div style='height: 125vh; border-left: 2px solid #888; margin: auto;'></div>
-            """,
-            unsafe_allow_html=True
-        )
+                "<div style='height: 100%; border-left: 1px solid #bbb; margin: auto;'></div>",
+                unsafe_allow_html=True
+            )
     col_index += 2
+
 
 # ---------- BOTTOM SECTION ----------
 col1, col2 = st.columns(2)
@@ -356,6 +365,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
