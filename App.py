@@ -136,9 +136,8 @@ df = load_data(file_stream)
 
 # Filter df
 aircon_zones = ['aircon', 'controlled drug room', 'strong room']
-df1 = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
-type_accepted = ['Goods Issue', 'Forward Deploy']
-df = df1[df1['Type'].astype(str).str.strip().str.lower().isin(type_accepted)]
+df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
+
 
 # ---------- DASHBOARD FUNCTIONS ----------
 # Daily overview
@@ -451,6 +450,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
