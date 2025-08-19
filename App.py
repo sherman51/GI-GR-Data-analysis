@@ -134,12 +134,9 @@ def load_data(file):
 # Load data
 df = load_data(file_stream)
 
-# Filter for Aircon zones
+# Filter df
 aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
-
-# Add your filter on 'type' column
-df = df[df['Type'].isin(['GoodsIssue', 'ForwardDeploy'])]
 
 
 # ---------- DASHBOARD FUNCTIONS ----------
@@ -453,9 +450,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
 
 
 
