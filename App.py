@@ -339,7 +339,7 @@ for i, dash_date in enumerate(date_list):
         with cols[col_index + 1]:
             st.markdown(
             """
-            <div style='height: 135vh; border-left: 2px solid #888; margin: auto;'></div>
+            <div style='height: 125vh; border-left: 2px solid #888; margin: auto;'></div>
             """,
             unsafe_allow_html=True
         )
@@ -356,6 +356,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
