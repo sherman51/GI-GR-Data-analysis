@@ -141,8 +141,8 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 # ---------- DASHBOARD FUNCTIONS ----------
 # Daily overview
 def daily_overview(df_today, key_prefix=""):
-    order_types_group1 = ['Back Orders', 'Ad-hoc Urgent', 'Ad-hoc Critical']  # High Priority
-    order_types_group2 = ['normal', 'Ad-hoc Normal']                         # Standard Orders
+    order_types_group1 = ['Back Orders', 'Ad-hoc Urgent', 'Ad-hoc Critical', 'Ad-hoc Normal']  # High Priority
+    order_types_group2 = ['normal']                         # Standard Orders
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
@@ -197,8 +197,8 @@ def daily_overview(df_today, key_prefix=""):
         )
         st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
 
-    build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
-    build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
+    build_chart(order_types_group1, "🚨 Ad-hoc Orders", f"{key_prefix}_high_priority")
+    build_chart(order_types_group2, "📦 Normal Orders", f"{key_prefix}_standard")
 
 
 
@@ -449,6 +449,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
