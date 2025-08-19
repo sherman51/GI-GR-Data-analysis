@@ -21,21 +21,21 @@ CONFIG = {
         '10-Open': 'Open',
         '15-Processing': 'Open',
         '20-Partially Allocated': 'Open',
-        '25-Fully Allocated': 'Pick In-Progress',
-        '35-Pick in Progress': 'Pick In-Progress',
+        '25-Fully Allocated': 'Pick In-Prog',
+        '35-Pick in Progress': 'Pick In-Prog',
         '45-Picked': 'Picked',
         '65-Packed': 'Packed',
         '75-Shipped': 'Shipped',
         '98-Cancelled': 'Cancelled'
     },
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
-    "status_segments": ['Open','Pick In-Progress', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
+    "status_segments": ['Open','Pick In-Prog', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
     "colors": {
         'Shipped': 'green',
         'Cancelled': 'red',
         'Packed': 'blue',
         'Picked': 'yellow',
-        'Pick In-Progress': 'orange',
+        'Pick In-Prog': 'orange',
         'Open': 'salmon',
         'Ad-hoc Urgent': 'orange',
         'Ad-hoc Critical': 'crimson'
@@ -481,6 +481,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
