@@ -146,6 +146,27 @@ def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
+    # --- 📦 Metric Counters ---
+    total_order_lines = df_today.shape[0]
+    unique_gino = df_today['GINo'].nunique()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            f"<div class='metric-container' style='padding:8px;'>"
+            f"<div class='metric-value' style='font-size:1.1rem;'>{total_order_lines}</div>"
+            f"<div class='metric-label' style='font-size:0.75rem;'>📦 Total Order Lines</div></div>",
+            unsafe_allow_html=True
+        )
+    with col2:
+        st.markdown(
+            f"<div class='metric-container' style='padding:8px;'>"
+            f"<div class='metric-value' style='font-size:1.1rem;'>{unique_gino}</div>"
+            f"<div class='metric-label' style='font-size:0.75rem;'>🔢 Total GINo</div></div>",
+            unsafe_allow_html=True
+        )
+
+    # --- 📊 Stacked Bar Chart Builder ---
     def build_chart(order_types_subset, chart_title, chart_key):
         data = {seg: [] for seg in segments}
         filtered_order_types = []
@@ -160,14 +181,14 @@ def daily_overview(df_today, key_prefix=""):
             if total > 0:
                 filtered_order_types.append(ot)
 
-        # Remove order types with zero total
+        # Filter only order types with data
         filtered_data = {seg: [] for seg in segments}
         for idx, ot in enumerate(order_types_subset):
             if ot in filtered_order_types:
                 for seg in segments:
                     filtered_data[seg].append(data[seg][idx])
 
-        # Create stacked bar chart
+        # Plot
         bar_fig = go.Figure()
         for seg in segments:
             bar_fig.add_trace(go.Bar(
@@ -189,7 +210,7 @@ def daily_overview(df_today, key_prefix=""):
         )
         st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
 
-    # Render both charts
+    # --- 🔄 Render both charts ---
     build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
     build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
 
@@ -441,6 +462,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
