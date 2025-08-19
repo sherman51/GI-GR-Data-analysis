@@ -8,9 +8,6 @@ import io
 from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
-if "show_sidebar" not in st.session_state:
-    st.session_state["show_sidebar"] = False
-    
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
 
 CONFIG = {
@@ -94,11 +91,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# Sidebar toggle button
-if st.button("☰ Open Sidebar"):
-    st.session_state["show_sidebar"] = not st.session_state["show_sidebar"]
-
 
 st.markdown("""
 <style>
@@ -466,9 +458,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
 
 
 
