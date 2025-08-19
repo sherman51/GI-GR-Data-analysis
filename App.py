@@ -146,28 +146,28 @@ def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    # --- 📦 Metric Counters ---
+    # --- 🔢 Metrics ---
     total_order_lines = df_today.shape[0]
     unique_gino = df_today['GINo'].nunique()
 
-    col1, col2 = st.columns(2)
-    with col1:
+    metric1, metric2 = st.columns(2)
+    with metric1:
         st.markdown(
             f"<div class='metric-container' style='padding:8px;'>"
-            f"<div class='metric-value' style='font-size:1.1rem;'>{total_order_lines}</div>"
-            f"<div class='metric-label' style='font-size:0.75rem;'>📦 Total Order Lines</div></div>",
+            f"<div class='metric-value'>{total_order_lines}</div>"
+            f"<div class='metric-label'>📦 Total Order Lines</div></div>",
             unsafe_allow_html=True
         )
-    with col2:
+    with metric2:
         st.markdown(
             f"<div class='metric-container' style='padding:8px;'>"
-            f"<div class='metric-value' style='font-size:1.1rem;'>{unique_gino}</div>"
-            f"<div class='metric-label' style='font-size:0.75rem;'>🔢 Total GINo</div></div>",
+            f"<div class='metric-value'>{unique_gino}</div>"
+            f"<div class='metric-label'>🔢 Total GINo</div></div>",
             unsafe_allow_html=True
         )
 
-    # --- 📊 Stacked Bar Chart Builder ---
-    def build_chart(order_types_subset, chart_title, chart_key):
+    # --- Helper to build chart ---
+    def build_chart(order_types_subset, chart_title):
         data = {seg: [] for seg in segments}
         filtered_order_types = []
 
@@ -181,14 +181,13 @@ def daily_overview(df_today, key_prefix=""):
             if total > 0:
                 filtered_order_types.append(ot)
 
-        # Filter only order types with data
+        # Filtered data
         filtered_data = {seg: [] for seg in segments}
         for idx, ot in enumerate(order_types_subset):
             if ot in filtered_order_types:
                 for seg in segments:
                     filtered_data[seg].append(data[seg][idx])
 
-        # Plot
         bar_fig = go.Figure()
         for seg in segments:
             bar_fig.add_trace(go.Bar(
@@ -203,16 +202,24 @@ def daily_overview(df_today, key_prefix=""):
             barmode='stack',
             bargap=0.2,
             title=dict(text=chart_title, x=0.5),
-            xaxis=dict(title="Order Count"),
+            xaxis=dict(title="Order Count", type="linear"),  # ✅ use linear scale
             margin=dict(l=10, r=10, t=40, b=20),
             height=40 * len(filtered_order_types) + 100,
             yaxis=dict(automargin=True)
         )
-        st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
+        return bar_fig
 
-    # --- 🔄 Render both charts ---
-    build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
-    build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
+    # --- 🔄 Side-by-side charts ---
+    chart_col1, chart_col2 = st.columns(2)
+
+    with chart_col1:
+        fig1 = build_chart(order_types_group1, "🚨 High Priority Orders")
+        st.plotly_chart(fig1, use_container_width=True, key=f"{key_prefix}_high")
+
+    with chart_col2:
+        fig2 = build_chart(order_types_group2, "📦 Standard Orders")
+        st.plotly_chart(fig2, use_container_width=True, key=f"{key_prefix}_normal")
+
 
 
 
@@ -462,6 +469,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
