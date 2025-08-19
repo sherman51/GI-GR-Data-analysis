@@ -253,14 +253,21 @@ def order_status_matrix(df_today, key_prefix=""):
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
 
-    # We need to access both row index and column names, so define a nested function with closure
+    # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
-        if row_name == 'Ad-hoc Urgent' and col_name != 'Shipped' and val > 0:
-            return 'background-color: orange'
-        return ''
+        if col_name == 'Shipped' or val <= 0:
+            return ''
 
-    # Wrapper function to pass to applymap, which only takes cell value,
-    # so we need to use df_status_table.index and columns in outer scope.
+        if row_name == 'Ad-hoc Urgent':
+            return 'background-color: #f8e5a1'
+        elif row_name == 'Ad-hoc Critical':
+            return 'background-color: #f5a1a1'
+        elif row_name == 'Ad-hoc Normal':
+            return 'background-color: #ADD8E6'
+        else:
+            return ''
+
+    # Build full style DataFrame
     def highlight_df(df):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
@@ -271,7 +278,6 @@ def order_status_matrix(df_today, key_prefix=""):
     styled_df = df_status_table.style.apply(highlight_df, axis=None)
 
     st.write(styled_df, key=f"{key_prefix}_status")
-
 
 
 
@@ -452,6 +458,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
