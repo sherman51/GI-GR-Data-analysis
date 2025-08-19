@@ -239,16 +239,19 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
 
 # Order status matrix
 def order_status_matrix(df_today, key_prefix=""):
+    # Group and pivot the data
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
     df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
-    
+    # Add a Total column (sum across status segments)
     df_status_table['Total'] = df_status_table.sum(axis=1)
+    # Add a Total row (sum across order types)
     total_row = df_status_table.sum(axis=0)
     total_row.name = 'Total'
     df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
-    
+
+    # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
         if col_name == 'Shipped' or val <= 0:
             return ''
@@ -261,33 +264,40 @@ def order_status_matrix(df_today, key_prefix=""):
         else:
             return ''
 
+    # Apply highlight only to original rows (exclude Total row)
     def highlight_df(df):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
             for c in df.columns:
+                # Skip highlighting for Total row
+                if r == 'Total':
+                    continue
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
-   styled_df = (df_status_table.style
-             .apply(highlight_df, axis=None)
-             .set_table_styles([
-                 {'selector': 'th, td',
-                  'props': [
-                      ('padding', '3px 6px'),
-                      ('font-size', '12px'),
-                      ('border-collapse', 'collapse'),
-                      ('text-align', 'center'),
-                  ]},
-                 {'selector': 'table',
-                  'props': [
-                      ('table-layout', 'auto'),   # Let columns size to content
-                      ('width', 'auto'),          # Avoid forcing full width
-                      ('border-collapse', 'collapse')
-                  ]}
-             ])
-            )
+    styled_df = (df_status_table.style
+                 .apply(highlight_df, axis=None)
+                 .set_table_styles([
+                     {'selector': 'th, td',
+                      'props': [
+                          ('padding', '3px 6px'),
+                          ('font-size', '12px'),
+                          ('border-collapse', 'collapse'),
+                          ('text-align', 'center'),
+                      ]},
+                     {'selector': 'table',
+                      'props': [
+                          ('table-layout', 'auto'),   # Autofit columns
+                          ('width', 'auto'),
+                          ('border-collapse', 'collapse'),
+                      ]}
+                 ])
+                 .set_caption("Order Status Matrix with Totals")
+                 .format("{:.0f}")
+                 )
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 
@@ -471,6 +481,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
