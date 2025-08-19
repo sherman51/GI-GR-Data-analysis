@@ -201,6 +201,7 @@ def daily_overview(df_today, key_prefix=""):
         barmode='stack',
         bargap=0,  # 🔥 remove vertical space between bars
         xaxis_title="Order Count",
+        type = "log",
         margin=dict(l=10, r=10, t=20, b=20),
         height=40 * len(filtered_order_types) + 100,
         yaxis=dict(automargin=True)
@@ -415,6 +416,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
