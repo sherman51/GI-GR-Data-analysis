@@ -223,14 +223,16 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
 
     if is_today:
         completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
+        completed_label = "Completed (Shipped)"
     else:
         completed_orders = df_today['Order Status'].isin(['Packed']).sum()
+        completed_label = "Completed (Packed)"
 
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
 
     fig = go.Figure(go.Pie(
         values=[completed_pct, 100 - completed_pct],
-        labels=["Completed", "Outstanding"],
+        labels=[completed_label, "Outstanding"],
         marker_colors=['mediumseagreen', 'lightgray'],
         hole=0.6,
         textinfo='none',
@@ -430,6 +432,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
