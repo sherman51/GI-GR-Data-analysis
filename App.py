@@ -253,24 +253,25 @@ def order_status_matrix(df_today, key_prefix=""):
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
 
-    # 🔸 Highlight only cells > 0 in Ad-hoc Urgent row (except 'Shipped')
-    def highlight_cells(val, row_name, col_name):
+    # We need to access both row index and column names, so define a nested function with closure
+    def highlight_cell(val, row_name, col_name):
         if row_name == 'Ad-hoc Urgent' and col_name != 'Shipped' and val > 0:
             return 'background-color: orange'
         return ''
 
-    # Apply the styling function element-wise
-    styled_df = df_status_table.style.apply(
-        lambda df: pd.DataFrame(
-            [[highlight_cells(df.iloc[i, j], df.index[i], df.columns[j])
-              for j in range(df.shape[1])]
-             for i in range(df.shape[0])],
-            index=df.index,
-            columns=df.columns
-        )
-    )
+    # Wrapper function to pass to applymap, which only takes cell value,
+    # so we need to use df_status_table.index and columns in outer scope.
+    def highlight_df(df):
+        styles = pd.DataFrame('', index=df.index, columns=df.columns)
+        for r in df.index:
+            for c in df.columns:
+                styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
+        return styles
+
+    styled_df = df_status_table.style.apply(highlight_df, axis=None)
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 
@@ -451,6 +452,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
