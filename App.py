@@ -381,7 +381,7 @@ for i, dash_date in enumerate(date_list):
         with top1:
             st.markdown("##### 🚨 Critical Orders")
             critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                 (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+                                 (~df_day['Order Status'].isin(['Shipped']))]
             st.markdown(
                 f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
                 f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
@@ -390,7 +390,7 @@ for i, dash_date in enumerate(date_list):
 
             st.markdown("##### ⚠ Urgent Orders")
             urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                               (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+                               (~df_day['Order Status'].isin(['Shipped']))]
             st.markdown(
                 f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
                 f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
@@ -431,6 +431,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
