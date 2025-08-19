@@ -71,6 +71,15 @@ else:
     st.stop()
 
 # ---------- PAGE HEADER ----------
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 0rem !important;   /* remove white space above first element */
+    }
+    header {visibility: hidden;}       /* hide default streamlit header bar */
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown(
     """
     <div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
@@ -381,6 +390,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
