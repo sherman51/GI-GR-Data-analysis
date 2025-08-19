@@ -6,6 +6,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
+import streamlit.components.v1 as components
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
@@ -114,6 +115,18 @@ hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
 """, unsafe_allow_html=True)
 
 # ---------- HELPER FUNCTIONS ----------
+def copy_to_clipboard(text, label="Copy GI Nos"):
+    js_code = f"""
+    <script>
+    function copyText() {{
+        navigator.clipboard.writeText(`{text}`);
+        alert("Copied to clipboard!");
+    }}
+    </script>
+    <button onclick="copyText()">{label}</button>
+    """
+    components.html(js_code, height=40)
+
 def load_data(file):
     try:
         df = pd.read_excel(file, skiprows=6, engine='openpyxl')
@@ -380,23 +393,34 @@ for i, dash_date in enumerate(date_list):
         # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
         top1, top2 = st.columns([1, 1.5])   # pie gets more space
         with top1:
-            st.markdown("##### 🚨 Critical Orders")
-            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+            # 🚨 Critical Orders
+            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') &
                                  (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+            critical_count = critical_df['GINo'].nunique()
             st.markdown(
                 f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not critical_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
-
-            st.markdown("##### ⚠ Urgent Orders")
-            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                f"🚨 Critical: {critical_count}</div>", unsafe_allow_html=True
+            )
+            if critical_count > 0:
+                with st.expander("Show Critical GI Nos"):
+                    gi_list = ", ".join(map(str, critical_df['GINo'].unique()))
+                    copy_to_clipboard(gi_list, "📋 Copy Critical GIs")
+                    st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
+        
+            # ⚠ Urgent Orders
+            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') &
                                (~df_day['Order Status'].isin(['Packed', 'Shipped']))]
+            urgent_count = urgent_df['GINo'].nunique()
             st.markdown(
                 f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not urgent_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
+                f"⚠ Urgent: {urgent_count}</div>", unsafe_allow_html=True
+            )
+            if urgent_count > 0:
+                with st.expander("Show Urgent GI Nos"):
+                    gi_list = ", ".join(map(str, urgent_df['GINo'].unique()))
+                    copy_to_clipboard(gi_list, "📋 Copy Urgent GIs")
+                    st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
+
 
         with top2:
             st.markdown("##### ✅ % Completion")
@@ -432,6 +456,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
