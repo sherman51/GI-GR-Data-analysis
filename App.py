@@ -402,17 +402,6 @@ for i, dash_date in enumerate(date_list):
             st.markdown("##### ✅ % Completion")
             daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
 
-        if i != len(date_list) - 1:
-            with cols[col_index + 1]:
-                st.markdown(
-                """
-                <div style='height: 135vh; border-left: 2px solid #888; margin: auto;'></div>
-                """,
-                unsafe_allow_html=True
-            )
-        col_index += 2
-
-
 
         # --- MIDDLE ROW: Order Status Table ---
         st.markdown("##### 📋 Order Status Table")
@@ -443,8 +432,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
 
 
 
