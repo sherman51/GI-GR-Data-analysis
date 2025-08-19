@@ -160,14 +160,15 @@ def daily_overview(df_today, key_prefix=""):
             if total > 0:
                 filtered_order_types.append(ot)
 
-        # Remove order types with zero total
+        if not filtered_order_types:
+            return  # no chart
+
         filtered_data = {seg: [] for seg in segments}
         for idx, ot in enumerate(order_types_subset):
             if ot in filtered_order_types:
                 for seg in segments:
                     filtered_data[seg].append(data[seg][idx])
 
-        # Create stacked bar chart
         bar_fig = go.Figure()
         for seg in segments:
             bar_fig.add_trace(go.Bar(
@@ -189,7 +190,6 @@ def daily_overview(df_today, key_prefix=""):
         )
         st.plotly_chart(bar_fig, use_container_width=True, key=chart_key)
 
-    # Render both charts
     build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
     build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
 
@@ -441,6 +441,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
