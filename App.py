@@ -327,22 +327,22 @@ for i, dash_date in enumerate(date_list):
             unsafe_allow_html=True
         )
 
-        # --- Urgent/Critical Orders ---
-        st.markdown("##### 🚨 Urgent & Critical")
-        adhoc_orders_section(df_day, key_prefix=f"day{i}")
+        # --- TOP ROW: Urgent/Critical + Completion Pie ---
+        top1, top2 = st.columns([1.3, 1])
+        with top1:
+            st.markdown("##### 🚨 Urgent & Critical")
+            adhoc_orders_section(df_day, key_prefix=f"day{i}")
+        with top2:
+            st.markdown("##### ✅ % Completion")
+            daily_completed_pie(df_day, key_prefix=f"day{i}")
 
-        # --- Completion Pie under it ---
-        st.markdown("##### ✅ % Completion")
-        daily_completed_pie(df_day, key_prefix=f"day{i}")
+        # --- MIDDLE ROW: Order Status Table ---
+        st.markdown("##### 📋 Order Status Table")
+        order_status_matrix(df_day, key_prefix=f"day{i}")
 
-        # --- Second Row: Status Table + Orders Breakdown side by side ---
-        mid1, mid2 = st.columns([1, 1])
-        with mid1:
-            st.markdown("📋 **Order Status Table**")
-            order_status_matrix(df_day, key_prefix=f"day{i}")
-        with mid2:
-            st.markdown("📦 **Orders Breakdown**")
-            daily_overview(df_day, key_prefix=f"day{i}")
+        # --- BOTTOM ROW: Orders Breakdown Chart ---
+        st.markdown("##### 📦 Orders Breakdown")
+        daily_overview(df_day, key_prefix=f"day{i}")
 
     # vertical divider between dates
     if i != len(date_list) - 1:
@@ -352,6 +352,7 @@ for i, dash_date in enumerate(date_list):
                 unsafe_allow_html=True
             )
     col_index += 2
+
 
 
 # ---------- BOTTOM SECTION ----------
@@ -365,6 +366,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
