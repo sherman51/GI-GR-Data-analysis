@@ -68,7 +68,6 @@ if file_stream:
     st.sidebar.success(f"📥 Using latest file from GCS: {file_name}")
 else:
     st.sidebar.error("❌ No Excel files found in GCS bucket.")
-    st.stop()
 
 # ---------- PAGE HEADER ----------
 st.markdown("""
@@ -432,6 +431,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
