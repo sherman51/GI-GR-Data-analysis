@@ -144,9 +144,8 @@ def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    # --- Split order types ---
-    urgent_types = ['Ad-hoc Urgent', 'Ad-hoc Critical', 'Back Orders']
-    normal_types = ['normal', 'Ad-hoc Normal']
+    urgent_types = ['Ad-hoc Urgent', 'Ad-hoc Critical']
+    normal_types = ['normal', 'Ad-hoc Normal', 'Back Orders']
 
     def build_chart(order_types, title, chart_key):
         data = {seg: [] for seg in segments}
@@ -174,23 +173,34 @@ def daily_overview(df_today, key_prefix=""):
                 name=seg,
                 orientation='h',
                 marker=dict(color=colors[seg]),
+                width=0.5,  # 🔹 Bar thickness
                 text=data[seg],
                 textposition='auto'
             ))
 
         fig.update_layout(
             barmode='stack',
-            bargap=0.3,
-            title=dict(text=title, x=0.5),
-            xaxis_title="Order Count",
+            bargap=0.15,         # 🔹 Space between bars
+            bargroupgap=0.05,    # 🔹 Optional: tighter groups
+            title=dict(text=title, x=0.5, font=dict(size=16)),
+            xaxis=dict(
+                title="Order Count",
+                titlefont=dict(size=12)
+            ),
+            yaxis=dict(
+                automargin=True,
+                title=None
+            ),
             height=60 * len(filtered_order_types) + 100,
-            yaxis=dict(automargin=True)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
+
         st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_{chart_key}")
 
-    # --- Build two separate charts ---
+    # Render both charts
     build_chart(urgent_types, "🚨 Urgent & Critical Orders", "urgent")
     build_chart(normal_types, "📦 Normal & Ad-hoc Normal Orders", "normal")
+
 
 
 # Daily completed pie
@@ -411,6 +421,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
