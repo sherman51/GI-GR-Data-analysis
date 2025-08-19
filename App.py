@@ -256,7 +256,7 @@ def order_status_matrix(df_today, key_prefix=""):
 
 # Ad-hoc orders
 def adhoc_orders_section(df_today, key_prefix=""):
-    not_completed_df = df_today[~df_today['Status'].isin(['Packed', 'Shipped'])]
+    not_completed_df = df_today[~df_today['Status'].isin(['Shipped'])]
     urgent_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Urgent']
     critical_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Critical']
     col1, col2 = st.columns(2)
@@ -431,6 +431,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
