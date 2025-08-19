@@ -6,7 +6,6 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
-from streamlit_extras.switch_page_button import switch_page
 
 # ---------- CONFIG ----------
 if "show_sidebar" not in st.session_state:
@@ -467,6 +466,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
