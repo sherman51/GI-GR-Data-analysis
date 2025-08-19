@@ -398,7 +398,8 @@ for i, dash_date in enumerate(date_list):
 
         with top2:
             st.markdown("##### ✅ % Completion")
-            daily_completed_pie(df_day, key_prefix=f"day{i}")
+            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+
 
         # --- MIDDLE ROW: Order Status Table ---
         st.markdown("##### 📋 Order Status Table")
@@ -429,6 +430,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
