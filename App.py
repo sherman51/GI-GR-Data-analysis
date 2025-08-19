@@ -146,6 +146,13 @@ def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
+    total_orders = len(df_today)
+    unique_gi_count = df_today['GINo'].nunique() if 'GINo' in df_today.columns else 0
+
+    # Display total orders and GI count with a small gap before charts
+    st.markdown(f"### Total Orders: {total_orders} &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp; Unique GI Count: {unique_gi_count}")
+    st.markdown("<br>", unsafe_allow_html=True)  # small gap
+
     def build_chart(order_types_subset, chart_title, chart_key):
         data = {seg: [] for seg in segments}
         filtered_order_types = []
@@ -192,6 +199,7 @@ def daily_overview(df_today, key_prefix=""):
 
     build_chart(order_types_group1, "🚨 High Priority Orders", f"{key_prefix}_high_priority")
     build_chart(order_types_group2, "📦 Standard Orders", f"{key_prefix}_standard")
+
 
 
 
@@ -441,6 +449,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
