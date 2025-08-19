@@ -178,10 +178,10 @@ def daily_overview(df_today, key_prefix=""):
                 textposition='auto'
             ))
 
-        fig.update_layout(
+            fig.update_layout(
             barmode='stack',
-            bargap=0.15,         # 🔹 Space between bars
-            bargroupgap=0.05,    # 🔹 Optional: tighter groups
+            bargap=0.15,
+            bargroupgap=0.05,
             title=dict(text=title, x=0.5, font=dict(size=16)),
             xaxis=dict(
                 title="Order Count",
@@ -192,8 +192,10 @@ def daily_overview(df_today, key_prefix=""):
                 title=None
             ),
             height=60 * len(filtered_order_types) + 100,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            legend=dict(orientation="h", y=1.1, x=0, xanchor="left")  # ✅ Updated
         )
+
+
 
         st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_{chart_key}")
 
@@ -421,6 +423,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
