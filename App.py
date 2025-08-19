@@ -181,7 +181,6 @@ def daily_overview(df_today, key_prefix=""):
         ))
 
     fig.update_layout(
-        title=dict(text="📦 Orders Breakdown (Normal vs Ad-hoc)", x=0.5),
         barmode='stack',
         height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
@@ -479,6 +478,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
