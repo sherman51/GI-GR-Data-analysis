@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, date
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -194,25 +193,22 @@ def daily_overview(df_today, key_prefix=""):
             name=seg,
             orientation='h',
             marker=dict(color=colors[seg]),
+            width=1.0  # 🔥 full-width bars (removes gap)
         ))
-
-    # dynamically adjust bar thickness
-    n_cats = len(filtered_order_types)
-    bar_width = min(0.6, 0.8 / max(1, n_cats))  # thinner bars if more categories
-
-    bar_fig.update_traces(width=bar_width)
 
     # layout improvements
     bar_fig.update_layout(
         barmode='stack',
+        bargap=0,  # 🔥 remove space between bars
+        bargroupgap=0,  # 🔥 remove group gap (precaution)
         xaxis_title="Order Count",
         margin=dict(l=10, r=10, t=20, b=20),
-        height=40 * n_cats + 100,  # auto-scale chart height
+        height=40 * len(filtered_order_types) + 100,  # auto-scale chart height
         yaxis=dict(automargin=True)
     )
 
-
     st.plotly_chart(bar_fig, use_container_width=True, key=f"{key_prefix}_overview")
+
 
 # Daily completed pie
 def daily_completed_pie(df_today, key_prefix=""):
@@ -419,6 +415,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
