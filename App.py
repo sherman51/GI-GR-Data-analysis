@@ -140,17 +140,14 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 
 
 # ---------- DASHBOARD FUNCTIONS ----------
-# Daily overview
 def daily_overview(df_today, key_prefix=""):
     segments = CONFIG['status_segments']
     colors = CONFIG['colors']
 
-    # Define order types
     normal_type = 'normal'
     adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
     all_order_types = [normal_type] + adhoc_types
 
-    # Prepare data structure
     order_data = {seg: {ot: 0 for ot in all_order_types} for seg in segments}
     for ot in all_order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
@@ -159,7 +156,7 @@ def daily_overview(df_today, key_prefix=""):
 
     fig = go.Figure()
 
-    # --- Plot normal orders on PRIMARY x-axis ---
+    # Primary axis: Normal orders
     for seg in segments:
         fig.add_trace(go.Bar(
             y=[normal_type],
@@ -170,7 +167,7 @@ def daily_overview(df_today, key_prefix=""):
             legendgroup=seg
         ))
 
-    # --- Plot Ad-hoc orders on SECONDARY x-axis ---
+    # Secondary axis: Ad-hoc orders
     for seg in segments:
         fig.add_trace(go.Bar(
             y=adhoc_types,
@@ -180,7 +177,7 @@ def daily_overview(df_today, key_prefix=""):
             marker_color=colors.get(seg),
             legendgroup=seg,
             xaxis='x2',
-            showlegend=False  # avoid duplicate legends
+            showlegend=False
         ))
 
     fig.update_layout(
@@ -192,12 +189,13 @@ def daily_overview(df_today, key_prefix=""):
         xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
         yaxis=dict(
             categoryorder='array',
-            categoryarray=adhoc_types[::-1] + [normal_type],  # controls order of bars top to bottom
+            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
             automargin=True
         ),
     )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
 
 
 
@@ -481,6 +479,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
