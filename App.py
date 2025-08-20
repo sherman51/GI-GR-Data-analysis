@@ -454,8 +454,31 @@ for i, dash_date in enumerate(date_list):
         order_status_matrix(df_day, key_prefix=f"day{i}")
 
         # --- BOTTOM ROW: Orders Breakdown Chart ---
-        st.markdown("##### 📦 Orders Breakdown")
+        brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
+        
+        with brk_col1:
+            st.markdown("##### 📦 Orders Breakdown")
+        
+        with brk_col2:
+            st.markdown(
+                f"<div class='metric-container'>"
+                f"<div class='metric-value'>{df_day.shape[0]}</div>"
+                f"<div class='metric-label'>🧾 Order Lines</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+        
+        with brk_col3:
+            st.markdown(
+                f"<div class='metric-container'>"
+                f"<div class='metric-value'>{df_day['GINo'].nunique()}</div>"
+                f"<div class='metric-label'>📦 No. of GIs</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+        
         daily_overview(df_day, key_prefix=f"day{i}")
+
 
     # vertical divider between dates
     if i != len(date_list) - 1:
@@ -479,6 +502,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
