@@ -8,7 +8,7 @@ import io
 from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
-st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon")
+st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
 
 CONFIG = {
     "priority_map": {
@@ -31,14 +31,14 @@ CONFIG = {
     "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
     "status_segments": ['Open','Pick In-Progress', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
     "colors": {
-        'Shipped': 'green',
-        'Cancelled': 'red',
-        'Packed': 'blue',
-        'Picked': 'yellow',
-        'Pick In-Progress': 'orange',
-        'Open': 'salmon',
-        'Ad-hoc Urgent': 'orange',
-        'Ad-hoc Critical': 'crimson'
+        'Shipped': '#22c55e',
+        'Cancelled': '#ef4444',
+        'Packed': '#3b82f6',
+        'Picked': '#eab308',
+        'Pick In-Progress': '#f97316',
+        'Open': '#fb7185',
+        'Ad-hoc Urgent': '#f59e0b',
+        'Ad-hoc Critical': '#dc2626'
     }
 }
 
@@ -69,48 +69,72 @@ if file_stream:
 else:
     st.sidebar.error("❌ No Excel files found in GCS bucket.")
 
-# ---------- PAGE HEADER ----------
+# ---------- GLOBAL STYLE OVERRIDES ----------
 st.markdown("""
 <style>
-    .block-container {
-        padding-top: 0rem !important;   /* remove white space above first element */
+    /* Hide Streamlit default header & footer */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Body font */
+    html, body, [class*="css"]  {
+        font-family: "Segoe UI", sans-serif;
     }
-    header {visibility: hidden;}       /* hide default streamlit header bar */
+
+    /* Page container */
+    .block-container {
+        padding-top: 0.5rem !important;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Divider */
+    hr {
+        border: none;
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 2rem 0;
+    }
+
+    /* Metric cards */
+    .metric-container {
+        background: linear-gradient(145deg, #ffffff, #f3f4f6);
+        padding: 14px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease;
+    }
+    .metric-container:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .metric-value {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    .metric-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
+# ---------- PAGE HEADER ----------
 st.markdown(
     """
-    <div style="display: flex; align-items: center; background-color: #003366; padding: 12px 16px; border-radius: 6px;">
+    <div style="display: flex; align-items: center; background: linear-gradient(90deg, #003366, #2563eb); padding: 14px 18px; border-radius: 10px; margin-bottom: 20px;">
         <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
-             style="max-height:40px; height:auto; width:auto; margin-right:10px;">
-        <h3 style="margin: 0; font-family: Arial, sans-serif; color: #ffffff;">
-            - <b>Outbound Dashboard Aircon</b>
-        </h3>
+             style="max-height:42px; height:auto; width:auto; margin-right:12px;">
+        <h2 style="margin: 0; font-family: 'Segoe UI', sans-serif; color: #ffffff; font-weight: 600;">
+            Outbound Dashboard Aircon
+        </h2>
     </div>
     """,
     unsafe_allow_html=True
 )
-
-st.markdown("""
-<style>
-hr { border: none; height: 1px; background-color: #d3d3d3; margin: 2rem 0; }
-.metric-container {
-    background-color: #f4f4f4;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-}
-.metric-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-.metric-label {
-    font-size: 0.9rem;
-    color: #555;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
@@ -137,7 +161,6 @@ df = load_data(file_stream)
 # Filter df
 aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
-
 
 # ---------- DASHBOARD FUNCTIONS ----------
 def daily_overview(df_today, key_prefix=""):
@@ -556,42 +579,8 @@ st.markdown("###  *Stay Safe & Well*")
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+st.markdown("""
+    <div style='text-align:center; color:#6b7280; font-size:0.9rem; margin-top:30px;'>
+        ⭐ Stay Safe & Well ⭐
+    </div>
+""", unsafe_allow_html=True)
