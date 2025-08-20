@@ -172,7 +172,7 @@ def daily_overview(df_today, key_prefix=""):
         fig.add_trace(go.Bar(
             y=[normal_type],
             x=[order_data[seg][normal_type]],
-            name=f"{seg} (Normal)",
+            name=f"{seg}",
             orientation='h',
             marker_color=colors.get(seg),
             legendgroup=seg
@@ -533,6 +533,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
