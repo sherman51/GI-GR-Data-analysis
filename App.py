@@ -187,38 +187,47 @@ def daily_overview(df_today, key_prefix=""):
     adhoc_range_max = int(adhoc_max * 1.3) if adhoc_max > 0 else 5
     adhoc_range_max = max(adhoc_range_max, 5)
 
-    fig.update_layout(
-        barmode='stack',
-        height=40 * len(all_order_types) + 100,
-        margin=dict(l=10, r=10, t=40, b=20),
-
-        xaxis=dict(
-            title='Normal Order Count',
-            side='bottom',
-            showgrid=True,
-            zeroline=True,
-            domain=[0, 1],  # Full width
-        ),
-
-        xaxis2=dict(
-            title='Ad-hoc Order Count',
-            overlaying='x',
-            side='top',
-            showgrid=False,
-            zeroline=True,
-            range=[0, adhoc_range_max],
-            titlefont=dict(color='crimson'),
-            tickfont=dict(color='crimson')
-        ),
-
-        yaxis=dict(
-            categoryorder='array',
-            categoryarray=[normal_type] + adhoc_types,
-            automargin=True
+    try:
+       fig.update_layout(
+            barmode='stack',
+            height=40 * len(all_order_types) + 100,
+            margin=dict(l=10, r=10, t=40, b=20),
+    
+            xaxis=dict(
+                title='Normal Order Count',
+                side='bottom',
+                showgrid=True,
+                zeroline=True,
+                domain=[0, 1],  # Full width
+            ),
+    
+            xaxis2=dict(
+                title='Ad-hoc Order Count',
+                overlaying='x',
+                side='top',
+                showgrid=False,
+                zeroline=True,
+                range=[0, adhoc_range_max],
+                titlefont=dict(color='crimson'),
+                tickfont=dict(color='crimson')
+            ),
+    
+            yaxis=dict(
+                categoryorder='array',
+                categoryarray=[normal_type] + adhoc_types,
+                automargin=True
+            )
         )
-    )
+    
+        st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+    
 
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+    except Exception as e:
+        st.error(f"Error in chart layout: {e}")
+        st.write(f"Debug — adhoc_max: {adhoc_max}, adhoc_range_max: {adhoc_range_max}")
+        st.write(fig.to_dict())
+    return
+    
 
 
 
@@ -545,6 +554,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
