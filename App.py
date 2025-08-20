@@ -163,7 +163,7 @@ def daily_overview(df_today, key_prefix=""):
                 max_adhoc_count = count
 
     # Set x-axis range for Ad-hoc chart with a bit of padding
-    adhoc_xaxis_range = [0, max_adhoc_count + 5)]
+    adhoc_xaxis_range = [0, (max_adhoc_count + 5)]
 
     fig = go.Figure()
 
@@ -533,6 +533,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
