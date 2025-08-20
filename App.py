@@ -185,7 +185,7 @@ def daily_overview(df_today, key_prefix=""):
         height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
         xaxis=dict(title='Normal Order Count'),
-        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False, range=[0, 50]),
         yaxis=dict(
             categoryorder='array',
             categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
@@ -521,6 +521,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
