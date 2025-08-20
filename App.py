@@ -148,7 +148,6 @@ def daily_overview(df_today, key_prefix=""):
     adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
     all_order_types = [normal_type] + adhoc_types
 
-    # Create dictionary to hold counts
     order_data = {seg: {ot: 0 for ot in all_order_types} for seg in segments}
     for ot in all_order_types:
         ot_df = df_today[df_today['Order Type'] == ot]
@@ -165,8 +164,7 @@ def daily_overview(df_today, key_prefix=""):
             name=f"{seg} (Normal)",
             orientation='h',
             marker_color=colors.get(seg),
-            legendgroup=seg,
-            xaxis='x1',
+            legendgroup=seg
         ))
 
     # Secondary axis: Ad-hoc orders
@@ -182,52 +180,21 @@ def daily_overview(df_today, key_prefix=""):
             showlegend=False
         ))
 
-    # --- Calculate dynamic max for Ad-hoc scale ---
-    adhoc_max = max(order_data[seg][ot] for seg in segments for ot in adhoc_types)
-    adhoc_range_max = int(adhoc_max * 1.3) if adhoc_max > 0 else 5
-    adhoc_range_max = max(adhoc_range_max, 5)
+    fig.update_layout(
+        barmode='stack',
+        height=40 * len(all_order_types) + 100,
+        margin=dict(l=10, r=10, t=40, b=20),
+        xaxis=dict(title='Normal Order Count'),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
+        yaxis=dict(
+            categoryorder='array',
+            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
+            automargin=True
+        ),
+    )
 
-    try:
-       fig.update_layout(
-            barmode='stack',
-            height=40 * len(all_order_types) + 100,
-            margin=dict(l=10, r=10, t=40, b=20),
-    
-            xaxis=dict(
-                title='Normal Order Count',
-                side='bottom',
-                showgrid=True,
-                zeroline=True,
-                domain=[0, 1],  # Full width
-            ),
-    
-            xaxis2=dict(
-                title='Ad-hoc Order Count',
-                overlaying='x',
-                side='top',
-                showgrid=False,
-                zeroline=True,
-                range=[0, adhoc_range_max],
-                titlefont=dict(color='crimson'),
-                tickfont=dict(color='crimson')
-            ),
-    
-            yaxis=dict(
-                categoryorder='array',
-                categoryarray=[normal_type] + adhoc_types,
-                automargin=True
-            )
-        )
-    
-            st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
-    
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
 
-    except Exception as e:
-        st.error(f"Error in chart layout: {e}")
-        st.write(f"Debug — adhoc_max: {adhoc_max}, adhoc_range_max: {adhoc_range_max}")
-        st.write(fig.to_dict())
-    return
-    
 
 
 
@@ -554,11 +521,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
-
-
 
 
 
