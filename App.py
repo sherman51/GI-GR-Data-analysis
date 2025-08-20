@@ -213,7 +213,9 @@ def daily_overview(df_today, key_prefix=""):
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_today.shape[0]
 
+    # Force both to plain Python date
     today = pd.Timestamp.today().normalize().date()
+    dash_date = pd.to_datetime(dash_date).date()
 
     if dash_date <= today:
         # For today or any past date → shipped
@@ -531,6 +533,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
