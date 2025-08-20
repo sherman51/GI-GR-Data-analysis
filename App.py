@@ -461,21 +461,40 @@ for i, dash_date in enumerate(date_list):
         
         with brk_col2:
             st.markdown(
-                f"<div class='metric-container'>"
-                f"<div class='metric-value'>{df_day.shape[0]}</div>"
-                f"<div class='metric-label'>🧾 Order Lines</div>"
-                f"</div>",
+                f"""
+                <div style='
+                    background-color: #f4f4f4;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    text-align: center;
+                    font-size: 14px;
+                    line-height: 1.2;
+                '>
+                    <div style='font-weight: bold; font-size: 16px;'>{df_day.shape[0]}</div>
+                    <div style='color: #555;'>🧾 Order Lines</div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
         
         with brk_col3:
             st.markdown(
-                f"<div class='metric-container'>"
-                f"<div class='metric-value'>{df_day['GINo'].nunique()}</div>"
-                f"<div class='metric-label'>📦 No. of GIs</div>"
-                f"</div>",
+                f"""
+                <div style='
+                    background-color: #f4f4f4;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    text-align: center;
+                    font-size: 14px;
+                    line-height: 1.2;
+                '>
+                    <div style='font-weight: bold; font-size: 16px;'>{df_day['GINo'].nunique()}</div>
+                    <div style='color: #555;'>📦 No. of GIs</div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
+
         
         daily_overview(df_day, key_prefix=f"day{i}")
 
@@ -502,6 +521,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
