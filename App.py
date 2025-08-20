@@ -34,7 +34,7 @@ CONFIG = {
         'Shipped': '#22c55e',
         'Cancelled': '#ef4444',
         'Packed': '#3b82f6',
-        'Picked': '#fb7185',
+        'Picked': '#C68BA4',
         'Pick In-Progress': '#f97316',
         'Open': '#eab308',
         'Ad-hoc Urgent': '#f59e0b',
@@ -584,4 +584,5 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
