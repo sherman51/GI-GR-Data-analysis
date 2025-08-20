@@ -219,7 +219,7 @@ def daily_overview(df_today, key_prefix=""):
             )
         )
     
-        st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+            st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
     
 
     except Exception as e:
@@ -554,6 +554,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
