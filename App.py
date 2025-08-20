@@ -209,9 +209,6 @@ def daily_overview(df_today, key_prefix=""):
 
 
 
-
-
-
 # Daily completed pie
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_today.shape[0]
@@ -219,9 +216,11 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     today = pd.Timestamp.today().normalize().date()
 
     if dash_date <= today:
+        # For today or any past date → shipped
         completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
     else:
+        # For future dates → packed
         completed_orders = df_today['Order Status'].isin(['Packed']).sum()
         completed_label = "Completed (Packed)"
 
@@ -242,6 +241,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
+
 
 
 # Order status matrix
@@ -531,6 +531,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
