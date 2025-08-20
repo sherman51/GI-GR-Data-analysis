@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, date
 import streamlit as st
-import pandas as pdf
+import pandas as pd
+import plotly.graph_objects as go
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
@@ -209,20 +210,20 @@ def daily_overview(df_today, key_prefix=""):
 
 
 
+
+
+
 # Daily completed pie
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_today.shape[0]
 
-    # Force both to plain Python date
     today = pd.Timestamp.today().normalize().date()
-    dash_date = pd.to_datetime(dash_date).date()
+    is_today = dash_date == today
 
-    if dash_date <= today:
-        # For today or any past date → shipped
+    if dash_date<= is_today:
         completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
     else:
-        # For future dates → packed
         completed_orders = df_today['Order Status'].isin(['Packed']).sum()
         completed_label = "Completed (Packed)"
 
@@ -243,7 +244,6 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
-
 
 
 # Order status matrix
@@ -533,10 +533,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
-
 
 
 
