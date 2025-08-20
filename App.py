@@ -220,7 +220,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     today = pd.Timestamp.today().normalize().date()
     is_today = dash_date == today
 
-    if is_today:
+    if dash_date<= is_today:
         completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
     else:
@@ -533,6 +533,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
