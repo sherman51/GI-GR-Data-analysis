@@ -454,7 +454,7 @@ for i, dash_date in enumerate(date_list):
 
         # --- Date Header ---
         st.markdown(
-            f"<h3 style='text-align:center; color:gray; margin-bottom:10px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h3>",
+            f"<h3 style='text-align:center; color:gray; margin-bottom:10px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h4>",
             unsafe_allow_html=True
         )
 
@@ -584,6 +584,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
