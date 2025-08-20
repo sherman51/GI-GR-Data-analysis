@@ -165,7 +165,8 @@ def daily_overview(df_today, key_prefix=""):
             name=f"{seg} (Normal)",
             orientation='h',
             marker_color=colors.get(seg),
-            legendgroup=seg
+            legendgroup=seg,
+            xaxis='x1',
         ))
 
     # Secondary axis: Ad-hoc orders
@@ -181,7 +182,7 @@ def daily_overview(df_today, key_prefix=""):
             showlegend=False
         ))
 
-    # --- Calculate dynamic x-axis range for Ad-hoc ---
+    # --- Calculate dynamic max for Ad-hoc scale ---
     adhoc_max = max(order_data[seg][ot] for seg in segments for ot in adhoc_types)
     adhoc_range_max = int(adhoc_max * 1.3) if adhoc_max > 0 else 5
     adhoc_range_max = max(adhoc_range_max, 5)
@@ -196,7 +197,7 @@ def daily_overview(df_today, key_prefix=""):
             side='bottom',
             showgrid=True,
             zeroline=True,
-            rangemode='tozero'
+            domain=[0, 1],  # Full width
         ),
 
         xaxis2=dict(
@@ -205,9 +206,9 @@ def daily_overview(df_today, key_prefix=""):
             side='top',
             showgrid=False,
             zeroline=True,
-            range=[0, adhoc_range_max],  # Dynamic scale for Ad-hoc orders
-            tickfont=dict(color='crimson'),
-            titlefont=dict(color='crimson')
+            range=[0, adhoc_range_max],
+            titlefont=dict(color='crimson'),
+            tickfont=dict(color='crimson')
         ),
 
         yaxis=dict(
@@ -218,6 +219,7 @@ def daily_overview(df_today, key_prefix=""):
     )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
 
 
 
@@ -543,6 +545,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
