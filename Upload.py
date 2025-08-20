@@ -25,7 +25,7 @@ if uploaded_file is not None:
     try:
         # Read file using correct engine
         if file_name.endswith(".xls"):
-            df = pd.read_excel(uploaded_file, engine="xlrd")
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
             content_type = "application/vnd.ms-excel"
         elif file_name.endswith(".xlsx"):
             df = pd.read_excel(uploaded_file, engine="openpyxl")
@@ -56,3 +56,4 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
+
