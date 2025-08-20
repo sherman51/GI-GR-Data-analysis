@@ -154,9 +154,20 @@ def daily_overview(df_today, key_prefix=""):
         for seg in segments:
             order_data[seg][ot] = (ot_df['Order Status'] == seg).sum()
 
+    # Find max Ad-hoc count among all segments and types
+    max_adhoc_count = 0
+    for seg in segments:
+        for ot in adhoc_types:
+            count = order_data[seg][ot]
+            if count > max_adhoc_count:
+                max_adhoc_count = count
+
+    # Set x-axis range for Ad-hoc chart with a bit of padding
+    adhoc_xaxis_range = [0, max_adhoc_count + 5)]
+
     fig = go.Figure()
 
-    # Primary axis: Normal orders
+    # Primary axis: Normal orders (stacked horizontally)
     for seg in segments:
         fig.add_trace(go.Bar(
             y=[normal_type],
@@ -167,7 +178,7 @@ def daily_overview(df_today, key_prefix=""):
             legendgroup=seg
         ))
 
-    # Secondary axis: Ad-hoc orders
+    # Secondary axis: Ad-hoc orders (stacked horizontally on x2 axis)
     for seg in segments:
         fig.add_trace(go.Bar(
             y=adhoc_types,
@@ -185,15 +196,16 @@ def daily_overview(df_today, key_prefix=""):
         height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
         xaxis=dict(title='Normal Order Count'),
-        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False, range=[0, 50]),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False, range=adhoc_xaxis_range),
         yaxis=dict(
             categoryorder='array',
-            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
+            categoryarray=[normal_type] + adhoc_types,
             automargin=True
         ),
     )
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
+
 
 
 
@@ -521,6 +533,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
