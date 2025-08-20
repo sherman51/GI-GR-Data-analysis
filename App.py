@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, date
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
+import pandas as pdf
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
@@ -218,9 +217,8 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_today.shape[0]
 
     today = pd.Timestamp.today().normalize().date()
-    is_today = dash_date == today
 
-    if dash_date<= is_today:
+    if dash_date <= today:
         completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
     else:
@@ -533,6 +531,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
