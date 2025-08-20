@@ -180,49 +180,18 @@ def daily_overview(df_today, key_prefix=""):
             showlegend=False
         ))
 
-   # Optional: Dynamically scale ad-hoc x-axis upper limit
-    adhoc_max = max(order_data[seg][ot] for seg in segments for ot in adhoc_types)
-    adhoc_range_max = max(10, int(adhoc_max * 1.3))  # add buffer
-
     fig.update_layout(
         barmode='stack',
         height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
-    
-        xaxis=dict(
-            title='Normal Order Count',
-            side='bottom',
-            showgrid=True,
-            zeroline=True,
-            rangemode='tozero'
-        ),
-    
-        xaxis2=dict(
-            title='Ad-hoc Order Count (scaled)',
-            overlaying='x',
-            side='top',
-            showgrid=False,
-            zeroline=True,
-            range=[0, adhoc_range_max],  # 👈 Compress scale
-            tickfont=dict(color='crimson'),
-            titlefont=dict(color='crimson')
-        ),
-    
+        xaxis=dict(title='Normal Order Count'),
+        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
         yaxis=dict(
             categoryorder='array',
-            categoryarray=[normal_type] + adhoc_types,
+            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
             automargin=True
         ),
-    
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
     )
-
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
 
@@ -552,9 +521,6 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
 
 
 
