@@ -184,14 +184,27 @@ def daily_overview(df_today, key_prefix=""):
         barmode='stack',
         height=40 * len(all_order_types) + 100,
         margin=dict(l=10, r=10, t=40, b=20),
-        xaxis=dict(title='Normal Order Count'),
-        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False),
+        xaxis=dict(
+            title='Normal Order Count',
+            domain=[0.0, 0.48],  # adjust left side space
+            showgrid=True,
+        ),
+        xaxis2=dict(
+            title='Ad-hoc Order Count',
+            overlaying=None,  # disables overlay to use separate scale
+            anchor='y',
+            side='right',
+            domain=[0.52, 1.0],  # position on right half
+            showgrid=True,
+        ),
         yaxis=dict(
             categoryorder='array',
-            categoryarray=[normal_type] + adhoc_types,  # ✅ Normal bar closest to x-axis
-            automargin=True
+            categoryarray=[normal_type] + adhoc_types,
+            automargin=True,
         ),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
+
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
 
@@ -521,6 +534,7 @@ with col2:
     performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
+
 
 
 
