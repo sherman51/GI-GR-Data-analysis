@@ -55,12 +55,14 @@ bucket = gcs_client.bucket(BUCKET_NAME)
 
 def download_latest_excel(bucket):
     blobs = list(bucket.list_blobs())
-    excel_blobs = [b for b in blobs if b.name.lower().endswith(('.xlsx', '.xls'))]
-    if not excel_blobs:
+    # Filter for files that start with 'aircon' (case-insensitive)
+    aircon_blobs = [b for b in blobs if b.name.lower().startswith('aircon') and b.name.lower().endswith(('.xlsx', '.xls'))]
+    if not aircon_blobs:
         return None, None
-    latest_blob = max(excel_blobs, key=lambda b: b.updated)
+    latest_blob = max(aircon_blobs, key=lambda b: b.updated)
     file_bytes = latest_blob.download_as_bytes()
     return io.BytesIO(file_bytes), latest_blob.name
+
 
 # ---------- FETCH LATEST FILE ----------
 file_stream, file_name = download_latest_excel(bucket)
@@ -584,6 +586,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
