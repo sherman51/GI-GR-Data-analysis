@@ -43,7 +43,7 @@ CONFIG = {
 }
 
 # ---------- AUTO REFRESH ----------
-st_autorefresh(interval=10*1000, limit=None, key="data_refresh")
+st_autorefresh(interval=60*1000, limit=None, key="data_refresh")
 
 # ---------- GCP AUTH ----------
 credentials = service_account.Credentials.from_service_account_info(
@@ -586,6 +586,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
