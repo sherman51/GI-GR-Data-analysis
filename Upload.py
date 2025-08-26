@@ -24,43 +24,42 @@ st.header(f"Upload Excel File for {workstream_label.capitalize()} Workstream (.x
 uploaded_file = st.file_uploader(f"Choose an Excel file for {workstream_label.capitalize()} workstream", type=["xls", "xlsx"])
 
 if uploaded_file is not None:
-    file_name = uploaded_file.name  # Get the original file name
+    original_file_name = uploaded_file.name  # Get the original file name
+    
+    # Automatically prepend the workstream label to the file name
+    file_name = f"{workstream_label}-{original_file_name}"
 
-    # Check if file name starts with the selected workstream label
-    if not file_name.lower().startswith(f"{workstream_label}-"):
-        st.error(f"File name must start with '{workstream_label}-'. Please rename your file and try again.")
-    else:
-        try:
-            # Read file using correct engine
-            if file_name.endswith(".xls"):
-                df = pd.read_excel(uploaded_file, engine="openpyxl")
-                content_type = "application/vnd.ms-excel"
-            elif file_name.endswith(".xlsx"):
-                df = pd.read_excel(uploaded_file, engine="openpyxl")
-                content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            else:
-                st.error("Unsupported file format!")
-                st.stop()
+    try:
+        # Read file using correct engine
+        if file_name.endswith(".xls"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
+            content_type = "application/vnd.ms-excel"
+        elif file_name.endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        else:
+            st.error("Unsupported file format!")
+            st.stop()
 
-            st.dataframe(df.head())  # Show preview
+        st.dataframe(df.head())  # Show preview
 
-            # Upload to GCS
-            uploaded_file.seek(0)  # Reset buffer
-            blob = bucket.blob(file_name)
-            blob.upload_from_file(uploaded_file, content_type=content_type)
+        # Upload to GCS with the new name
+        uploaded_file.seek(0)  # Reset buffer
+        blob = bucket.blob(file_name)
+        blob.upload_from_file(uploaded_file, content_type=content_type)
 
-            st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
+        st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
 
-            # --- Remove existing workstream-related file ---
-            st.info(f"Cleaning up old {workstream_label} file in the bucket...")
-            blobs = bucket.list_blobs(prefix=workstream_label)  # List blobs with the workstream prefix
-            deleted_count = 0
-            for b in blobs:
-                if b.name != file_name:  # Don't delete the newly uploaded file
-                    b.delete()
-                    deleted_count += 1
+        # --- Remove existing workstream-related file ---
+        st.info(f"Cleaning up old {workstream_label} file in the bucket...")
+        blobs = bucket.list_blobs(prefix=workstream_label)  # List blobs with the workstream prefix
+        deleted_count = 0
+        for b in blobs:
+            if b.name != file_name:  # Don't delete the newly uploaded file
+                b.delete()
+                deleted_count += 1
 
-            st.success(f"Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
+        st.success(f"Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
 
-        except Exception as e:
-            st.error(f"Failed to read or upload Excel file: {e}")
+    except Exception as e:
+        st.error(f"Failed to read or upload Excel file: {e}")
