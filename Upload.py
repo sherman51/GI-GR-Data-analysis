@@ -52,10 +52,13 @@ if uploaded_file is not None:
 
         # --- Remove existing workstream-related file ---
         st.info(f"Cleaning up old {workstream_label} file in the bucket...")
-        blobs = bucket.list_blobs(prefix=workstream_label)  # List blobs with the workstream prefix
+        
+        # List blobs with the workstream prefix
+        blobs = bucket.list_blobs(prefix=workstream_label)
         deleted_count = 0
         for b in blobs:
-            if b.name != file_name:  # Don't delete the newly uploaded file
+            # Delete only the file that matches the prefix and is NOT the newly uploaded file
+            if b.name.startswith(workstream_label) and b.name != file_name:
                 b.delete()
                 deleted_count += 1
 
