@@ -15,12 +15,16 @@ bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
 
+# --- Workstream Label Section ---
+st.header("Workstream Label")
+workstream_label = st.selectbox("Choose your workstream", ["coldroom", "aircon"])
+
 # --- Upload Section ---
-st.header("Upload Excel File (.xls or .xlsx)")
-uploaded_file = st.file_uploader("Choose an Excel file", type=["xls", "xlsx"])
+st.header(f"Upload Excel File for {workstream_label.capitalize()} Workstream (.xls or .xlsx)")
+uploaded_file = st.file_uploader(f"Choose an Excel file for {workstream_label.capitalize()} workstream", type=["xls", "xlsx"])
 
 if uploaded_file is not None:
-    file_name = uploaded_file.name
+    file_name = f"{workstream_label}-{uploaded_file.name}"  # Prepend the workstream label to the file name
 
     try:
         # Read file using correct engine
@@ -43,17 +47,16 @@ if uploaded_file is not None:
 
         st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
 
-        # --- Delete all other blobs except the newly uploaded one ---
-        st.info("Cleaning up old files in the bucket...")
-        blobs = bucket.list_blobs()
+        # --- Remove existing workstream-related file ---
+        st.info(f"Cleaning up old {workstream_label} file in the bucket...")
+        blobs = bucket.list_blobs(prefix=workstream_label)  # List blobs with the workstream prefix
         deleted_count = 0
         for b in blobs:
-            if b.name != file_name:
+            if b.name != file_name:  # Don't delete the newly uploaded file
                 b.delete()
                 deleted_count += 1
 
-        st.success(f"Deleted {deleted_count} old file(s) from the bucket.")
+        st.success(f"Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
 
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
-
