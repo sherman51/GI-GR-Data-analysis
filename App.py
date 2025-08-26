@@ -414,8 +414,8 @@ def performance_metrics(df, key_prefix=""):
 # ---------- DATE LOGIC ----------
 date_list = []
 days_checked = 0
-current_date = datetime.today().date()
-#current_date = date(2025,8,15)
+#current_date = datetime.today().date()
+current_date = date(2025,8,15)
 while len(date_list) < 3 and days_checked < 7:
     weekday = current_date.weekday()  # Monday = 0, Sunday = 6
 
@@ -584,6 +584,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
