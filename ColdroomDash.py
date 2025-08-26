@@ -129,7 +129,7 @@ st.markdown(
         <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
              style="max-height:42px; height:auto; width:auto; margin-right:12px;">
         <h2 style="margin: 0; font-family: 'Segoe UI', sans-serif; color: #ffffff; font-weight: 600;">
-            Outbound Dashboard Aircon
+            ColdRoom Dashboard
         </h2>
     </div>
     """,
@@ -584,6 +584,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
