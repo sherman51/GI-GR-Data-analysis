@@ -8,7 +8,7 @@ import io
 from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
-st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
+st.set_page_config(layout="wide", page_title="ColdRoom Dashboard", page_icon="📊")
 
 CONFIG = {
     "priority_map": {
@@ -159,8 +159,8 @@ def load_data(file):
 df = load_data(file_stream)
 
 # Filter df
-aircon_zones = ['aircon', 'controlled drug room', 'strong room']
-df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
+coldroom_zones = ['cold room', 'freezer']
+df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(coldroom_zones)]
 
 # ---------- DASHBOARD FUNCTIONS ----------
 def daily_overview(df_today, key_prefix=""):
@@ -584,3 +584,4 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
