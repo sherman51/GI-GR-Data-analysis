@@ -246,7 +246,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     is_today = dash_date == today
 
     if is_today:
-        completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
+        completed_orders = df_today['Order Status'].isin(['Packed']).sum()
         completed_label = "Completed (Shipped)"
     else:
         completed_orders = df_today['Order Status'].isin(['Packed']).sum()
@@ -586,6 +586,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
