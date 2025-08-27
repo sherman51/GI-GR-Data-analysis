@@ -18,7 +18,6 @@ CONFIG = {
         '4-ADHOC Critical': 'Ad-hoc Critical'
     },
     "status_map": {
-        '10-Open': 'Open',
         '15-Processing': 'Processing',
         '20-Partially Allocated': 'Partially Allocated',
         '25-Fully Allocated': 'Pick In-Progress',
@@ -586,6 +585,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
