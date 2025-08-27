@@ -19,8 +19,8 @@ CONFIG = {
     },
     "status_map": {
         '10-Open': 'Open',
-        '15-Processing': 'Open',
-        '20-Partially Allocated': 'Open',
+        '15-Processing': 'Processing',
+        '20-Partially Allocated': 'Partially Allocated',
         '25-Fully Allocated': 'Pick In-Progress',
         '35-Pick in Progress': 'Pick In-Progress',
         '45-Picked': 'Picked',
@@ -586,6 +586,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
