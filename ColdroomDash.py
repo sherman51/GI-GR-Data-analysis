@@ -282,32 +282,52 @@ def order_status_matrix(df_today, key_prefix=""):
     # Sum of ExpectedQTY
     qty_sums = grouped['ExpectedQTY'].sum().unstack(fill_value=0)
 
-    # Build combined DataFrame with format "lines\n(qty)"
+    # Build combined DataFrame with conditional format
     combined_df = pd.DataFrame(index=CONFIG['order_types'], columns=CONFIG['status_segments'])
 
     for row in CONFIG['order_types']:
         for col in CONFIG['status_segments']:
             lines = order_line_counts.at[row, col] if (row in order_line_counts.index and col in order_line_counts.columns) else 0
             qty = qty_sums.at[row, col] if (row in qty_sums.index and col in qty_sums.columns) else 0
-            combined_df.at[row, col] = f"{int(lines)}\n({int(qty)})"
+            if lines == 0:
+                combined_df.at[row, col] = "0"
+            elif qty == 0:
+                combined_df.at[row, col] = f"{int(lines)}"
+            else:
+                combined_df.at[row, col] = f"{int(lines)}\n({int(qty)})"
 
-    # Add row total (sum of lines and qty)
+    # Add row totals
     for row in CONFIG['order_types']:
         line_total = order_line_counts.loc[row].sum() if row in order_line_counts.index else 0
         qty_total = qty_sums.loc[row].sum() if row in qty_sums.index else 0
-        combined_df.at[row, 'Total'] = f"{int(line_total)}\n({int(qty_total)})"
+        if line_total == 0:
+            combined_df.at[row, 'Total'] = "0"
+        elif qty_total == 0:
+            combined_df.at[row, 'Total'] = f"{int(line_total)}"
+        else:
+            combined_df.at[row, 'Total'] = f"{int(line_total)}\n({int(qty_total)})"
 
     # Add column totals
     total_row = {}
     for col in CONFIG['status_segments']:
         line_total = order_line_counts[col].sum() if col in order_line_counts.columns else 0
         qty_total = qty_sums[col].sum() if col in qty_sums.columns else 0
-        total_row[col] = f"{int(line_total)}\n({int(qty_total)})"
+        if line_total == 0:
+            total_row[col] = "0"
+        elif qty_total == 0:
+            total_row[col] = f"{int(line_total)}"
+        else:
+            total_row[col] = f"{int(line_total)}\n({int(qty_total)})"
 
     # Grand total
     grand_total_lines = order_line_counts.values.sum()
     grand_total_qty = qty_sums.values.sum()
-    total_row['Total'] = f"{int(grand_total_lines)}\n({int(grand_total_qty)})"
+    if grand_total_lines == 0:
+        total_row['Total'] = "0"
+    elif grand_total_qty == 0:
+        total_row['Total'] = f"{int(grand_total_lines)}"
+    else:
+        total_row['Total'] = f"{int(grand_total_lines)}\n({int(grand_total_qty)})"
 
     combined_df.loc['Total'] = pd.Series(total_row)
 
@@ -343,7 +363,7 @@ def order_status_matrix(df_today, key_prefix=""):
                       'props': [
                           ('padding', '4px 8px'),
                           ('font-size', '12px'),
-                          ('white-space', 'pre-line'),  # allow line break
+                          ('white-space', 'pre-line'),  # allows line breaks
                           ('text-align', 'center'),
                           ('border-collapse', 'collapse'),
                       ]},
@@ -613,6 +633,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
