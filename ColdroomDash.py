@@ -273,22 +273,50 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
 
 # Order status matrix
 def order_status_matrix(df_today, key_prefix=""):
-    # Group and pivot the data
-    df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
-    df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
-                                              columns=CONFIG['status_segments'],
-                                              fill_value=0)
-    # Add a Total column (sum across status segments)
-    df_status_table['Total'] = df_status_table.sum(axis=1)
-    # Add a Total row (sum across order types)
-    total_row = df_status_table.sum(axis=0)
-    total_row.name = 'Total'
-    df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
+    # Group by Order Type and Order Status
+    grouped = df_today.groupby(['Order Type', 'Order Status'])
 
-    # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
+    # Count of order lines
+    order_line_counts = grouped.size().unstack(fill_value=0)
+
+    # Sum of ExpectedQTY
+    qty_sums = grouped['ExpectedQTY'].sum().unstack(fill_value=0)
+
+    # Build combined DataFrame with format "lines\n(qty)"
+    combined_df = pd.DataFrame(index=CONFIG['order_types'], columns=CONFIG['status_segments'])
+
+    for row in CONFIG['order_types']:
+        for col in CONFIG['status_segments']:
+            lines = order_line_counts.at[row, col] if (row in order_line_counts.index and col in order_line_counts.columns) else 0
+            qty = qty_sums.at[row, col] if (row in qty_sums.index and col in qty_sums.columns) else 0
+            combined_df.at[row, col] = f"{int(lines)}\n({int(qty)})"
+
+    # Add row total (sum of lines and qty)
+    for row in CONFIG['order_types']:
+        line_total = order_line_counts.loc[row].sum() if row in order_line_counts.index else 0
+        qty_total = qty_sums.loc[row].sum() if row in qty_sums.index else 0
+        combined_df.at[row, 'Total'] = f"{int(line_total)}\n({int(qty_total)})"
+
+    # Add column totals
+    total_row = {}
+    for col in CONFIG['status_segments']:
+        line_total = order_line_counts[col].sum() if col in order_line_counts.columns else 0
+        qty_total = qty_sums[col].sum() if col in qty_sums.columns else 0
+        total_row[col] = f"{int(line_total)}\n({int(qty_total)})"
+
+    # Grand total
+    grand_total_lines = order_line_counts.values.sum()
+    grand_total_qty = qty_sums.values.sum()
+    total_row['Total'] = f"{int(grand_total_lines)}\n({int(grand_total_qty)})"
+
+    combined_df.loc['Total'] = pd.Series(total_row)
+
+    # ---------- Highlighting ----------
     def highlight_cell(val, row_name, col_name):
         exclude_status = ['Shipped', 'Cancelled', 'Total']
-        if col_name in exclude_status or val <= 0:
+        if col_name in exclude_status or pd.isna(val):
+            return ''
+        if val.startswith("0"):
             return ''
         if row_name == 'Ad-hoc Urgent':
             return 'background-color: #f8e5a1'
@@ -299,39 +327,38 @@ def order_status_matrix(df_today, key_prefix=""):
         else:
             return ''
 
-    # Apply highlight only to original rows (exclude Total row)
     def highlight_df(df):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
             for c in df.columns:
-                # Skip highlighting for Total row
                 if r == 'Total':
                     continue
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
-    styled_df = (df_status_table.style
+    styled_df = (combined_df.style
                  .apply(highlight_df, axis=None)
                  .set_table_styles([
                      {'selector': 'th, td',
                       'props': [
-                          ('padding', '3px 6px'),
+                          ('padding', '4px 8px'),
                           ('font-size', '12px'),
-                          ('border-collapse', 'collapse'),
+                          ('white-space', 'pre-line'),  # allow line break
                           ('text-align', 'center'),
+                          ('border-collapse', 'collapse'),
                       ]},
                      {'selector': 'table',
                       'props': [
-                          ('table-layout', 'auto'),   # Autofit columns
+                          ('table-layout', 'auto'),
                           ('width', 'auto'),
                           ('border-collapse', 'collapse'),
                       ]}
                  ])
                  .set_caption("Order Status Matrix with Totals")
-                 .format("{:.0f}")
                  )
 
     st.write(styled_df, key=f"{key_prefix}_status")
+
 
 
 
@@ -586,6 +613,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
