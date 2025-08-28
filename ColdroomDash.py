@@ -296,45 +296,9 @@ def order_status_matrix(df_today, key_prefix=""):
             else:
                 combined_df.at[row, col] = f"{int(lines)}\n({int(qty)})"
 
-    # Add row totals
-    for row in CONFIG['order_types']:
-        line_total = order_line_counts.loc[row].sum() if row in order_line_counts.index else 0
-        qty_total = qty_sums.loc[row].sum() if row in qty_sums.index else 0
-        if line_total == 0:
-            combined_df.at[row, 'Total'] = "0"
-        elif qty_total == 0:
-            combined_df.at[row, 'Total'] = f"{int(line_total)}"
-        else:
-            combined_df.at[row, 'Total'] = f"{int(line_total)}\n({int(qty_total)})"
-
-    # Add column totals
-    total_row = {}
-    for col in CONFIG['status_segments']:
-        line_total = order_line_counts[col].sum() if col in order_line_counts.columns else 0
-        qty_total = qty_sums[col].sum() if col in qty_sums.columns else 0
-        if line_total == 0:
-            total_row[col] = "0"
-        elif qty_total == 0:
-            total_row[col] = f"{int(line_total)}"
-        else:
-            total_row[col] = f"{int(line_total)}\n({int(qty_total)})"
-
-    # Grand total
-    grand_total_lines = order_line_counts.values.sum()
-    grand_total_qty = qty_sums.values.sum()
-    if grand_total_lines == 0:
-        total_row['Total'] = "0"
-    elif grand_total_qty == 0:
-        total_row['Total'] = f"{int(grand_total_lines)}"
-    else:
-        total_row['Total'] = f"{int(grand_total_lines)}\n({int(grand_total_qty)})"
-
-    combined_df.loc['Total'] = pd.Series(total_row)
-
     # ---------- Highlighting ----------
     def highlight_cell(val, row_name, col_name):
-        exclude_status = ['Shipped', 'Cancelled', 'Total']
-        if col_name in exclude_status or pd.isna(val):
+        if col_name in ['Shipped', 'Cancelled'] or pd.isna(val):
             return ''
         if val.startswith("0"):
             return ''
@@ -351,8 +315,6 @@ def order_status_matrix(df_today, key_prefix=""):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
             for c in df.columns:
-                if r == 'Total':
-                    continue
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
@@ -363,7 +325,7 @@ def order_status_matrix(df_today, key_prefix=""):
                       'props': [
                           ('padding', '4px 8px'),
                           ('font-size', '12px'),
-                          ('white-space', 'pre-line'),  # allows line breaks
+                          ('white-space', 'pre-line'),
                           ('text-align', 'center'),
                           ('border-collapse', 'collapse'),
                       ]},
@@ -374,11 +336,10 @@ def order_status_matrix(df_today, key_prefix=""):
                           ('border-collapse', 'collapse'),
                       ]}
                  ])
-                 .set_caption("Order Status Matrix with Totals")
+                 .set_caption("Order Status Matrix (No Totals)")
                  )
 
     st.write(styled_df, key=f"{key_prefix}_status")
-
 
 
 
@@ -633,6 +594,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
