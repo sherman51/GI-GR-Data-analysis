@@ -6,6 +6,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
+import streamlit.components.v1 as components
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -612,6 +613,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
