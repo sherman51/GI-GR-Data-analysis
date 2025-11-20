@@ -272,60 +272,91 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
 
 
 def order_status_matrix(df_today, key_prefix=""):
-    df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
-    df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
-                                              columns=CONFIG['status_segments'],
-                                              fill_value=0)
-    df_status_table['Total'] = df_status_table.sum(axis=1)
+
+    # --- Build pivot table ---
+    df_status_table = df_today.groupby(["Order Type", "Order Status"]).size().unstack(fill_value=0)
+
+    df_status_table = df_status_table.reindex(
+        index=CONFIG['order_types'],
+        columns=CONFIG['status_segments'],
+        fill_value=0
+    )
+
+    df_status_table["Total"] = df_status_table.sum(axis=1)
+
     total_row = df_status_table.sum(axis=0)
-    total_row.name = 'Total'
+    total_row.name = "Total"
+
     df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
 
-    def highlight_cell(val, row_name, col_name):
-        exclude_status = ['Shipped', 'Cancelled', 'Total']
-        if col_name in exclude_status or val <= 0:
-            return ''
-        if row_name == 'Ad-hoc Urgent':
-            return 'background-color: #f8e5a1'
-        elif row_name == 'Ad-hoc Critical':
-            return 'background-color: #f5a1a1'
-        elif row_name == 'Ad-hoc Normal':
-            return 'background-color: #ADD8E6'
-        else:
-            return ''
 
+    # --- Cell highlighter ---
+    def highlight_cell(val, row_name, col_name):
+        # Don't highlight totals or completed statuses
+        if col_name in ["Shipped", "Cancelled", "Total"]:
+            return ""
+        if val <= 0:
+            return ""
+
+        if row_name == "Ad-hoc Urgent":
+            return "background-color: #f8e5a1"
+        if row_name == "Ad-hoc Critical":
+            return "background-color: #f5a1a1"
+        if row_name == "Ad-hoc Normal":
+            return "background-color: #ADD8E6"
+        return ""
+
+
+    # --- Build style dataframe ---
     def highlight_df(df):
-        styles = pd.DataFrame('', index=df.index, columns=df.columns)
+        styles = pd.DataFrame("", index=df.index, columns=df.columns)
         for r in df.index:
+            if r == "Total":
+                continue
             for c in df.columns:
-                if r == 'Total':
-                    continue
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
         return styles
 
-    styled_df = (df_status_table.style
-                 .apply(highlight_df, axis=None)
-                 .set_table_styles([
-                     {'selector': 'th, td',
-                      'props': [
-                          ('padding', '3px 6px'),
-                          ('font-size', '12px'),
-                          ('border-collapse', 'collapse'),
-                          ('text-align', 'center'),
-                      ]},
-                     {'selector': 'table',
-                      'props': [
-                          ('table-layout', 'auto'),
-                          ('width', 'auto'),
-                          ('border-collapse', 'collapse'),
-                      ]}
-                 ])
-                 .set_caption("Order Status Matrix with Totals")
-                 .format("{:.0f}")
-                 )
 
-    # FIXED — Streamlit supports HTML + key, not styled_df directly
-    st.html(styled_df.to_html(), key=f"{key_prefix}_status")
+    # --- Apply style ---
+    styled_df = (
+        df_status_table.style
+            .apply(highlight_df, axis=None)
+            .set_table_styles([
+                {
+                    "selector": "th, td",
+                    "props": [
+                        ("padding", "4px 6px"),
+                        ("font-size", "12px"),
+                        ("border", "1px solid #ddd"),
+                        ("text-align", "center"),
+                    ],
+                },
+                {
+                    "selector": "table",
+                    "props": [
+                        ("border-collapse", "collapse"),
+                        ("width", "100%"),
+                    ],
+                },
+            ])
+            .format("{:.0f}")
+    )
+
+    # --- Render HTML using supported method ---
+    html_code = styled_df.to_html()
+
+    with st.container():
+        components.html(
+            f"""
+            <div style="overflow-x:auto; width:100%;">
+                {html_code}
+            </div>
+            """,
+            height=350,
+            scrolling=True
+        )
+
 
 
 
@@ -581,6 +612,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
