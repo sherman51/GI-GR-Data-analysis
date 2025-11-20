@@ -271,21 +271,16 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
 
 
-# Order status matrix
 def order_status_matrix(df_today, key_prefix=""):
-    # Group and pivot the data
     df_status_table = df_today.groupby(['Order Type', 'Order Status']).size().unstack(fill_value=0)
     df_status_table = df_status_table.reindex(index=CONFIG['order_types'],
                                               columns=CONFIG['status_segments'],
                                               fill_value=0)
-    # Add a Total column (sum across status segments)
     df_status_table['Total'] = df_status_table.sum(axis=1)
-    # Add a Total row (sum across order types)
     total_row = df_status_table.sum(axis=0)
     total_row.name = 'Total'
     df_status_table = pd.concat([df_status_table, total_row.to_frame().T])
 
-    # Highlighting logic for Urgent, Critical, and Ad-hoc Normal
     def highlight_cell(val, row_name, col_name):
         exclude_status = ['Shipped', 'Cancelled', 'Total']
         if col_name in exclude_status or val <= 0:
@@ -299,12 +294,10 @@ def order_status_matrix(df_today, key_prefix=""):
         else:
             return ''
 
-    # Apply highlight only to original rows (exclude Total row)
     def highlight_df(df):
         styles = pd.DataFrame('', index=df.index, columns=df.columns)
         for r in df.index:
             for c in df.columns:
-                # Skip highlighting for Total row
                 if r == 'Total':
                     continue
                 styles.at[r, c] = highlight_cell(df.at[r, c], r, c)
@@ -322,7 +315,7 @@ def order_status_matrix(df_today, key_prefix=""):
                       ]},
                      {'selector': 'table',
                       'props': [
-                          ('table-layout', 'auto'),   # Autofit columns
+                          ('table-layout', 'auto'),
                           ('width', 'auto'),
                           ('border-collapse', 'collapse'),
                       ]}
@@ -331,7 +324,9 @@ def order_status_matrix(df_today, key_prefix=""):
                  .format("{:.0f}")
                  )
 
-    st.write(styled_df, key=f"{key_prefix}_status")
+    # FIXED — Streamlit supports HTML + key, not styled_df directly
+    st.html(styled_df.to_html(), key=f"{key_prefix}_status")
+
 
 
 
@@ -586,6 +581,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
