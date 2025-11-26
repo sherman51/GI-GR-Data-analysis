@@ -166,71 +166,7 @@ aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
 
 # ---------- DASHBOARD FUNCTIONS ----------
-def daily_overview(df_today, key_prefix=""):
-    segments = CONFIG['status_segments']
-    colors = CONFIG['colors']
 
-    normal_type = 'normal'
-    adhoc_types = ['Ad-hoc Critical', 'Ad-hoc Urgent', 'Ad-hoc Normal']
-    all_order_types = [normal_type] + adhoc_types
-
-    order_data = {seg: {ot: 0 for ot in all_order_types} for seg in segments}
-    for ot in all_order_types:
-        ot_df = df_today[df_today['Order Type'] == ot]
-        for seg in segments:
-            order_data[seg][ot] = (ot_df['Order Status'] == seg).sum()
-
-    # Find max Ad-hoc count among all segments and types
-    max_adhoc_count = 0
-    for seg in segments:
-        for ot in adhoc_types:
-            count = order_data[seg][ot]
-            if count > max_adhoc_count:
-                max_adhoc_count = count
-
-    # Set x-axis range for Ad-hoc chart with a bit of padding
-    adhoc_xaxis_range = [0, (max_adhoc_count + 5)]
-
-    fig = go.Figure()
-
-    # Primary axis: Normal orders (stacked horizontally)
-    for seg in segments:
-        fig.add_trace(go.Bar(
-            y=[normal_type],
-            x=[order_data[seg][normal_type]],
-            name=f"{seg}",
-            orientation='h',
-            marker_color=colors.get(seg),
-            legendgroup=seg
-        ))
-
-    # Secondary axis: Ad-hoc orders (stacked horizontally on x2 axis)
-    for seg in segments:
-        fig.add_trace(go.Bar(
-            y=adhoc_types,
-            x=[order_data[seg][ot] for ot in adhoc_types],
-            name=f"{seg} (Ad-hoc)",
-            orientation='h',
-            marker_color=colors.get(seg),
-            legendgroup=seg,
-            xaxis='x2',
-            showlegend=False
-        ))
-
-    fig.update_layout(
-        barmode='stack',
-        height=40 * len(all_order_types) + 100,
-        margin=dict(l=10, r=10, t=40, b=20),
-        xaxis=dict(title='Normal Order Count'),
-        xaxis2=dict(title='Ad-hoc Order Count', overlaying='x', side='top', showgrid=False, range=adhoc_xaxis_range),
-        yaxis=dict(
-            categoryorder='array',
-            categoryarray=[normal_type] + adhoc_types,
-            automargin=True
-        ),
-    )
-
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
 
 
 
@@ -613,6 +549,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
