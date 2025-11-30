@@ -390,59 +390,30 @@ for i, dash_date in enumerate(date_list):
 
         # --- Date Header ---
         st.markdown(
-            f"<h3 style='text-align:center; color:gray; margin-bottom:10px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h4>",
+            f"<h3 style='text-align:center; color:#4b5563; margin-bottom:8px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h3>",
             unsafe_allow_html=True
         )
 
-        # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
-        top1, top2 = st.columns([1, 1.5])   # pie gets more space
-        with top1:
-            st.markdown("##### 🚨 Critical Orders")
-            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                 (~df_day['Order Status'].isin(['Shipped']))]
-            st.markdown(
-                f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not critical_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
-
-            st.markdown("##### ⚠ Urgent Orders")
-            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                               (~df_day['Order Status'].isin(['Shipped']))]
-            st.markdown(
-                f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not urgent_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
-
-        with top2:
-            st.markdown("##### ✅ % Completion")
-            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
-
-
-        # --- MIDDLE ROW: Order Status Table ---
-        st.markdown("##### 📋 Order Status Table")
-        order_status_matrix(df_day, key_prefix=f"day{i}")
-
-        # --- BOTTOM ROW: Orders Breakdown Chart ---
+        # --- Orders Breakdown Metrics ---
         brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
         
         with brk_col1:
-            st.markdown("##### 📦 Orders Breakdown")
+            st.markdown("<h5 style='margin-bottom:8px;'>📦 Orders Breakdown</h5>", unsafe_allow_html=True)
         
         with brk_col2:
             st.markdown(
                 f"""
                 <div style='
-                    background-color: #f4f4f4;
-                    padding: 6px 10px;
-                    border-radius: 6px;
+                    background-color: #f9fafb;
+                    padding: 8px 10px;
+                    border-radius: 8px;
                     text-align: center;
                     font-size: 14px;
-                    line-height: 1.2;
+                    line-height: 1.3;
+                    border: 1px solid #e5e7eb;
                 '>
-                    <div style='font-weight: bold; font-size: 16px;'>{df_day.shape[0]}</div>
-                    <div style='color: #555;'>🧾 Order Lines</div>
+                    <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day.shape[0]}</div>
+                    <div style='color: #6b7280; font-size: 12px;'>🧾 Order Lines</div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -452,22 +423,52 @@ for i, dash_date in enumerate(date_list):
             st.markdown(
                 f"""
                 <div style='
-                    background-color: #f4f4f4;
-                    padding: 6px 10px;
-                    border-radius: 6px;
+                    background-color: #f9fafb;
+                    padding: 8px 10px;
+                    border-radius: 8px;
                     text-align: center;
                     font-size: 14px;
-                    line-height: 1.2;
+                    line-height: 1.3;
+                    border: 1px solid #e5e7eb;
                 '>
-                    <div style='font-weight: bold; font-size: 16px;'>{df_day['GINo'].nunique()}</div>
-                    <div style='color: #555;'>📦 No. of GIs</div>
+                    <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day['GINo'].nunique()}</div>
+                    <div style='color: #6b7280; font-size: 12px;'>📦 No. of GIs</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
-
         
-        # Bar chart removed - daily_overview(df_day, key_prefix=f"day{i}")
+        st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
+
+        # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
+        top1, top2 = st.columns([1, 1.5])   # pie gets more space
+        with top1:
+            st.markdown("<h5 style='margin-bottom:8px;'>🚨 Critical Orders</h5>", unsafe_allow_html=True)
+            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                 (~df_day['Order Status'].isin(['Shipped']))]
+            st.markdown(
+                f"<div style='background-color:#fee2e2; padding:10px; border-radius:8px; text-align:center; border: 1px solid #fecaca;'>"
+                f"<span style='font-weight:600;'>🚨 Critical: {critical_df['GINo'].nunique()}</span></div>", unsafe_allow_html=True)
+            if not critical_df.empty:
+                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
+
+            st.markdown("<h5 style='margin-top:12px; margin-bottom:8px;'>⚠ Urgent Orders</h5>", unsafe_allow_html=True)
+            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                               (~df_day['Order Status'].isin(['Shipped']))]
+            st.markdown(
+                f"<div style='background-color:#fef3c7; padding:10px; border-radius:8px; text-align:center; border: 1px solid #fde68a;'>"
+                f"<span style='font-weight:600;'>⚠ Urgent: {urgent_df['GINo'].nunique()}</span></div>", unsafe_allow_html=True)
+            if not urgent_df.empty:
+                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
+
+        with top2:
+            st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
+            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+
+
+        # --- MIDDLE ROW: Order Status Table ---
+        st.markdown("<h5 style='margin-top:12px; margin-bottom:8px;'>📋 Order Status Table</h5>", unsafe_allow_html=True)
+        order_status_matrix(df_day, key_prefix=f"day{i}")
 
 
     # vertical divider between dates
