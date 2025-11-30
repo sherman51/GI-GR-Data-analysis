@@ -193,9 +193,9 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     ))
     fig.update_layout(
         width=200,
-        height=200,
-        margin=dict(l=10, r=10, t=30, b=10),
-        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=20, showarrow=False)]
+        height=180,
+        margin=dict(l=10, r=10, t=20, b=10),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=18, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
 
@@ -312,7 +312,7 @@ def order_status_matrix(df_today, key_prefix=""):
                 {html_code}
             </div>
             """,
-            height=380,
+            height=320,
             scrolling=True
         )
 
@@ -493,7 +493,7 @@ for i, dash_date in enumerate(date_list):
                 st.markdown(
                     f"""
                     <div style='
-                        max-height: 150px;
+                        max-height: 120px;
                         overflow-y: auto;
                         border: 1px solid #fecaca;
                         border-radius: 6px;
@@ -527,7 +527,7 @@ for i, dash_date in enumerate(date_list):
                 st.markdown(
                     f"""
                     <div style='
-                        max-height: 150px;
+                        max-height: 120px;
                         overflow-y: auto;
                         border: 1px solid #fde68a;
                         border-radius: 6px;
