@@ -449,8 +449,33 @@ for i, dash_date in enumerate(date_list):
             st.markdown(
                 f"<div style='background-color:#fee2e2; padding:10px; border-radius:8px; text-align:center; border: 1px solid #fecaca;'>"
                 f"<span style='font-weight:600;'>🚨 Critical: {critical_df['GINo'].nunique()}</span></div>", unsafe_allow_html=True)
+            
             if not critical_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
+                critical_gis = critical_df['GINo'].unique().tolist()
+                critical_text = ", ".join(map(str, critical_gis))
+                
+                # Copy button
+                if st.button("📋 Copy Critical GIs", key=f"{i}_copy_critical", use_container_width=True):
+                    st.write("Copy this text:")
+                    st.code(critical_text, language=None)
+                
+                # Scrollable frame
+                st.markdown(
+                    f"""
+                    <div style='
+                        max-height: 150px;
+                        overflow-y: auto;
+                        border: 1px solid #fecaca;
+                        border-radius: 6px;
+                        padding: 8px;
+                        background-color: #fef2f2;
+                        margin-top: 8px;
+                    '>
+                        {'<br>'.join([f"<span style='display:block; padding:2px 0;'>{gi}</span>" for gi in critical_gis])}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
             st.markdown("<h5 style='margin-top:12px; margin-bottom:8px;'>⚠ Urgent Orders</h5>", unsafe_allow_html=True)
             urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
@@ -458,8 +483,33 @@ for i, dash_date in enumerate(date_list):
             st.markdown(
                 f"<div style='background-color:#fef3c7; padding:10px; border-radius:8px; text-align:center; border: 1px solid #fde68a;'>"
                 f"<span style='font-weight:600;'>⚠ Urgent: {urgent_df['GINo'].nunique()}</span></div>", unsafe_allow_html=True)
+            
             if not urgent_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
+                urgent_gis = urgent_df['GINo'].unique().tolist()
+                urgent_text = ", ".join(map(str, urgent_gis))
+                
+                # Copy button
+                if st.button("📋 Copy Urgent GIs", key=f"{i}_copy_urgent", use_container_width=True):
+                    st.write("Copy this text:")
+                    st.code(urgent_text, language=None)
+                
+                # Scrollable frame
+                st.markdown(
+                    f"""
+                    <div style='
+                        max-height: 150px;
+                        overflow-y: auto;
+                        border: 1px solid #fde68a;
+                        border-radius: 6px;
+                        padding: 8px;
+                        background-color: #fefce8;
+                        margin-top: 8px;
+                    '>
+                        {'<br>'.join([f"<span style='display:block; padding:2px 0;'>{gi}</span>" for gi in urgent_gis])}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
