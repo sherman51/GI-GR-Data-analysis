@@ -192,10 +192,10 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         sort=False
     ))
     fig.update_layout(
-        width=200,
-        height=180,
-        margin=dict(l=10, r=10, t=20, b=10),
-        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=18, showarrow=False)]
+        width=180,
+        height=160,
+        margin=dict(l=5, r=5, t=15, b=5),
+        annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=16, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
 
@@ -255,8 +255,8 @@ def order_status_matrix(df_today, key_prefix=""):
                 {
                     "selector": "th",
                     "props": [
-                        ("padding", "10px 12px"),
-                        ("font-size", "13px"),
+                        ("padding", "8px 10px"),
+                        ("font-size", "12px"),
                         ("font-weight", "600"),
                         ("border", "1px solid #d1d5db"),
                         ("text-align", "center"),
@@ -267,8 +267,8 @@ def order_status_matrix(df_today, key_prefix=""):
                 {
                     "selector": "td",
                     "props": [
-                        ("padding", "8px 12px"),
-                        ("font-size", "13px"),
+                        ("padding", "6px 8px"),
+                        ("font-size", "12px"),
                         ("border", "1px solid #e5e7eb"),
                         ("text-align", "center"),
                         ("color", "#1f2937"),
@@ -312,7 +312,7 @@ def order_status_matrix(df_today, key_prefix=""):
                 {html_code}
             </div>
             """,
-            height=320,
+            height=280,
             scrolling=True
         )
 
@@ -493,15 +493,16 @@ for i, dash_date in enumerate(date_list):
                 st.markdown(
                     f"""
                     <div style='
-                        max-height: 120px;
+                        max-height: 100px;
                         overflow-y: auto;
                         border: 1px solid #fecaca;
                         border-radius: 6px;
-                        padding: 8px;
+                        padding: 6px;
                         background-color: #fef2f2;
-                        margin-top: 8px;
+                        margin-top: 6px;
+                        font-size: 12px;
                     '>
-                        {'<br>'.join([f"<span style='display:block; padding:2px 0;'>{gi}</span>" for gi in critical_gis])}
+                        {'<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in critical_gis])}
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -527,15 +528,16 @@ for i, dash_date in enumerate(date_list):
                 st.markdown(
                     f"""
                     <div style='
-                        max-height: 120px;
+                        max-height: 100px;
                         overflow-y: auto;
                         border: 1px solid #fde68a;
                         border-radius: 6px;
-                        padding: 8px;
+                        padding: 6px;
                         background-color: #fefce8;
-                        margin-top: 8px;
+                        margin-top: 6px;
+                        font-size: 12px;
                     '>
-                        {'<br>'.join([f"<span style='display:block; padding:2px 0;'>{gi}</span>" for gi in urgent_gis])}
+                        {'<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in urgent_gis])}
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -555,7 +557,7 @@ for i, dash_date in enumerate(date_list):
     if i != len(date_list) - 1:
         with cols[col_index + 1]:
             st.markdown(
-                "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
+                "<div style='border-left: 1px solid #bbb; height: 750px; margin: auto;'></div>",
                 unsafe_allow_html=True
             )
 
