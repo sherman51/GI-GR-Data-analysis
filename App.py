@@ -253,12 +253,25 @@ def order_status_matrix(df_today, key_prefix=""):
             .apply(highlight_df, axis=None)
             .set_table_styles([
                 {
-                    "selector": "th, td",
+                    "selector": "th",
                     "props": [
-                        ("padding", "4px 6px"),
-                        ("font-size", "12px"),
-                        ("border", "1px solid #ddd"),
+                        ("padding", "10px 12px"),
+                        ("font-size", "13px"),
+                        ("font-weight", "600"),
+                        ("border", "1px solid #d1d5db"),
                         ("text-align", "center"),
+                        ("background-color", "#f3f4f6"),
+                        ("color", "#374151"),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [
+                        ("padding", "8px 12px"),
+                        ("font-size", "13px"),
+                        ("border", "1px solid #e5e7eb"),
+                        ("text-align", "center"),
+                        ("color", "#1f2937"),
                     ],
                 },
                 {
@@ -266,6 +279,23 @@ def order_status_matrix(df_today, key_prefix=""):
                     "props": [
                         ("border-collapse", "collapse"),
                         ("width", "100%"),
+                        ("margin", "0 auto"),
+                        ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
+                        ("border-radius", "8px"),
+                        ("overflow", "hidden"),
+                    ],
+                },
+                {
+                    "selector": "tbody tr:hover",
+                    "props": [
+                        ("background-color", "#f9fafb"),
+                    ],
+                },
+                {
+                    "selector": "tbody tr:last-child",
+                    "props": [
+                        ("font-weight", "600"),
+                        ("background-color", "#f3f4f6"),
                     ],
                 },
             ])
@@ -278,11 +308,11 @@ def order_status_matrix(df_today, key_prefix=""):
     with st.container():
         components.html(
             f"""
-            <div style="overflow-x:auto; width:100%;">
+            <div style="overflow-x:auto; width:100%; padding: 4px;">
                 {html_code}
             </div>
             """,
-            height=350,
+            height=380,
             scrolling=True
         )
 
