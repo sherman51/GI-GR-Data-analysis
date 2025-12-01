@@ -529,6 +529,12 @@ with tab1:
                 
                 # Expandable copy section
                 with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=False):
+                    st.markdown(
+                        """
+                        <div style='background-color: #fef2f2; padding: 10px; border-radius: 6px; border: 1px solid #fecaca;'>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -547,6 +553,7 @@ with tab1:
                         key=f"{i}_critical_copy_text",
                         label_visibility="collapsed"
                     )
+                    st.markdown("</div>", unsafe_allow_html=True)
 
                 # Urgent Orders Section
                 st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
@@ -565,6 +572,12 @@ with tab1:
                 
                 # Expandable copy section
                 with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=False):
+                    st.markdown(
+                        """
+                        <div style='background-color: #fefce8; padding: 10px; border-radius: 6px; border: 1px solid #fde68a;'>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -583,6 +596,7 @@ with tab1:
                         key=f"{i}_urgent_copy_text",
                         label_visibility="collapsed"
                     )
+                    st.markdown("</div>", unsafe_allow_html=True)
 
             with top2:
                 st.markdown("<h5 style='text-align:center; margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
@@ -618,6 +632,12 @@ with tab1:
                 
                 # Expandable copy section for outstanding orders
                 with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
+                    st.markdown(
+                        """
+                        <div style='background-color: #f0f9ff; padding: 10px; border-radius: 6px; border: 1px solid #bae6fd;'>
+                        """,
+                        unsafe_allow_html=True
+                    )
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -636,6 +656,7 @@ with tab1:
                         key=f"{i}_outstanding_copy_text",
                         label_visibility="collapsed"
                     )
+                    st.markdown("</div>", unsafe_allow_html=True)
 
 
             # --- MIDDLE ROW: Order Status Table ---
