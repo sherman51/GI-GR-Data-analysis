@@ -581,7 +581,7 @@ for i, dash_date in enumerate(date_list):
                 )
 
         with top2:
-            st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
+            st.markdown("<h5 style='text-align:center; margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
             daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
             
             # Outstanding Orders Section
