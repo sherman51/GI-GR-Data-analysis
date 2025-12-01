@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
+import pyperclip
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -481,20 +482,11 @@ for i, dash_date in enumerate(date_list):
             
             # Copy button with count and clipboard functionality
             if st.button(f"📋 Copy Critical GIs ({len(critical_gis)})", key=f"{i}_copy_critical", use_container_width=True):
-                st.toast("✅ Critical GIs copied to clipboard!", icon="✅")
-                # JavaScript to copy to clipboard
-                components.html(
-                    f"""
-                    <script>
-                        navigator.clipboard.writeText("{critical_text}").then(function() {{
-                            console.log('Copied to clipboard successfully!');
-                        }}, function(err) {{
-                            console.error('Could not copy text: ', err);
-                        }});
-                    </script>
-                    """,
-                    height=0
-                )
+                try:
+                    pyperclip.copy(critical_text if critical_text else "No critical orders")
+                    st.toast("✅ Critical GIs copied to clipboard!", icon="✅")
+                except Exception as e:
+                    st.toast("⚠️ Could not copy. Please select and copy manually.", icon="⚠️")
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
@@ -528,20 +520,11 @@ for i, dash_date in enumerate(date_list):
             
             # Copy button with count and clipboard functionality
             if st.button(f"📋 Copy Urgent GIs ({len(urgent_gis)})", key=f"{i}_copy_urgent", use_container_width=True):
-                st.toast("✅ Urgent GIs copied to clipboard!", icon="✅")
-                # JavaScript to copy to clipboard
-                components.html(
-                    f"""
-                    <script>
-                        navigator.clipboard.writeText("{urgent_text}").then(function() {{
-                            console.log('Copied to clipboard successfully!');
-                        }}, function(err) {{
-                            console.error('Could not copy text: ', err);
-                        }});
-                    </script>
-                    """,
-                    height=0
-                )
+                try:
+                    pyperclip.copy(urgent_text if urgent_text else "No urgent orders")
+                    st.toast("✅ Urgent GIs copied to clipboard!", icon="✅")
+                except Exception as e:
+                    st.toast("⚠️ Could not copy. Please select and copy manually.", icon="⚠️")
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
