@@ -174,13 +174,31 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_active.shape[0]
 
     today = pd.Timestamp.today().normalize().date()
-    is_today = dash_date == today
-
-    if is_today:
+    
+    # Determine what "completed" means based on the date
+    if dash_date < today:
+        # Yesterday and before: All orders should be shipped
         completed_orders = df_active['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
+    elif dash_date == today:
+        # Today's orders: Different criteria based on order type
+        # Ad-hoc Critical/Urgent should be shipped
+        # All others should be at least packed
+        critical_urgent_shipped = df_active[
+            (df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+            (df_active['Order Status'] == 'Shipped')
+        ].shape[0]
+        
+        others_packed_or_shipped = df_active[
+            (~df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+            (df_active['Order Status'].isin(['Packed', 'Shipped']))
+        ].shape[0]
+        
+        completed_orders = critical_urgent_shipped + others_packed_or_shipped
+        completed_label = "Completed"
     else:
-        completed_orders = df_active['Order Status'].isin(['Packed']).sum()
+        # Future orders (next working day): All should be packed
+        completed_orders = df_active['Order Status'].isin(['Packed', 'Shipped']).sum()
         completed_label = "Completed (Packed)"
 
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
