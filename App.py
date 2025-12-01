@@ -479,16 +479,28 @@ for i, dash_date in enumerate(date_list):
             critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
             critical_text = ", ".join(map(str, critical_gis))
             
-            # Copy button with count
+            # Copy button with count and clipboard functionality
             if st.button(f"📋 Copy Critical GIs ({len(critical_gis)})", key=f"{i}_copy_critical", use_container_width=True):
-                st.write("Copy this text:")
-                st.code(critical_text if critical_text else "No critical orders", language=None)
+                st.toast("✅ Critical GIs copied to clipboard!", icon="✅")
+                # JavaScript to copy to clipboard
+                components.html(
+                    f"""
+                    <script>
+                        navigator.clipboard.writeText("{critical_text}").then(function() {{
+                            console.log('Copied to clipboard successfully!');
+                        }}, function(err) {{
+                            console.error('Could not copy text: ', err);
+                        }});
+                    </script>
+                    """,
+                    height=0
+                )
             
-            # Scrollable frame (always visible)
+            # Scrollable frame (always visible, fixed height)
             st.markdown(
                 f"""
                 <div style='
-                    max-height: 100px;
+                    height: 100px;
                     overflow-y: auto;
                     border: 1px solid #fecaca;
                     border-radius: 6px;
@@ -496,7 +508,6 @@ for i, dash_date in enumerate(date_list):
                     background-color: #fef2f2;
                     margin-top: 6px;
                     font-size: 12px;
-                    min-height: 50px;
                 '>
                     {
                         '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in critical_gis])
@@ -515,16 +526,28 @@ for i, dash_date in enumerate(date_list):
             urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
             urgent_text = ", ".join(map(str, urgent_gis))
             
-            # Copy button with count
+            # Copy button with count and clipboard functionality
             if st.button(f"📋 Copy Urgent GIs ({len(urgent_gis)})", key=f"{i}_copy_urgent", use_container_width=True):
-                st.write("Copy this text:")
-                st.code(urgent_text if urgent_text else "No urgent orders", language=None)
+                st.toast("✅ Urgent GIs copied to clipboard!", icon="✅")
+                # JavaScript to copy to clipboard
+                components.html(
+                    f"""
+                    <script>
+                        navigator.clipboard.writeText("{urgent_text}").then(function() {{
+                            console.log('Copied to clipboard successfully!');
+                        }}, function(err) {{
+                            console.error('Could not copy text: ', err);
+                        }});
+                    </script>
+                    """,
+                    height=0
+                )
             
-            # Scrollable frame (always visible)
+            # Scrollable frame (always visible, fixed height)
             st.markdown(
                 f"""
                 <div style='
-                    max-height: 100px;
+                    height: 100px;
                     overflow-y: auto;
                     border: 1px solid #fde68a;
                     border-radius: 6px;
@@ -532,7 +555,6 @@ for i, dash_date in enumerate(date_list):
                     background-color: #fefce8;
                     margin-top: 6px;
                     font-size: 12px;
-                    min-height: 50px;
                 '>
                     {
                         '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in urgent_gis])
