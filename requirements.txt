@@ -7,4 +7,3 @@ plotly.express
 streamlit_autorefresh
 google-cloud-storage
 google-auth
-pyperclip
