@@ -7,7 +7,6 @@ from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
-from streamlit_extras.copy_button import copy_button
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -506,36 +505,14 @@ for i, dash_date in enumerate(date_list):
             critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
             critical_text = ", ".join(map(str, critical_gis))
             
-            # Copy button
+            # Permanently open expander with copy text area
             st.markdown(f"<div style='margin-bottom:4px;'><strong>🚨 Critical Orders ({len(critical_gis)})</strong></div>", unsafe_allow_html=True)
-            copy_button(
-                text=critical_text if critical_text else "No critical orders",
-                button_text="📋 Copy Critical GIs",
-                success_message="✅ Copied!",
-                key=f"{i}_critical_copy"
-            )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #fecaca;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #fef2f2;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in critical_gis])
-                        if critical_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No critical orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.text_area(
+                "Select all (Ctrl+A) and copy (Ctrl+C):",
+                value=critical_text if critical_text else "No critical orders",
+                height=100,
+                key=f"{i}_critical_copy_text",
+                label_visibility="collapsed"
             )
 
             # Urgent Orders Section
@@ -553,36 +530,14 @@ for i, dash_date in enumerate(date_list):
             urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
             urgent_text = ", ".join(map(str, urgent_gis))
             
-            # Copy button
+            # Permanently open expander with copy text area
             st.markdown(f"<div style='margin-bottom:4px;'><strong>⚠️ Urgent Orders ({len(urgent_gis)})</strong></div>", unsafe_allow_html=True)
-            copy_button(
-                text=urgent_text if urgent_text else "No urgent orders",
-                button_text="📋 Copy Urgent GIs",
-                success_message="✅ Copied!",
-                key=f"{i}_urgent_copy"
-            )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #fde68a;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #fefce8;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in urgent_gis])
-                        if urgent_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No urgent orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.text_area(
+                "Select all (Ctrl+A) and copy (Ctrl+C):",
+                value=urgent_text if urgent_text else "No urgent orders",
+                height=100,
+                key=f"{i}_urgent_copy_text",
+                label_visibility="collapsed"
             )
 
         with top2:
@@ -666,36 +621,14 @@ for i, dash_date in enumerate(date_list):
             outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
             outstanding_text = ", ".join(map(str, outstanding_gis))
             
-            # Copy button for outstanding orders
+            # Permanently open text area for outstanding orders
             st.markdown(f"<div style='margin-bottom:4px;'><strong>📦 Outstanding Orders ({len(outstanding_gis)})</strong></div>", unsafe_allow_html=True)
-            copy_button(
-                text=outstanding_text if outstanding_text else "No outstanding orders",
-                button_text="📋 Copy Outstanding GIs",
-                success_message="✅ Copied!",
-                key=f"{i}_outstanding_copy"
-            )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #d1d5db;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #f9fafb;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in outstanding_gis])
-                        if outstanding_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No outstanding orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.text_area(
+                "Select all (Ctrl+A) and copy (Ctrl+C):",
+                value=outstanding_text if outstanding_text else "No outstanding orders",
+                height=100,
+                key=f"{i}_outstanding_copy_text",
+                label_visibility="collapsed"
             )
 
 
