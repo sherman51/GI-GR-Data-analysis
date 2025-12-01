@@ -483,7 +483,7 @@ with tab1:
                         border: 1px solid #e5e7eb;
                     '>
                         <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day.shape[0]}</div>
-                        <div style='color: #6b7280; font-size: 12px;'>🧾 Order Lines</div>
+                        <div style='color: #6b7280; font-size: 12px;'>📄 Order Lines</div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -530,7 +530,7 @@ with tab1:
                 critical_text = ", ".join(map(str, critical_gis))
                 
                 # Expandable copy section
-                with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=True):
+                with st.expander(f"🚨 Critical Orders ({len(critical_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -566,7 +566,7 @@ with tab1:
                 urgent_text = ", ".join(map(str, urgent_gis))
                 
                 # Expandable copy section
-                with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=True):
+                with st.expander(f"⚠️ Urgent Orders ({len(urgent_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -619,7 +619,7 @@ with tab1:
                 outstanding_text = ", ".join(map(str, outstanding_gis))
                 
                 # Expandable copy section for outstanding orders
-                with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=True):
+                with st.expander(f"⏳ Outstanding Orders ({len(outstanding_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -659,7 +659,7 @@ with tab2:
     # ---------- ANALYTICS TAB ----------
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("### 📊 Order lines (Past 14 Days)")
+        st.markdown("### 📊 Order Lines (Past 14 Days)")
         order_volume_summary(df, key_prefix="overall")
         expiry_date_summary(df, key_prefix="overall")
     with col2:
