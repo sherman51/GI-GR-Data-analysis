@@ -530,7 +530,19 @@ with tab1:
                 critical_text = ", ".join(map(str, critical_gis))
                 
                 # Expandable copy section
-                with st.expander(f"🚨 Critical Orders ({len(critical_gis)})", expanded=True):
+                st.markdown(
+                    """
+                    <div style='background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); 
+                                padding: 8px 12px; 
+                                border-radius: 8px; 
+                                border-left: 4px solid #dc2626;
+                                margin-bottom: 8px;'>
+                        <span style='font-weight: 600; color: #991b1b;'>🚨 Critical Orders</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                with st.expander(f"View {len(critical_gis)} Critical Order(s)", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -551,7 +563,20 @@ with tab1:
                     )
                 
                 # Urgent Orders Section
-                st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+                
+                st.markdown(
+                    """
+                    <div style='background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
+                                padding: 8px 12px; 
+                                border-radius: 8px; 
+                                border-left: 4px solid #f59e0b;
+                                margin-bottom: 8px;'>
+                        <span style='font-weight: 600; color: #92400e;'>⚠️ Urgent Orders</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 
                 if dash_date == today:
                     # Today: urgent orders outstanding = not shipped
@@ -566,7 +591,7 @@ with tab1:
                 urgent_text = ", ".join(map(str, urgent_gis))
                 
                 # Expandable copy section
-                with st.expander(f"⚠️ Urgent Orders ({len(urgent_gis)})", expanded=True):
+                with st.expander(f"View {len(urgent_gis)} Urgent Order(s)", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
@@ -591,7 +616,20 @@ with tab1:
                 daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
                 
                 # Outstanding Orders Section
-                st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
+                
+                st.markdown(
+                    """
+                    <div style='background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+                                padding: 8px 12px; 
+                                border-radius: 8px; 
+                                border-left: 4px solid #3b82f6;
+                                margin-bottom: 8px;'>
+                        <span style='font-weight: 600; color: #1e40af;'>⏳ Outstanding Orders</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 
                 # Determine outstanding orders based on date and order type
                 today = pd.Timestamp.today().normalize().date()
@@ -619,7 +657,7 @@ with tab1:
                 outstanding_text = ", ".join(map(str, outstanding_gis))
                 
                 # Expandable copy section for outstanding orders
-                with st.expander(f"⏳ Outstanding Orders ({len(outstanding_gis)})", expanded=True):
+                with st.expander(f"View {len(outstanding_gis)} Outstanding Order(s)", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
                         st.markdown("**GI Numbers:**")
