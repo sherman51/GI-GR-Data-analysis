@@ -122,6 +122,25 @@ st.markdown("""
         color: #6b7280;
         margin-top: 4px;
     }
+    /* --- CUSTOM COLORED EXPANDER HEADERS --- */
+div.streamlit-expanderHeader:has(p:contains("Critical Orders")) {
+    background-color: #ffe5e5 !important;
+    border: 1px solid #dc2626 !important;
+    border-radius: 6px !important;
+}
+
+div.streamlit-expanderHeader:has(p:contains("Urgent Orders")) {
+    background-color: #fff8d6 !important;
+    border: 1px solid #f59e0b !important;
+    border-radius: 6px !important;
+}
+
+div.streamlit-expanderHeader:has(p:contains("Outstanding Orders")) {
+    background-color: #e6f0ff !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 6px !important;
+}
+
     
 
 </style>
@@ -673,3 +692,4 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
