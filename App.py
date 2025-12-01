@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
+from streamlit_extras.copy_button import copy_button
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -505,15 +506,14 @@ for i, dash_date in enumerate(date_list):
             critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
             critical_text = ", ".join(map(str, critical_gis))
             
-            # Expandable copy section
-            with st.expander(f"📋 Copy Critical GIs ({len(critical_gis)})", expanded=False):
-                st.text_area(
-                    "Select all (Ctrl+A) and copy (Ctrl+C):",
-                    value=critical_text if critical_text else "No critical orders",
-                    height=60,
-                    key=f"{i}_critical_copy_text",
-                    label_visibility="collapsed"
-                )
+            # Copy button
+            st.markdown(f"<div style='margin-bottom:4px;'><strong>🚨 Critical Orders ({len(critical_gis)})</strong></div>", unsafe_allow_html=True)
+            copy_button(
+                text=critical_text if critical_text else "No critical orders",
+                button_text="📋 Copy Critical GIs",
+                success_message="✅ Copied!",
+                key=f"{i}_critical_copy"
+            )
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
@@ -553,15 +553,14 @@ for i, dash_date in enumerate(date_list):
             urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
             urgent_text = ", ".join(map(str, urgent_gis))
             
-            # Expandable copy section
-            with st.expander(f"📋 Copy Urgent GIs ({len(urgent_gis)})", expanded=False):
-                st.text_area(
-                    "Select all (Ctrl+A) and copy (Ctrl+C):",
-                    value=urgent_text if urgent_text else "No urgent orders",
-                    height=60,
-                    key=f"{i}_urgent_copy_text",
-                    label_visibility="collapsed"
-                )
+            # Copy button
+            st.markdown(f"<div style='margin-bottom:4px;'><strong>⚠️ Urgent Orders ({len(urgent_gis)})</strong></div>", unsafe_allow_html=True)
+            copy_button(
+                text=urgent_text if urgent_text else "No urgent orders",
+                button_text="📋 Copy Urgent GIs",
+                success_message="✅ Copied!",
+                key=f"{i}_urgent_copy"
+            )
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
@@ -588,10 +587,59 @@ for i, dash_date in enumerate(date_list):
 
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
-            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+            
+            # Make the pie chart smaller
+            fig = go.Figure(go.Pie(
+                values=[0, 100],  # Placeholder, will be updated by function
+                labels=["Completed", "Outstanding"],
+                marker_colors=['mediumseagreen', 'lightgray'],
+                hole=0.6,
+                textinfo='none',
+                sort=False
+            ))
+            
+            # Call the function but reduce the chart size
+            df_active = df_day[df_day['Order Status'] != 'Cancelled']
+            total_orders = df_active.shape[0]
+            today_date = pd.Timestamp.today().normalize().date()
+            
+            if dash_date == today_date:
+                critical_urgent_shipped = df_active[
+                    (df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (df_active['Order Status'] == 'Shipped')
+                ].shape[0]
+                
+                others_packed_or_shipped = df_active[
+                    (~df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (df_active['Order Status'].isin(['Packed', 'Shipped']))
+                ].shape[0]
+                
+                completed_orders = critical_urgent_shipped + others_packed_or_shipped
+                completed_label = "Completed"
+            else:
+                completed_orders = df_active['Order Status'].isin(['Packed', 'Shipped']).sum()
+                completed_label = "Completed (Packed)"
+            
+            completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
+            
+            fig = go.Figure(go.Pie(
+                values=[completed_pct, 100 - completed_pct],
+                labels=[completed_label, "Outstanding"],
+                marker_colors=['mediumseagreen', 'lightgray'],
+                hole=0.6,
+                textinfo='none',
+                sort=False
+            ))
+            fig.update_layout(
+                width=140,
+                height=120,
+                margin=dict(l=5, r=5, t=5, b=5),
+                annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=14, showarrow=False)]
+            )
+            st.plotly_chart(fig, use_container_width=False, key=f"day{i}_completed")
             
             # Outstanding Orders Section
-            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
             
             # Determine outstanding orders based on date and order type
             today = pd.Timestamp.today().normalize().date()
@@ -618,15 +666,14 @@ for i, dash_date in enumerate(date_list):
             outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
             outstanding_text = ", ".join(map(str, outstanding_gis))
             
-            # Expandable copy section for outstanding orders
-            with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
-                st.text_area(
-                    "Select all (Ctrl+A) and copy (Ctrl+C):",
-                    value=outstanding_text if outstanding_text else "No outstanding orders",
-                    height=60,
-                    key=f"{i}_outstanding_copy_text",
-                    label_visibility="collapsed"
-                )
+            # Copy button for outstanding orders
+            st.markdown(f"<div style='margin-bottom:4px;'><strong>📦 Outstanding Orders ({len(outstanding_gis)})</strong></div>", unsafe_allow_html=True)
+            copy_button(
+                text=outstanding_text if outstanding_text else "No outstanding orders",
+                button_text="📋 Copy Outstanding GIs",
+                success_message="✅ Copied!",
+                key=f"{i}_outstanding_copy"
+            )
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
