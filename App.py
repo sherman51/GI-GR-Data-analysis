@@ -516,20 +516,24 @@ for i, dash_date in enumerate(date_list):
             
             # Expandable copy section
             with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=False):
+                col_label, col_copy = st.columns([4, 1])
+                with col_label:
+                    st.markdown("**GI Numbers:**")
+                with col_copy:
+                    if critical_text:
+                        components.html(f"""
+                            <button onclick="navigator.clipboard.writeText('{critical_text}').then(() => alert('✅ Copied!'))" 
+                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                📋
+                            </button>
+                        """, height=30)
                 st.text_area(
                     "GI Numbers:",
                     value=critical_text if critical_text else "No critical orders",
                     height=100,
                     key=f"{i}_critical_copy_text",
-                    label_visibility="visible"
+                    label_visibility="collapsed"
                 )
-                if critical_text:
-                    components.html(f"""
-                        <button onclick="navigator.clipboard.writeText('{critical_text}').then(() => alert('✅ Critical orders copied to clipboard!'))" 
-                                style="background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                            📋 Copy to Clipboard
-                        </button>
-                    """, height=50)
 
             # Urgent Orders Section
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
@@ -548,20 +552,24 @@ for i, dash_date in enumerate(date_list):
             
             # Expandable copy section
             with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=False):
+                col_label, col_copy = st.columns([4, 1])
+                with col_label:
+                    st.markdown("**GI Numbers:**")
+                with col_copy:
+                    if urgent_text:
+                        components.html(f"""
+                            <button onclick="navigator.clipboard.writeText('{urgent_text}').then(() => alert('✅ Copied!'))" 
+                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                📋
+                            </button>
+                        """, height=30)
                 st.text_area(
                     "GI Numbers:",
                     value=urgent_text if urgent_text else "No urgent orders",
                     height=100,
                     key=f"{i}_urgent_copy_text",
-                    label_visibility="visible"
+                    label_visibility="collapsed"
                 )
-                if urgent_text:
-                    components.html(f"""
-                        <button onclick="navigator.clipboard.writeText('{urgent_text}').then(() => alert('✅ Urgent orders copied to clipboard!'))" 
-                                style="background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                            📋 Copy to Clipboard
-                        </button>
-                    """, height=50)
 
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
@@ -597,20 +605,24 @@ for i, dash_date in enumerate(date_list):
             
             # Expandable copy section for outstanding orders
             with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
+                col_label, col_copy = st.columns([4, 1])
+                with col_label:
+                    st.markdown("**GI Numbers:**")
+                with col_copy:
+                    if outstanding_text:
+                        components.html(f"""
+                            <button onclick="navigator.clipboard.writeText('{outstanding_text}').then(() => alert('✅ Copied!'))" 
+                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                📋
+                            </button>
+                        """, height=30)
                 st.text_area(
                     "GI Numbers:",
                     value=outstanding_text if outstanding_text else "No outstanding orders",
                     height=100,
                     key=f"{i}_outstanding_copy_text",
-                    label_visibility="visible"
+                    label_visibility="collapsed"
                 )
-                if outstanding_text:
-                    components.html(f"""
-                        <button onclick="navigator.clipboard.writeText('{outstanding_text}').then(() => alert('✅ Outstanding orders copied to clipboard!'))" 
-                                style="background-color: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                            📋 Copy to Clipboard
-                        </button>
-                    """, height=50)
 
 
         # --- MIDDLE ROW: Order Status Table ---
