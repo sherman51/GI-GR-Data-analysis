@@ -222,11 +222,11 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         margin=dict(l=5, r=5, t=5, b=5),
         showlegend=True,
         legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.15,
-            xanchor="center",
-            x=0.5,
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="left",
+            x=1.05,
             font=dict(size=10)
         ),
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=16, showarrow=False)]
@@ -643,7 +643,7 @@ for i, dash_date in enumerate(date_list):
     if i != len(date_list) - 1:
         with cols[col_index + 1]:
             st.markdown(
-                "<div style='border-left: 1px solid #bbb; height: 750px; margin: auto;'></div>",
+                "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
                 unsafe_allow_html=True
             )
 
