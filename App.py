@@ -557,6 +557,45 @@ for i, dash_date in enumerate(date_list):
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
             daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+            
+            # Outstanding Orders Section
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            outstanding_df = df_day[~df_day['Order Status'].isin(['Shipped', 'Packed', 'Cancelled'])]
+            outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
+            outstanding_text = ", ".join(map(str, outstanding_gis))
+            
+            # Expandable copy section for outstanding orders
+            with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
+                st.text_area(
+                    "Select all (Ctrl+A) and copy (Ctrl+C):",
+                    value=outstanding_text if outstanding_text else "No outstanding orders",
+                    height=60,
+                    key=f"{i}_outstanding_copy_text",
+                    label_visibility="collapsed"
+                )
+            
+            # Scrollable frame (always visible, fixed height)
+            st.markdown(
+                f"""
+                <div style='
+                    height: 100px;
+                    overflow-y: auto;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    padding: 6px;
+                    background-color: #f9fafb;
+                    margin-top: 6px;
+                    font-size: 12px;
+                '>
+                    {
+                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in outstanding_gis])
+                        if outstanding_gis else
+                        "<span style='color:#9ca3af; font-style:italic;'>No outstanding orders</span>"
+                    }
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 
         # --- MIDDLE ROW: Order Status Table ---
