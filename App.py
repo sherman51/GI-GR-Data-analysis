@@ -176,11 +176,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     today = pd.Timestamp.today().normalize().date()
     
     # Determine what "completed" means based on the date
-    if dash_date < today:
-        # Yesterday and before: All orders should be shipped
-        completed_orders = df_active['Order Status'].isin(['Shipped']).sum()
-        completed_label = "Completed (Shipped)"
-    elif dash_date == today:
+    if dash_date == today:
         # Today's orders: Different criteria based on order type
         # Ad-hoc Critical/Urgent should be shipped
         # All others should be at least packed
@@ -197,7 +193,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         completed_orders = critical_urgent_shipped + others_packed_or_shipped
         completed_label = "Completed"
     else:
-        # Future orders (next working day): All should be packed
+        # D+1 and D+2 orders: All should be packed or shipped
         completed_orders = df_active['Order Status'].isin(['Packed', 'Shipped']).sum()
         completed_label = "Completed (Packed)"
 
@@ -497,16 +493,12 @@ for i, dash_date in enumerate(date_list):
             today = pd.Timestamp.today().normalize().date()
             
             # Critical Orders Section
-            if dash_date < today:
-                # Yesterday and before: critical orders outstanding = not shipped
-                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                     (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
-            elif dash_date == today:
+            if dash_date == today:
                 # Today: critical orders outstanding = not shipped
                 critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
                                      (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
             else:
-                # Future orders: critical orders outstanding = not packed/shipped
+                # D+1 and D+2: critical orders outstanding = not packed/shipped
                 critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
                                      (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
             
@@ -549,16 +541,12 @@ for i, dash_date in enumerate(date_list):
             # Urgent Orders Section
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
             
-            if dash_date < today:
-                # Yesterday and before: urgent orders outstanding = not shipped
-                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                                   (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
-            elif dash_date == today:
+            if dash_date == today:
                 # Today: urgent orders outstanding = not shipped
                 urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
                                    (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
             else:
-                # Future orders: urgent orders outstanding = not packed/shipped
+                # D+1 and D+2: urgent orders outstanding = not packed/shipped
                 urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
                                    (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
             
@@ -608,12 +596,7 @@ for i, dash_date in enumerate(date_list):
             # Determine outstanding orders based on date and order type
             today = pd.Timestamp.today().normalize().date()
             
-            if dash_date < today:
-                # Yesterday and before: outstanding = not shipped (excluding cancelled)
-                outstanding_df = df_day[
-                    (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
-                ]
-            elif dash_date == today:
+            if dash_date == today:
                 # Today: different criteria based on order type
                 # Critical/Urgent outstanding = not shipped
                 critical_urgent_outstanding = df_day[
@@ -627,7 +610,7 @@ for i, dash_date in enumerate(date_list):
                 ]
                 outstanding_df = pd.concat([critical_urgent_outstanding, others_outstanding])
             else:
-                # Future orders: outstanding = not packed/shipped (excluding cancelled)
+                # D+1 and D+2: outstanding = not packed/shipped (excluding cancelled)
                 outstanding_df = df_day[
                     (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
                 ]
