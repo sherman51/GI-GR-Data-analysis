@@ -12,37 +12,6 @@ import streamlit.components.v1 as components
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
 
 CONFIG = {
-    /* Custom expander backgrounds */
-    div[data-testid="stExpander"] details summary {
-        font-weight: 600;
-    }
-    
-    /* Critical Orders - Red background */
-    div[data-testid="stExpander"]:has(summary:contains("Critical")) details summary {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
-        border-left: 4px solid #dc2626 !important;
-        border-radius: 8px !important;
-        color: #991b1b !important;
-        padding: 12px 16px !important;
-    }
-    
-    /* Urgent Orders - Yellow background */
-    div[data-testid="stExpander"]:has(summary:contains("Urgent")) details summary {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
-        border-left: 4px solid #f59e0b !important;
-        border-radius: 8px !important;
-        color: #92400e !important;
-        padding: 12px 16px !important;
-    }
-    
-    /* Outstanding Orders - Blue background */
-    div[data-testid="stExpander"]:has(summary:contains("Outstanding")) details summary {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
-        border-left: 4px solid #3b82f6 !important;
-        border-radius: 8px !important;
-        color: #1e40af !important;
-        padding: 12px 16px !important;
-    }
     "priority_map": {
         '1-Normal': 'normal',
         '2-ADHOC Normal': 'Ad-hoc Normal',
