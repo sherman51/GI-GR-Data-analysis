@@ -440,225 +440,229 @@ while len(date_list) < 3 and days_checked < 7:
 
 
 # ---------- DISPLAY ----------
-layout = []
-for i in range(len(date_list)):
-    layout.append(5)
-    if i != len(date_list) - 1:
-        layout.append(0.3)  # thinner divider
-cols = st.columns(layout)
+# Create tabs
+tab1, tab2 = st.tabs(["📊 Daily Dashboard", "📈 Analytics"])
 
-col_index = 0
-for i, dash_date in enumerate(date_list):
-    with cols[col_index]:
-        df_day = df[df['ExpDate'].dt.date == dash_date]
+with tab1:
+    layout = []
+    for i in range(len(date_list)):
+        layout.append(5)
+        if i != len(date_list) - 1:
+            layout.append(0.3)  # thinner divider
+    cols = st.columns(layout)
 
-        # --- Date Header ---
-        st.markdown(
-            f"<h3 style='text-align:center; color:#4b5563; margin-bottom:8px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h3>",
-            unsafe_allow_html=True
-        )
+    col_index = 0
+    for i, dash_date in enumerate(date_list):
+        with cols[col_index]:
+            df_day = df[df['ExpDate'].dt.date == dash_date]
 
-        # --- Orders Breakdown Metrics ---
-        brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
-        
-        with brk_col1:
-            st.markdown("<h5 style='margin-bottom:8px;'>📦 Orders Breakdown</h5>", unsafe_allow_html=True)
-        
-        with brk_col2:
+            # --- Date Header ---
             st.markdown(
-                f"""
-                <div style='
-                    background-color: #f9fafb;
-                    padding: 8px 10px;
-                    border-radius: 8px;
-                    text-align: center;
-                    font-size: 14px;
-                    line-height: 1.3;
-                    border: 1px solid #e5e7eb;
-                '>
-                    <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day.shape[0]}</div>
-                    <div style='color: #6b7280; font-size: 12px;'>🧾 Order Lines</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        
-        with brk_col3:
-            st.markdown(
-                f"""
-                <div style='
-                    background-color: #f9fafb;
-                    padding: 8px 10px;
-                    border-radius: 8px;
-                    text-align: center;
-                    font-size: 14px;
-                    line-height: 1.3;
-                    border: 1px solid #e5e7eb;
-                '>
-                    <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day['GINo'].nunique()}</div>
-                    <div style='color: #6b7280; font-size: 12px;'>📦 No. of GIs</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        
-        st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
-
-        # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
-        top1, top2 = st.columns([1, 1.5])   # pie gets more space
-        with top1:
-            # Determine completion criteria based on date
-            today = pd.Timestamp.today().normalize().date()
-            
-            # Critical Orders Section
-            if dash_date == today:
-                # Today: critical orders outstanding = not shipped
-                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                     (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
-            else:
-                # D+1 and D+2: critical orders outstanding = not packed/shipped
-                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                     (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
-            
-            critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
-            critical_text = ", ".join(map(str, critical_gis))
-            
-            # Expandable copy section
-            with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=False):
-                col_label, col_copy = st.columns([4, 1])
-                with col_label:
-                    st.markdown("**GI Numbers:**")
-                with col_copy:
-                    if critical_text:
-                        components.html(f"""
-                            <button onclick="navigator.clipboard.writeText('{critical_text}').then(() => alert('✅ Copied!'))" 
-                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
-                                📋
-                            </button>
-                        """, height=30)
-                st.text_area(
-                    "GI Numbers:",
-                    value=critical_text if critical_text else "No critical orders",
-                    height=100,
-                    key=f"{i}_critical_copy_text",
-                    label_visibility="collapsed"
-                )
-
-            # Urgent Orders Section
-            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            
-            if dash_date == today:
-                # Today: urgent orders outstanding = not shipped
-                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                                   (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
-            else:
-                # D+1 and D+2: urgent orders outstanding = not packed/shipped
-                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                                   (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
-            
-            urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
-            urgent_text = ", ".join(map(str, urgent_gis))
-            
-            # Expandable copy section
-            with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=False):
-                col_label, col_copy = st.columns([4, 1])
-                with col_label:
-                    st.markdown("**GI Numbers:**")
-                with col_copy:
-                    if urgent_text:
-                        components.html(f"""
-                            <button onclick="navigator.clipboard.writeText('{urgent_text}').then(() => alert('✅ Copied!'))" 
-                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
-                                📋
-                            </button>
-                        """, height=30)
-                st.text_area(
-                    "GI Numbers:",
-                    value=urgent_text if urgent_text else "No urgent orders",
-                    height=100,
-                    key=f"{i}_urgent_copy_text",
-                    label_visibility="collapsed"
-                )
-
-        with top2:
-            st.markdown("<h5 style='text-align:center; margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
-            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
-            
-            # Outstanding Orders Section
-            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            
-            # Determine outstanding orders based on date and order type
-            today = pd.Timestamp.today().normalize().date()
-            
-            if dash_date == today:
-                # Today: different criteria based on order type
-                # Critical/Urgent outstanding = not shipped
-                critical_urgent_outstanding = df_day[
-                    (df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
-                    (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
-                ]
-                # Others outstanding = not packed/shipped
-                others_outstanding = df_day[
-                    (~df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
-                    (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
-                ]
-                outstanding_df = pd.concat([critical_urgent_outstanding, others_outstanding])
-            else:
-                # D+1 and D+2: outstanding = not packed/shipped (excluding cancelled)
-                outstanding_df = df_day[
-                    (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
-                ]
-            
-            outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
-            outstanding_text = ", ".join(map(str, outstanding_gis))
-            
-            # Expandable copy section for outstanding orders
-            with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
-                col_label, col_copy = st.columns([4, 1])
-                with col_label:
-                    st.markdown("**GI Numbers:**")
-                with col_copy:
-                    if outstanding_text:
-                        components.html(f"""
-                            <button onclick="navigator.clipboard.writeText('{outstanding_text}').then(() => alert('✅ Copied!'))" 
-                                    style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
-                                📋
-                            </button>
-                        """, height=30)
-                st.text_area(
-                    "GI Numbers:",
-                    value=outstanding_text if outstanding_text else "No outstanding orders",
-                    height=100,
-                    key=f"{i}_outstanding_copy_text",
-                    label_visibility="collapsed"
-                )
-
-
-        # --- MIDDLE ROW: Order Status Table ---
-        st.markdown("<h5 style='margin-top:12px; margin-bottom:8px;'>📋 Order Status Table</h5>", unsafe_allow_html=True)
-        order_status_matrix(df_day, key_prefix=f"day{i}")
-
-
-    # vertical divider between dates
-    if i != len(date_list) - 1:
-        with cols[col_index + 1]:
-            st.markdown(
-                "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
+                f"<h3 style='text-align:center; color:#4b5563; margin-bottom:8px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h3>",
                 unsafe_allow_html=True
             )
 
-    col_index += 2
+            # --- Orders Breakdown Metrics ---
+            brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
+            
+            with brk_col1:
+                st.markdown("<h5 style='margin-bottom:8px;'>📦 Orders Breakdown</h5>", unsafe_allow_html=True)
+            
+            with brk_col2:
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color: #f9fafb;
+                        padding: 8px 10px;
+                        border-radius: 8px;
+                        text-align: center;
+                        font-size: 14px;
+                        line-height: 1.3;
+                        border: 1px solid #e5e7eb;
+                    '>
+                        <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day.shape[0]}</div>
+                        <div style='color: #6b7280; font-size: 12px;'>🧾 Order Lines</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with brk_col3:
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color: #f9fafb;
+                        padding: 8px 10px;
+                        border-radius: 8px;
+                        text-align: center;
+                        font-size: 14px;
+                        line-height: 1.3;
+                        border: 1px solid #e5e7eb;
+                    '>
+                        <div style='font-weight: 600; font-size: 18px; color:#111827;'>{df_day['GINo'].nunique()}</div>
+                        <div style='color: #6b7280; font-size: 12px;'>📦 No. of GIs</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
+
+            # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
+            top1, top2 = st.columns([1, 1.5])   # pie gets more space
+            with top1:
+                # Determine completion criteria based on date
+                today = pd.Timestamp.today().normalize().date()
+                
+                # Critical Orders Section
+                if dash_date == today:
+                    # Today: critical orders outstanding = not shipped
+                    critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                         (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+                else:
+                    # D+1 and D+2: critical orders outstanding = not packed/shipped
+                    critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                         (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
+                
+                critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
+                critical_text = ", ".join(map(str, critical_gis))
+                
+                # Expandable copy section
+                with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=False):
+                    col_label, col_copy = st.columns([4, 1])
+                    with col_label:
+                        st.markdown("**GI Numbers:**")
+                    with col_copy:
+                        if critical_text:
+                            components.html(f"""
+                                <button onclick="navigator.clipboard.writeText('{critical_text}').then(() => alert('✅ Copied!'))" 
+                                        style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                    📋
+                                </button>
+                            """, height=30)
+                    st.text_area(
+                        "GI Numbers:",
+                        value=critical_text if critical_text else "No critical orders",
+                        height=100,
+                        key=f"{i}_critical_copy_text",
+                        label_visibility="collapsed"
+                    )
+
+                # Urgent Orders Section
+                st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+                
+                if dash_date == today:
+                    # Today: urgent orders outstanding = not shipped
+                    urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                       (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+                else:
+                    # D+1 and D+2: urgent orders outstanding = not packed/shipped
+                    urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                       (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
+                
+                urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
+                urgent_text = ", ".join(map(str, urgent_gis))
+                
+                # Expandable copy section
+                with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=False):
+                    col_label, col_copy = st.columns([4, 1])
+                    with col_label:
+                        st.markdown("**GI Numbers:**")
+                    with col_copy:
+                        if urgent_text:
+                            components.html(f"""
+                                <button onclick="navigator.clipboard.writeText('{urgent_text}').then(() => alert('✅ Copied!'))" 
+                                        style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                    📋
+                                </button>
+                            """, height=30)
+                    st.text_area(
+                        "GI Numbers:",
+                        value=urgent_text if urgent_text else "No urgent orders",
+                        height=100,
+                        key=f"{i}_urgent_copy_text",
+                        label_visibility="collapsed"
+                    )
+
+            with top2:
+                st.markdown("<h5 style='text-align:center; margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
+                daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+                
+                # Outstanding Orders Section
+                st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+                
+                # Determine outstanding orders based on date and order type
+                today = pd.Timestamp.today().normalize().date()
+                
+                if dash_date == today:
+                    # Today: different criteria based on order type
+                    # Critical/Urgent outstanding = not shipped
+                    critical_urgent_outstanding = df_day[
+                        (df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                        (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
+                    ]
+                    # Others outstanding = not packed/shipped
+                    others_outstanding = df_day[
+                        (~df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                        (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
+                    ]
+                    outstanding_df = pd.concat([critical_urgent_outstanding, others_outstanding])
+                else:
+                    # D+1 and D+2: outstanding = not packed/shipped (excluding cancelled)
+                    outstanding_df = df_day[
+                        (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
+                    ]
+                
+                outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
+                outstanding_text = ", ".join(map(str, outstanding_gis))
+                
+                # Expandable copy section for outstanding orders
+                with st.expander(f"📦 Outstanding Orders ({len(outstanding_gis)})", expanded=False):
+                    col_label, col_copy = st.columns([4, 1])
+                    with col_label:
+                        st.markdown("**GI Numbers:**")
+                    with col_copy:
+                        if outstanding_text:
+                            components.html(f"""
+                                <button onclick="navigator.clipboard.writeText('{outstanding_text}').then(() => alert('✅ Copied!'))" 
+                                        style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
+                                    📋
+                                </button>
+                            """, height=30)
+                    st.text_area(
+                        "GI Numbers:",
+                        value=outstanding_text if outstanding_text else "No outstanding orders",
+                        height=100,
+                        key=f"{i}_outstanding_copy_text",
+                        label_visibility="collapsed"
+                    )
 
 
-# ---------- BOTTOM SECTION ----------
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("### 📊 Order lines (Past 14 Days)")
-    order_volume_summary(df, key_prefix="overall")
-    expiry_date_summary(df, key_prefix="overall")
-with col2:
-    st.markdown("### 📈 Performance Metrics")
-    performance_metrics(df, key_prefix="overall")
+            # --- MIDDLE ROW: Order Status Table ---
+            st.markdown("<h5 style='margin-top:12px; margin-bottom:8px;'>📋 Order Status Table</h5>", unsafe_allow_html=True)
+            order_status_matrix(df_day, key_prefix=f"day{i}")
+
+
+        # vertical divider between dates
+        if i != len(date_list) - 1:
+            with cols[col_index + 1]:
+                st.markdown(
+                    "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
+                    unsafe_allow_html=True
+                )
+
+        col_index += 2
+
+with tab2:
+    # ---------- ANALYTICS TAB ----------
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### 📊 Order lines (Past 14 Days)")
+        order_volume_summary(df, key_prefix="overall")
+        expiry_date_summary(df, key_prefix="overall")
+    with col2:
+        st.markdown("### 📈 Performance Metrics")
+        performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
 
