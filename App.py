@@ -588,10 +588,59 @@ for i, dash_date in enumerate(date_list):
 
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
-            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
+            
+            # Make the pie chart smaller
+            fig = go.Figure(go.Pie(
+                values=[0, 100],  # Placeholder, will be updated by function
+                labels=["Completed", "Outstanding"],
+                marker_colors=['mediumseagreen', 'lightgray'],
+                hole=0.6,
+                textinfo='none',
+                sort=False
+            ))
+            
+            # Call the function but reduce the chart size
+            df_active = df_day[df_day['Order Status'] != 'Cancelled']
+            total_orders = df_active.shape[0]
+            today_date = pd.Timestamp.today().normalize().date()
+            
+            if dash_date == today_date:
+                critical_urgent_shipped = df_active[
+                    (df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (df_active['Order Status'] == 'Shipped')
+                ].shape[0]
+                
+                others_packed_or_shipped = df_active[
+                    (~df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (df_active['Order Status'].isin(['Packed', 'Shipped']))
+                ].shape[0]
+                
+                completed_orders = critical_urgent_shipped + others_packed_or_shipped
+                completed_label = "Completed"
+            else:
+                completed_orders = df_active['Order Status'].isin(['Packed', 'Shipped']).sum()
+                completed_label = "Completed (Packed)"
+            
+            completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
+            
+            fig = go.Figure(go.Pie(
+                values=[completed_pct, 100 - completed_pct],
+                labels=[completed_label, "Outstanding"],
+                marker_colors=['mediumseagreen', 'lightgray'],
+                hole=0.6,
+                textinfo='none',
+                sort=False
+            ))
+            fig.update_layout(
+                width=140,
+                height=120,
+                margin=dict(l=5, r=5, t=5, b=5),
+                annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=14, showarrow=False)]
+            )
+            st.plotly_chart(fig, use_container_width=False, key=f"day{i}_completed")
             
             # Outstanding Orders Section
-            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top:8px;'></div>", unsafe_allow_html=True)
             
             # Determine outstanding orders based on date and order type
             today = pd.Timestamp.today().normalize().date()
