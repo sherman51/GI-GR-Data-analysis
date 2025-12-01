@@ -493,9 +493,23 @@ for i, dash_date in enumerate(date_list):
         # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
         top1, top2 = st.columns([1, 1.5])   # pie gets more space
         with top1:
+            # Determine completion criteria based on date
+            today = pd.Timestamp.today().normalize().date()
+            
             # Critical Orders Section
-            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                 (~df_day['Order Status'].isin(['Shipped']))]
+            if dash_date < today:
+                # Yesterday and before: critical orders outstanding = not shipped
+                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                     (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+            elif dash_date == today:
+                # Today: critical orders outstanding = not shipped
+                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                     (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+            else:
+                # Future orders: critical orders outstanding = not packed/shipped
+                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                     (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
+            
             critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
             critical_text = ", ".join(map(str, critical_gis))
             
@@ -534,8 +548,20 @@ for i, dash_date in enumerate(date_list):
 
             # Urgent Orders Section
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                               (~df_day['Order Status'].isin(['Shipped']))]
+            
+            if dash_date < today:
+                # Yesterday and before: urgent orders outstanding = not shipped
+                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                   (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+            elif dash_date == today:
+                # Today: urgent orders outstanding = not shipped
+                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                   (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))]
+            else:
+                # Future orders: urgent orders outstanding = not packed/shipped
+                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                   (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
+            
             urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
             urgent_text = ", ".join(map(str, urgent_gis))
             
@@ -578,7 +604,34 @@ for i, dash_date in enumerate(date_list):
             
             # Outstanding Orders Section
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            outstanding_df = df_day[~df_day['Order Status'].isin(['Shipped', 'Packed', 'Cancelled'])]
+            
+            # Determine outstanding orders based on date and order type
+            today = pd.Timestamp.today().normalize().date()
+            
+            if dash_date < today:
+                # Yesterday and before: outstanding = not shipped (excluding cancelled)
+                outstanding_df = df_day[
+                    (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
+                ]
+            elif dash_date == today:
+                # Today: different criteria based on order type
+                # Critical/Urgent outstanding = not shipped
+                critical_urgent_outstanding = df_day[
+                    (df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
+                ]
+                # Others outstanding = not packed/shipped
+                others_outstanding = df_day[
+                    (~df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
+                    (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
+                ]
+                outstanding_df = pd.concat([critical_urgent_outstanding, others_outstanding])
+            else:
+                # Future orders: outstanding = not packed/shipped (excluding cancelled)
+                outstanding_df = df_day[
+                    (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
+                ]
+            
             outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
             outstanding_text = ", ".join(map(str, outstanding_gis))
             
