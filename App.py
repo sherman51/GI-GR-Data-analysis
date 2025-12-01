@@ -506,37 +506,14 @@ for i, dash_date in enumerate(date_list):
             critical_text = ", ".join(map(str, critical_gis))
             
             # Expandable copy section
-            with st.expander(f"📋 Copy Critical GIs ({len(critical_gis)})", expanded=False):
+            with st.expander(f"📋 Critical Orders ({len(critical_gis)})", expanded=False):
                 st.text_area(
                     "Select all (Ctrl+A) and copy (Ctrl+C):",
                     value=critical_text if critical_text else "No critical orders",
-                    height=60,
+                    height=100,
                     key=f"{i}_critical_copy_text",
                     label_visibility="collapsed"
                 )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #fecaca;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #fef2f2;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in critical_gis])
-                        if critical_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No critical orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
             # Urgent Orders Section
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
@@ -554,37 +531,14 @@ for i, dash_date in enumerate(date_list):
             urgent_text = ", ".join(map(str, urgent_gis))
             
             # Expandable copy section
-            with st.expander(f"📋 Copy Urgent GIs ({len(urgent_gis)})", expanded=False):
+            with st.expander(f"📋 Urgent Orders ({len(urgent_gis)})", expanded=False):
                 st.text_area(
                     "Select all (Ctrl+A) and copy (Ctrl+C):",
                     value=urgent_text if urgent_text else "No urgent orders",
-                    height=60,
+                    height=100,
                     key=f"{i}_urgent_copy_text",
                     label_visibility="collapsed"
                 )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #fde68a;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #fefce8;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in urgent_gis])
-                        if urgent_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No urgent orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
         with top2:
             st.markdown("<h5 style='margin-bottom:8px;'>✅ % Completion</h5>", unsafe_allow_html=True)
@@ -623,33 +577,10 @@ for i, dash_date in enumerate(date_list):
                 st.text_area(
                     "Select all (Ctrl+A) and copy (Ctrl+C):",
                     value=outstanding_text if outstanding_text else "No outstanding orders",
-                    height=60,
+                    height=100,
                     key=f"{i}_outstanding_copy_text",
                     label_visibility="collapsed"
                 )
-            
-            # Scrollable frame (always visible, fixed height)
-            st.markdown(
-                f"""
-                <div style='
-                    height: 100px;
-                    overflow-y: auto;
-                    border: 1px solid #d1d5db;
-                    border-radius: 6px;
-                    padding: 6px;
-                    background-color: #f9fafb;
-                    margin-top: 6px;
-                    font-size: 12px;
-                '>
-                    {
-                        '<br>'.join([f"<span style='display:block; padding:1px 0;'>{gi}</span>" for gi in outstanding_gis])
-                        if outstanding_gis else
-                        "<span style='color:#9ca3af; font-style:italic;'>No outstanding orders</span>"
-                    }
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
 
         # --- MIDDLE ROW: Order Status Table ---
