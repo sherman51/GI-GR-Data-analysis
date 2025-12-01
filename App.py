@@ -218,8 +218,17 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     ))
     fig.update_layout(
         width=180,
-        height=160,
-        margin=dict(l=5, r=5, t=15, b=5),
+        height=180,
+        margin=dict(l=5, r=5, t=5, b=5),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10)
+        ),
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=16, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
