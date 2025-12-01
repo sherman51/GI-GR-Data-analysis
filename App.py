@@ -7,7 +7,6 @@ from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
-import pyperclip
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -480,13 +479,49 @@ for i, dash_date in enumerate(date_list):
             critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
             critical_text = ", ".join(map(str, critical_gis))
             
-            # Copy button with count and clipboard functionality
-            if st.button(f"📋 Copy Critical GIs ({len(critical_gis)})", key=f"{i}_copy_critical", use_container_width=True):
-                try:
-                    pyperclip.copy(critical_text if critical_text else "No critical orders")
-                    st.toast("✅ Critical GIs copied to clipboard!", icon="✅")
-                except Exception as e:
-                    st.toast("⚠️ Could not copy. Please select and copy manually.", icon="⚠️")
+            # Copy button with count and clipboard functionality using HTML/JS
+            copy_button_critical = f"""
+                <button onclick="copyToClipboard{i}Critical()" style="
+                    width: 100%;
+                    padding: 8px;
+                    background-color: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                ">
+                    📋 Copy Critical GIs ({len(critical_gis)})
+                </button>
+                <div id="copyMessage{i}Critical" style="
+                    display: none;
+                    margin-top: 4px;
+                    padding: 4px;
+                    background-color: #10b981;
+                    color: white;
+                    border-radius: 4px;
+                    text-align: center;
+                    font-size: 12px;
+                ">
+                    ✅ Copied to clipboard!
+                </div>
+                <script>
+                function copyToClipboard{i}Critical() {{
+                    const text = `{critical_text if critical_text else "No critical orders"}`;
+                    navigator.clipboard.writeText(text).then(function() {{
+                        const msg = document.getElementById('copyMessage{i}Critical');
+                        msg.style.display = 'block';
+                        setTimeout(function() {{
+                            msg.style.display = 'none';
+                        }}, 2000);
+                    }}, function(err) {{
+                        alert('Could not copy to clipboard. Please copy manually from the box below.');
+                    }});
+                }}
+                </script>
+            """
+            st.markdown(copy_button_critical, unsafe_allow_html=True)
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
@@ -518,13 +553,49 @@ for i, dash_date in enumerate(date_list):
             urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
             urgent_text = ", ".join(map(str, urgent_gis))
             
-            # Copy button with count and clipboard functionality
-            if st.button(f"📋 Copy Urgent GIs ({len(urgent_gis)})", key=f"{i}_copy_urgent", use_container_width=True):
-                try:
-                    pyperclip.copy(urgent_text if urgent_text else "No urgent orders")
-                    st.toast("✅ Urgent GIs copied to clipboard!", icon="✅")
-                except Exception as e:
-                    st.toast("⚠️ Could not copy. Please select and copy manually.", icon="⚠️")
+            # Copy button with count and clipboard functionality using HTML/JS
+            copy_button_urgent = f"""
+                <button onclick="copyToClipboard{i}Urgent()" style="
+                    width: 100%;
+                    padding: 8px;
+                    background-color: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                ">
+                    📋 Copy Urgent GIs ({len(urgent_gis)})
+                </button>
+                <div id="copyMessage{i}Urgent" style="
+                    display: none;
+                    margin-top: 4px;
+                    padding: 4px;
+                    background-color: #10b981;
+                    color: white;
+                    border-radius: 4px;
+                    text-align: center;
+                    font-size: 12px;
+                ">
+                    ✅ Copied to clipboard!
+                </div>
+                <script>
+                function copyToClipboard{i}Urgent() {{
+                    const text = `{urgent_text if urgent_text else "No urgent orders"}`;
+                    navigator.clipboard.writeText(text).then(function() {{
+                        const msg = document.getElementById('copyMessage{i}Urgent');
+                        msg.style.display = 'block';
+                        setTimeout(function() {{
+                            msg.style.display = 'none';
+                        }}, 2000);
+                    }}, function(err) {{
+                        alert('Could not copy to clipboard. Please copy manually from the box below.');
+                    }});
+                }}
+                </script>
+            """
+            st.markdown(copy_button_urgent, unsafe_allow_html=True)
             
             # Scrollable frame (always visible, fixed height)
             st.markdown(
