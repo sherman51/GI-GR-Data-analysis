@@ -169,16 +169,18 @@ df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)
 
 # Daily completed pie
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
-    total_orders = df_today.shape[0]
+    # Exclude cancelled orders from the total count
+    df_active = df_today[df_today['Order Status'] != 'Cancelled']
+    total_orders = df_active.shape[0]
 
     today = pd.Timestamp.today().normalize().date()
     is_today = dash_date == today
 
     if is_today:
-        completed_orders = df_today['Order Status'].isin(['Shipped']).sum()
+        completed_orders = df_active['Order Status'].isin(['Shipped']).sum()
         completed_label = "Completed (Shipped)"
     else:
-        completed_orders = df_today['Order Status'].isin(['Packed']).sum()
+        completed_orders = df_active['Order Status'].isin(['Packed']).sum()
         completed_label = "Completed (Packed)"
 
     completed_pct = (completed_orders / total_orders * 100) if total_orders else 0
