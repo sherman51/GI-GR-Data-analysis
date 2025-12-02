@@ -75,6 +75,7 @@ else:
 # ---------- GLOBAL STYLE OVERRIDES ----------
 st.markdown("""
 <style>
+
     /* Hide Streamlit default header & footer */
     header {visibility: hidden;}
     footer {visibility: hidden;}
@@ -122,26 +123,88 @@ st.markdown("""
         color: #6b7280;
         margin-top: 4px;
     }
+
     /* --- CUSTOM COLORED EXPANDER HEADERS --- */
-div.streamlit-expanderHeader:has(p:contains("Critical Orders")) {
-    background-color: #ffe5e5 !important;
-    border: 1px solid #dc2626 !important;
-    border-radius: 6px !important;
-}
+    div.streamlit-expanderHeader:has(p:contains("Critical Orders")) {
+        background-color: #ffe5e5 !important;
+        border: 1px solid #dc2626 !important;
+        border-radius: 6px !important;
+    }
 
-div.streamlit-expanderHeader:has(p:contains("Urgent Orders")) {
-    background-color: #fff8d6 !important;
-    border: 1px solid #f59e0b !important;
-    border-radius: 6px !important;
-}
+    div.streamlit-expanderHeader:has(p:contains("Urgent Orders")) {
+        background-color: #fff8d6 !important;
+        border: 1px solid #f59e0b !important;
+        border-radius: 6px !important;
+    }
 
-div.streamlit-expanderHeader:has(p:contains("Outstanding Orders")) {
-    background-color: #e6f0ff !important;
-    border: 1px solid #3b82f6 !important;
-    border-radius: 6px !important;
-}
+    div.streamlit-expanderHeader:has(p:contains("Outstanding Orders")) {
+        background-color: #e6f0ff !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 6px !important;
+    }
 
-    
+    /* ============================================================
+       NEW: FULL WIDTH ORDER STATUS TABLE
+       ============================================================ */
+
+    /* Table container must stretch full width */
+    .table-container {
+        width: 100%;
+        padding: 0;
+        margin: 10px 0 20px 0;
+        overflow-x: auto;   /* enable scroll if needed */
+    }
+
+    /* Make the table itself fill the width */
+    .table-container table {
+        width: 100% !important;
+        border-collapse: collapse;
+        margin: 0;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    /* Header cells */
+    .table-container th {
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #d1d5db;
+        text-align: center;
+        background-color: #f3f4f6;
+        color: #374151;
+        white-space: nowrap;
+    }
+
+    /* Body cells */
+    .table-container td {
+        padding: 8px 10px;
+        font-size: 13px;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+        color: #1f2937;
+    }
+
+    /* Hover row */
+    .table-container tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Last row (Total) formatting */
+    .table-container tbody tr:last-child {
+        font-weight: 600;
+        background-color: #f3f4f6;
+    }
+
+    /* Responsive for small screens */
+    @media (max-width: 768px) {
+        .table-container th,
+        .table-container td {
+            padding: 6px 6px;
+            font-size: 11px;
+        }
+    }
 
 </style>
 <script>
@@ -154,6 +217,7 @@ function copyToClipboard(text) {
 }
 </script>
 """, unsafe_allow_html=True)
+
 
 # ---------- PAGE HEADER ----------
 st.markdown(
@@ -262,7 +326,6 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
 
 
 def order_status_matrix(df_today, key_prefix=""):
-
     # --- Build pivot table ---
     df_status_table = df_today.groupby(["Order Type", "Order Status"]).size().unstack(fill_value=0)
 
@@ -336,7 +399,7 @@ def order_status_matrix(df_today, key_prefix=""):
                 "selector": "table",
                 "props": [
                     ("border-collapse", "collapse"),
-                    ("width", "100%"),  # Ensure full width
+                    ("width", "100%"),  # Ensures full width
                     ("margin", "0 auto"),
                     ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
                     ("border-radius", "8px"),
@@ -363,13 +426,14 @@ def order_status_matrix(df_today, key_prefix=""):
     with st.container():
         components.html(
             f"""
-            <div style="overflow-x:auto; width:100%; padding: 4px; margin-top: 10px;">
+            <div class="table-container">
                 {html_code}
             </div>
             """,
-            height=400,  # You can adjust this height as needed
+            height=400,  # You can adjust this height based on your content size
             scrolling=True
         )
+
 
 
 
@@ -693,4 +757,5 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
