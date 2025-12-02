@@ -13,7 +13,7 @@ st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_i
 
 CONFIG = {
     "priority_map": {
-        '1-Normal': 'normal',
+        '1-Normal': 'Normal',
         '2-ADHOC Normal': 'Ad-hoc Normal',
         '3-ADHOC Urgent': 'Ad-hoc Urgent',
         '4-ADHOC Critical': 'Ad-hoc Critical'
@@ -757,5 +757,6 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
