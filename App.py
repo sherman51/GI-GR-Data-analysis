@@ -312,54 +312,48 @@ def order_status_matrix(df_today, key_prefix=""):
     styled_df = (
         df_status_table.style
             .apply(highlight_df, axis=None)
-            .set_table_styles([
-                {
-                    "selector": "th",
-                    "props": [
-                        ("padding", "8px 10px"),
-                        ("font-size", "12px"),
-                        ("font-weight", "600"),
-                        ("border", "1px solid #d1d5db"),
-                        ("text-align", "center"),
-                        ("background-color", "#f3f4f6"),
-                        ("color", "#374151"),
-                    ],
-                },
-                {
-                    "selector": "td",
-                    "props": [
-                        ("padding", "6px 8px"),
-                        ("font-size", "12px"),
-                        ("border", "1px solid #e5e7eb"),
-                        ("text-align", "center"),
-                        ("color", "#1f2937"),
-                    ],
-                },
-                {
-                    "selector": "table",
-                    "props": [
-                        ("border-collapse", "collapse"),
-                        ("width", "100%"),
-                        ("margin", "0 auto"),
-                        ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
-                        ("border-radius", "8px"),
-                        ("overflow", "hidden"),
-                    ],
-                },
-                {
-                    "selector": "tbody tr:hover",
-                    "props": [
-                        ("background-color", "#f9fafb"),
-                    ],
-                },
-                {
-                    "selector": "tbody tr:last-child",
-                    "props": [
-                        ("font-weight", "600"),
-                        ("background-color", "#f3f4f6"),
-                    ],
-                },
-            ])
+            .set_table_styles([{
+                "selector": "th",
+                "props": [
+                    ("padding", "8px 10px"),
+                    ("font-size", "12px"),
+                    ("font-weight", "600"),
+                    ("border", "1px solid #d1d5db"),
+                    ("text-align", "center"),
+                    ("background-color", "#f3f4f6"),
+                    ("color", "#374151"),
+                ],
+            }, {
+                "selector": "td",
+                "props": [
+                    ("padding", "6px 8px"),
+                    ("font-size", "12px"),
+                    ("border", "1px solid #e5e7eb"),
+                    ("text-align", "center"),
+                    ("color", "#1f2937"),
+                ],
+            }, {
+                "selector": "table",
+                "props": [
+                    ("border-collapse", "collapse"),
+                    ("width", "100%"),  # Ensure full width
+                    ("margin", "0 auto"),
+                    ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
+                    ("border-radius", "8px"),
+                    ("overflow", "hidden"),
+                ],
+            }, {
+                "selector": "tbody tr:hover",
+                "props": [
+                    ("background-color", "#f9fafb"),
+                ],
+            }, {
+                "selector": "tbody tr:last-child",
+                "props": [
+                    ("font-weight", "600"),
+                    ("background-color", "#f3f4f6"),
+                ],
+            }])
             .format("{:.0f}")
     )
 
@@ -369,13 +363,14 @@ def order_status_matrix(df_today, key_prefix=""):
     with st.container():
         components.html(
             f"""
-            <div style="overflow-x:auto; width:100%; padding: 4px;">
+            <div style="overflow-x:auto; width:100%; padding: 4px; margin-top: 10px;">
                 {html_code}
             </div>
             """,
-            height=280,
+            height=400,  # You can adjust this height as needed
             scrolling=True
         )
+
 
 
 # Expiry date summary
@@ -698,3 +693,4 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
