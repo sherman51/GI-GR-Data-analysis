@@ -29,7 +29,7 @@ CONFIG = {
         '75-Shipped': 'Shipped',
         '98-Cancelled': 'Cancelled'
     },
-    "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
+    "order_types": ['Back Orders', 'Normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
     "status_segments": ['Open','Pick In-Progress', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
     "colors": {
         'Shipped': '#22c55e',
@@ -757,5 +757,6 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
