@@ -29,7 +29,7 @@ CONFIG = {
         '75-Shipped': 'Shipped',
         '98-Cancelled': 'Cancelled'
     },
-    "order_types": ['Back Orders', 'normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
+    "order_types": ['Back Orders', 'Normal', 'Ad-hoc Normal', 'Ad-hoc Urgent', 'Ad-hoc Critical'],
     "status_segments": ['Open','Pick In-Progress', 'Picked', 'Packed', 'Shipped', 'Cancelled'],
     "colors": {
         'Shipped': '#22c55e',
@@ -273,7 +273,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     df_active = df_today[df_today['Order Status'] != 'Cancelled']
     total_orders = df_active.shape[0]
 
-    today = pd.Timestamp.today().normalize().date()
+    today = pd.Timestamp.today().Normalize().date()
     
     # Determine what "completed" means based on the date
     if dash_date == today:
@@ -455,7 +455,7 @@ def expiry_date_summary(df, key_prefix=""):
 
 # Order volume summary
 def order_volume_summary(df, key_prefix=""):
-    today = pd.Timestamp.today().normalize()
+    today = pd.Timestamp.today().Normalize()
     recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
     daily_counts = recent_df.groupby(recent_df['ExpDate'].dt.date)['GINo'].count()
     if daily_counts.empty:
@@ -474,7 +474,7 @@ def order_volume_summary(df, key_prefix=""):
 
 # Performance metrics
 def performance_metrics(df, key_prefix=""):
-    today = pd.Timestamp.today().normalize()
+    today = pd.Timestamp.today().Normalize()
     recent_past_df = df[(df['ExpDate'] < today) & (df['ExpDate'] >= today - pd.Timedelta(days=14))]
     total_expected = recent_past_df['ExpectedQTY'].sum()
     total_shipped = recent_past_df['ShippedQTY'].sum()
@@ -598,7 +598,7 @@ with tab1:
             top1, top2 = st.columns([1, 1.5])   # pie gets more space
             with top1:
                 # Determine completion criteria based on date
-                today = pd.Timestamp.today().normalize().date()
+                today = pd.Timestamp.today().Normalize().date()
                 
                 # Critical Orders Section
                 if dash_date == today:
@@ -678,7 +678,7 @@ with tab1:
                 st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
                 
                 # Determine outstanding orders based on date and order type
-                today = pd.Timestamp.today().normalize().date()
+                today = pd.Timestamp.today().Normalize().date()
                 
                 if dash_date == today:
                     # Today: different criteria based on order type
@@ -757,6 +757,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
