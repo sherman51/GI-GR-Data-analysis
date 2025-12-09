@@ -92,8 +92,8 @@ st.markdown("""
     /* Page container */
     .block-container {
         padding-top: 0.5rem !important;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 0 !important;   /* remove left gap */
+        padding-right: 0 !important;  /* remove right gap */
     }
 
     /* Divider */
@@ -152,16 +152,16 @@ st.markdown("""
        ============================================================ */
 
     .table-container {
-        width: 100%;
-        padding: 0;
-        margin: 0;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
         overflow-x: auto;
     }
 
     .table-container table {
         width: 100% !important;
         border-collapse: collapse;
-        margin: 0;
+        margin: 0 !important;
         border-radius: 8px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         overflow: hidden;
@@ -204,12 +204,29 @@ st.markdown("""
     }
 
     /* ============================================================
-       FIX: Force iframe width to be FULL PAGE WIDTH
+       REMOVE ALL PADDING / MARGINS AROUND TABLE & IFRAME
        ============================================================ */
+
+    /* Remove padding around the iframe wrapper */
+    .element-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Remove padding inside Streamlit HTML block */
+    .stMarkdown, .stHtml {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Force iframe to be flush and full width */
     iframe {
         width: 100% !important;
         min-width: 100% !important;
         max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
     }
 
 </style>
@@ -224,6 +241,7 @@ function copyToClipboard(text) {
 }
 </script>
 """, unsafe_allow_html=True)
+
 
 
 
@@ -792,4 +810,5 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
