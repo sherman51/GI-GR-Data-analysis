@@ -155,7 +155,7 @@ st.markdown("""
     .table-container {
         width: 100%;
         padding: 0;
-        margin: 10px 0 20px 0;
+        margin: 0;
         overflow-x: auto;   /* enable scroll if needed */
     }
 
@@ -171,7 +171,7 @@ st.markdown("""
 
     /* Header cells */
     .table-container th {
-        padding: 10px 12px;
+        padding: 8px 10px;
         font-size: 13px;
         font-weight: 600;
         border: 1px solid #d1d5db;
@@ -183,7 +183,7 @@ st.markdown("""
 
     /* Body cells */
     .table-container td {
-        padding: 8px 10px;
+        padding: 6px 8px;
         font-size: 13px;
         border: 1px solid #e5e7eb;
         text-align: center;
@@ -205,7 +205,7 @@ st.markdown("""
     @media (max-width: 768px) {
         .table-container th,
         .table-container td {
-            padding: 6px 6px;
+            padding: 5px 5px;
             font-size: 11px;
         }
     }
