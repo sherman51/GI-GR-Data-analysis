@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
+import hashlib
 
 # ---------- CONFIG ----------
 st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
@@ -44,7 +45,7 @@ CONFIG = {
 }
 
 # ---------- AUTO REFRESH ----------
-st_autorefresh(interval=60*1000, limit=None, key="data_refresh")
+refresh_count = st_autorefresh(interval=60*1000, limit=None, key="data_refresh")
 
 # ---------- GCP AUTH ----------
 credentials = service_account.Credentials.from_service_account_info(
@@ -264,6 +265,9 @@ valid_types = ["Disposal", "Goods Issue", "Forward Deploy"]
 df['Type'] = df['Type'].astype(str).str.strip()
 df = df[df['Type'].isin(valid_types)]
 
+# Create a data hash for keys - this will change when data changes
+data_hash = hashlib.md5(f"{df.shape[0]}_{df['GINo'].sum() if 'GINo' in df.columns else 0}_{refresh_count}".encode()).hexdigest()[:8]
+
 
 # ---------- DASHBOARD FUNCTIONS ----------
 
@@ -322,7 +326,7 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         ),
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=16, showarrow=False)]
     )
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed_{data_hash}")
 
 
 def order_status_matrix(df_today, key_prefix=""):
@@ -430,7 +434,7 @@ def order_status_matrix(df_today, key_prefix=""):
                 {html_code}
             </div>
             """,
-            height=400,  # You can adjust this height based on your content size
+            height=400,
             scrolling=True
         )
 
@@ -451,7 +455,7 @@ def expiry_date_summary(df, key_prefix=""):
         go.Bar(name='Orders Cancelled', x=dates, y=orders_cancelled, marker_color='indianred')
     ])
     fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
-    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_expiry")
+    st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_expiry_{data_hash}")
 
 # Order volume summary
 def order_volume_summary(df, key_prefix=""):
@@ -488,13 +492,13 @@ def performance_metrics(df, key_prefix=""):
         fig1.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=250,
                            annotations=[dict(text=f"{backorder_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False),
                                         dict(text=f"{int(total_variance)} Variance", x=0.5, y=0.35, font_size=12, showarrow=False)])
-        st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True, key=f"{key_prefix}_backorder_{data_hash}")
     with col2:
         fig2 = go.Figure(go.Pie(values=[accuracy_pct, 100 - accuracy_pct], hole=0.65, marker_colors=['#7cd992', '#e6e6e6'], textinfo='none'))
         fig2.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=250,
                            annotations=[dict(text=f"{accuracy_pct:.1f}%", x=0.5, y=0.55, font_size=22, showarrow=False),
                                         dict(text=f"{int(missed)} Missed", x=0.5, y=0.35, font_size=12, showarrow=False)])
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True, key=f"{key_prefix}_accuracy_{data_hash}")
 
 
 # ---------- DATE LOGIC ----------
@@ -613,7 +617,7 @@ with tab1:
                 critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
                 critical_text = ", ".join(map(str, critical_gis))
                 
-                # Expandable copy section
+                # Expandable copy section - KEY CHANGE: Added data_hash to key
                 with st.expander(f"🚨 Critical Orders ({len(critical_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
@@ -630,7 +634,7 @@ with tab1:
                         "GI Numbers:",
                         value=critical_text if critical_text else "No critical orders",
                         height=100,
-                        key=f"{i}_critical_copy_text",
+                        key=f"{i}_critical_copy_text_{data_hash}",
                         label_visibility="collapsed"
                     )
                 
@@ -649,7 +653,7 @@ with tab1:
                 urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
                 urgent_text = ", ".join(map(str, urgent_gis))
                 
-                # Expandable copy section
+                # Expandable copy section - KEY CHANGE: Added data_hash to key
                 with st.expander(f"⚠️ Urgent Orders ({len(urgent_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
@@ -666,7 +670,7 @@ with tab1:
                         "GI Numbers:",
                         value=urgent_text if urgent_text else "No urgent orders",
                         height=100,
-                        key=f"{i}_urgent_copy_text",
+                        key=f"{i}_urgent_copy_text_{data_hash}",
                         label_visibility="collapsed"
                     )
 
@@ -702,7 +706,7 @@ with tab1:
                 outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
                 outstanding_text = ", ".join(map(str, outstanding_gis))
                 
-                # Expandable copy section for outstanding orders
+                # Expandable copy section for outstanding orders - KEY CHANGE: Added data_hash to key
                 with st.expander(f"⏳ Outstanding Orders ({len(outstanding_gis)})", expanded=True):
                     col_label, col_copy = st.columns([4, 1])
                     with col_label:
@@ -719,7 +723,7 @@ with tab1:
                         "GI Numbers:",
                         value=outstanding_text if outstanding_text else "No outstanding orders",
                         height=100,
-                        key=f"{i}_outstanding_copy_text",
+                        key=f"{i}_outstanding_copy_text_{data_hash}",
                         label_visibility="collapsed"
                     )
 
@@ -757,6 +761,3 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
-
-
-
