@@ -645,8 +645,10 @@ with tab1:
                         st.markdown("**GI Numbers:**")
                     with col_copy:
                         if critical_text:
+                            # Escape the text properly for JavaScript
+                            escaped_text = critical_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
                             components.html(f"""
-                                <button onclick="navigator.clipboard.writeText('{critical_text}').then(() => alert('✅ Copied!'))" 
+                                <button onclick="navigator.clipboard.writeText('{escaped_text}').then(() => alert('✅ Copied!'))" 
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
                                     📋
                                 </button>
@@ -681,8 +683,10 @@ with tab1:
                         st.markdown("**GI Numbers:**")
                     with col_copy:
                         if urgent_text:
+                            # Escape the text properly for JavaScript
+                            escaped_text = urgent_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
                             components.html(f"""
-                                <button onclick="navigator.clipboard.writeText('{urgent_text}').then(() => alert('✅ Copied!'))" 
+                                <button onclick="navigator.clipboard.writeText('{escaped_text}').then(() => alert('✅ Copied!'))" 
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
                                     📋
                                 </button>
@@ -734,6 +738,8 @@ with tab1:
                         st.markdown("**GI Numbers:**")
                     with col_copy:
                         if outstanding_text:
+                            # Escape the text properly for JavaScript
+                            escaped_text = outstanding_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
                             components.html(f"""
                                 <button onclick="navigator.clipboard.writeText('{outstanding_text}').then(() => alert('✅ Copied!'))" 
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
