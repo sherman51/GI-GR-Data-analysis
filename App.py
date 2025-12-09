@@ -69,9 +69,12 @@ def download_latest_excel(bucket):
 # ---------- FETCH LATEST FILE ----------
 file_stream, file_name = download_latest_excel(bucket)
 if file_stream:
+    file_stream.seek(0)  # Ensure we're at the start of the file
     st.sidebar.success(f"📥 Using latest file from GCS: {file_name}")
+    st.sidebar.info(f"🔄 Last refresh: {datetime.now().strftime('%H:%M:%S')}")
 else:
     st.sidebar.error("❌ No Excel files found in GCS bucket.")
+    st.stop()
 
 # ---------- GLOBAL STYLE OVERRIDES ----------
 st.markdown("""
@@ -236,34 +239,52 @@ st.markdown(
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
+    """Load and clean data from Excel file."""
     try:
+        # Seek to beginning to ensure clean read
+        file.seek(0)
         df = pd.read_excel(file, skiprows=6, engine='openpyxl')
-    except Exception:
-        st.error("❌ Failed to read Excel file. Make sure it's a valid .xlsx file.")
+    except Exception as e:
+        st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
+    
+    # Clean column names
     df.columns = df.columns.str.strip()
+    
+    # Remove empty rows and columns
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
+    
+    # Convert date columns
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-    df = df[df['ExpDate'].notna()]
+    
+    # Filter out rows without ExpDate
+    df = df[df['ExpDate'].notna()].copy()  # .copy() ensures clean DataFrame
+    
+    # Map priority and status
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
+    
     return df
 
-# Load data
+# Load data - create fresh copy
 df = load_data(file_stream)
 
-# Filter df
+# Filter df - use .copy() to ensure clean filtering
 aircon_zones = ['aircon', 'controlled drug room', 'strong room']
-df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)]
+df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)].copy()
 
 # Filter df by Type
 valid_types = ["Disposal", "Goods Issue", "Forward Deploy"]
 df['Type'] = df['Type'].astype(str).str.strip()
-df = df[df['Type'].isin(valid_types)]
+df = df[df['Type'].isin(valid_types)].copy()
+
+# Verify data freshness
+st.sidebar.metric("Total Records", df.shape[0])
+st.sidebar.metric("Unique GI Numbers", df['GINo'].nunique())
 
 # Create a data hash for keys - this will change when data changes
 data_hash = hashlib.md5(f"{df.shape[0]}_{df['GINo'].sum() if 'GINo' in df.columns else 0}_{refresh_count}".encode()).hexdigest()[:8]
