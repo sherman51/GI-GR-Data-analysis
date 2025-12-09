@@ -148,18 +148,16 @@ st.markdown("""
     }
 
     /* ============================================================
-       NEW: FULL WIDTH ORDER STATUS TABLE
+       FULL WIDTH ORDER STATUS TABLE
        ============================================================ */
 
-    /* Table container must stretch full width */
     .table-container {
         width: 100%;
         padding: 0;
         margin: 0;
-        overflow-x: auto;   /* enable scroll if needed */
+        overflow-x: auto;
     }
 
-    /* Make the table itself fill the width */
     .table-container table {
         width: 100% !important;
         border-collapse: collapse;
@@ -169,7 +167,6 @@ st.markdown("""
         overflow: hidden;
     }
 
-    /* Header cells */
     .table-container th {
         padding: 8px 10px;
         font-size: 13px;
@@ -181,7 +178,6 @@ st.markdown("""
         white-space: nowrap;
     }
 
-    /* Body cells */
     .table-container td {
         padding: 6px 8px;
         font-size: 13px;
@@ -190,18 +186,15 @@ st.markdown("""
         color: #1f2937;
     }
 
-    /* Hover row */
     .table-container tbody tr:hover {
         background-color: #f9fafb;
     }
 
-    /* Last row (Total) formatting */
     .table-container tbody tr:last-child {
         font-weight: 600;
         background-color: #f3f4f6;
     }
 
-    /* Responsive for small screens */
     @media (max-width: 768px) {
         .table-container th,
         .table-container td {
@@ -210,7 +203,17 @@ st.markdown("""
         }
     }
 
+    /* ============================================================
+       FIX: Force iframe width to be FULL PAGE WIDTH
+       ============================================================ */
+    iframe {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+
 </style>
+
 <script>
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(function() {
@@ -221,6 +224,7 @@ function copyToClipboard(text) {
 }
 </script>
 """, unsafe_allow_html=True)
+
 
 
 # ---------- PAGE HEADER ----------
@@ -788,3 +792,4 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
