@@ -636,7 +636,7 @@ with tab1:
                                          (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
                 
                 critical_gis = critical_df['GINo'].unique().tolist() if not critical_df.empty else []
-                critical_text = ", ".join(map(str, critical_gis))
+                critical_text = "\n".join(map(str, critical_gis))  # Each GI on new line
                 
                 # Expandable copy section - KEY CHANGE: Added data_hash to key
                 with st.expander(f"🚨 Critical Orders ({len(critical_gis)})", expanded=True):
@@ -672,7 +672,7 @@ with tab1:
                                        (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))]
                 
                 urgent_gis = urgent_df['GINo'].unique().tolist() if not urgent_df.empty else []
-                urgent_text = ", ".join(map(str, urgent_gis))
+                urgent_text = "\n".join(map(str, urgent_gis))  # Each GI on new line
                 
                 # Expandable copy section - KEY CHANGE: Added data_hash to key
                 with st.expander(f"⚠️ Urgent Orders ({len(urgent_gis)})", expanded=True):
@@ -725,7 +725,7 @@ with tab1:
                     ]
                 
                 outstanding_gis = outstanding_df['GINo'].unique().tolist() if not outstanding_df.empty else []
-                outstanding_text = ", ".join(map(str, outstanding_gis))
+                outstanding_text = "\n".join(map(str, outstanding_gis))  # Each GI on new line
                 
                 # Expandable copy section for outstanding orders - KEY CHANGE: Added data_hash to key
                 with st.expander(f"⏳ Outstanding Orders ({len(outstanding_gis)})", expanded=True):
