@@ -338,8 +338,7 @@ def order_status_matrix(df_today, key_prefix=""):
                  ])
                  .set_caption("Order Status Matrix (No Totals)")
                  )
-
-    st.write(styled_df, key=f"{key_prefix}_status")
+    st.write(styled_df)
 
 
 
@@ -594,6 +593,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
