@@ -55,7 +55,6 @@ bucket = gcs_client.bucket(BUCKET_NAME)
 
 def download_latest_excel(bucket):
     blobs = list(bucket.list_blobs())
-    # Filter blobs to include only those starting with 'coldroom'
     coldroom_blobs = [b for b in blobs if b.name.lower().startswith('coldroom') and b.name.lower().endswith(('.xlsx', '.xls'))]
     if not coldroom_blobs:
         return None, None
@@ -74,23 +73,19 @@ else:
 # ---------- GLOBAL STYLE OVERRIDES ----------
 st.markdown("""
 <style>
-    /* Hide Streamlit default header & footer */
     header {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Body font */
     html, body, [class*="css"]  {
         font-family: "Segoe UI", sans-serif;
     }
 
-    /* Page container */
     .block-container {
         padding-top: 0.5rem !important;
         padding-left: 1rem;
         padding-right: 1rem;
     }
 
-    /* Divider */
     hr {
         border: none;
         height: 1px;
@@ -98,7 +93,6 @@ st.markdown("""
         margin: 2rem 0;
     }
 
-    /* Metric cards */
     .metric-container {
         background: linear-gradient(145deg, #ffffff, #f3f4f6);
         padding: 14px;
@@ -157,10 +151,8 @@ def load_data(file):
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
     return df
 
-# Load data
 df = load_data(file_stream)
 
-# Filter df
 coldroom_zones = ['cold room', 'freezer']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(coldroom_zones)]
 
@@ -179,7 +171,6 @@ def daily_overview(df_today, key_prefix=""):
         for seg in segments:
             order_data[seg][ot] = (ot_df['Order Status'] == seg).sum()
 
-    # Find max Ad-hoc count among all segments and types
     max_adhoc_count = 0
     for seg in segments:
         for ot in adhoc_types:
@@ -187,12 +178,10 @@ def daily_overview(df_today, key_prefix=""):
             if count > max_adhoc_count:
                 max_adhoc_count = count
 
-    # Set x-axis range for Ad-hoc chart with a bit of padding
     adhoc_xaxis_range = [0, (max_adhoc_count + 5)]
 
     fig = go.Figure()
 
-    # Primary axis: Normal orders (stacked horizontally)
     for seg in segments:
         fig.add_trace(go.Bar(
             y=[normal_type],
@@ -203,7 +192,6 @@ def daily_overview(df_today, key_prefix=""):
             legendgroup=seg
         ))
 
-    # Secondary axis: Ad-hoc orders (stacked horizontally on x2 axis)
     for seg in segments:
         fig.add_trace(go.Bar(
             y=adhoc_types,
@@ -231,14 +219,6 @@ def daily_overview(df_today, key_prefix=""):
 
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_combined")
 
-
-
-
-
-
-
-
-# Daily completed pie
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
     total_orders = df_today.shape[0]
 
@@ -270,19 +250,10 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed")
 
-
-# Order status matrix
 def order_status_matrix(df_today, key_prefix=""):
-    # Group by Order Type and Order Status
     grouped = df_today.groupby(['Order Type', 'Order Status'])
-
-    # Count of order lines
     order_line_counts = grouped.size().unstack(fill_value=0)
-
-    # Sum of ExpectedQTY
     qty_sums = grouped['ExpectedQTY'].sum().unstack(fill_value=0)
-
-    # Build combined DataFrame with conditional format
     combined_df = pd.DataFrame(index=CONFIG['order_types'], columns=CONFIG['status_segments'])
 
     for row in CONFIG['order_types']:
@@ -296,7 +267,6 @@ def order_status_matrix(df_today, key_prefix=""):
             else:
                 combined_df.at[row, col] = f"{int(lines)}\n({int(qty)})"
 
-    # ---------- Highlighting ----------
     def highlight_cell(val, row_name, col_name):
         if col_name in ['Shipped', 'Cancelled'] or pd.isna(val):
             return ''
@@ -338,14 +308,9 @@ def order_status_matrix(df_today, key_prefix=""):
                  ])
                  .set_caption("Order Status Matrix (No Totals)")
                  )
+
     st.write(styled_df)
 
-
-
-
-
-
-# Ad-hoc orders
 def adhoc_orders_section(df_today, key_prefix=""):
     not_completed_df = df_today[~df_today['Status'].isin(['Shipped'])]
     urgent_df = not_completed_df[not_completed_df['Order Type'] == 'Ad-hoc Urgent']
@@ -360,7 +325,6 @@ def adhoc_orders_section(df_today, key_prefix=""):
         if not critical_df.empty:
             st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{key_prefix}_critical")
 
-# Expiry date summary
 def expiry_date_summary(df, key_prefix=""):
     recent_df = df[df['ExpDate'] >= pd.Timestamp.today() - pd.Timedelta(days=14)]
     daily_summary = recent_df.groupby(recent_df['ExpDate'].dt.strftime("%d-%b"))['GINo'].count()
@@ -376,7 +340,6 @@ def expiry_date_summary(df, key_prefix=""):
     fig.update_layout(barmode='group', xaxis_title='Expiry Date', yaxis_title='Order Count')
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_expiry")
 
-# Order volume summary
 def order_volume_summary(df, key_prefix=""):
     today = pd.Timestamp.today().normalize()
     recent_df = df[(df['ExpDate'] >= today - pd.Timedelta(days=14)) & (df['ExpDate'] <= today)]
@@ -395,7 +358,6 @@ def order_volume_summary(df, key_prefix=""):
     with col3:
         st.markdown(f"<div class='metric-container'><div class='metric-value'>{low_day_vol}</div><div class='metric-label'>📉 Lowest Day Volume</div></div>", unsafe_allow_html=True)
 
-# Performance metrics
 def performance_metrics(df, key_prefix=""):
     today = pd.Timestamp.today().normalize()
     recent_past_df = df[(df['ExpDate'] < today) & (df['ExpDate'] >= today - pd.Timedelta(days=14))]
@@ -424,190 +386,141 @@ def performance_metrics(df, key_prefix=""):
 date_list = []
 days_checked = 0
 current_date = datetime.today().date()
-#current_date = date(2025,8,15)
 while len(date_list) < 3 and days_checked < 7:
-    weekday = current_date.weekday()  # Monday = 0, Sunday = 6
+    weekday = current_date.weekday()
 
-    if weekday == 6:  # Sunday - always skip
+    if weekday == 6:
         current_date += timedelta(days=1)
         days_checked += 1
         continue
 
-    if weekday == 5:  # Saturday
-        # Filter to see if there are any GINo entries for this Saturday
+    if weekday == 5:
         df_day = df[df['ExpDate'].dt.date == current_date]
         if df_day['GINo'].count() == 0:
-            # No orders — skip Saturday
             current_date += timedelta(days=1)
             days_checked += 1
             continue
 
-    # Valid day to display
     date_list.append(current_date)
     current_date += timedelta(days=1)
     days_checked += 1
 
 
-# ---------- DISPLAY ----------
-layout = []
-for i in range(len(date_list)):
-    layout.append(5)
-    if i != len(date_list) - 1:
-        layout.append(0.3)  # thinner divider
-cols = st.columns(layout)
+# ---------- DISPLAY WITH TABS ----------
+tab1, tab2 = st.tabs(["📊 Daily Dashboard", "📈 Analytics"])
 
-col_index = 0
-for i, dash_date in enumerate(date_list):
-    with cols[col_index]:
-        df_day = df[df['ExpDate'].dt.date == dash_date]
+with tab1:
+    layout = []
+    for i in range(len(date_list)):
+        layout.append(5)
+        if i != len(date_list) - 1:
+            layout.append(0.3)
+    cols = st.columns(layout)
 
-        # --- Date Header ---
-        st.markdown(
-            f"<h3 style='text-align:center; color:gray; margin-bottom:10px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h4>",
-            unsafe_allow_html=True
-        )
+    col_index = 0
+    for i, dash_date in enumerate(date_list):
+        with cols[col_index]:
+            df_day = df[df['ExpDate'].dt.date == dash_date]
 
-        # --- TOP ROW: Urgent/Critical stacked + Completion Pie ---
-        top1, top2 = st.columns([1, 1.5])   # pie gets more space
-        with top1:
-            st.markdown("##### 🚨 Critical Orders")
-            critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
-                                 (~df_day['Order Status'].isin(['Shipped']))]
             st.markdown(
-                f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not critical_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
-
-            st.markdown("##### ⚠ Urgent Orders")
-            urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
-                               (~df_day['Order Status'].isin(['Shipped']))]
-            st.markdown(
-                f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
-                f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
-            if not urgent_df.empty:
-                st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
-
-        with top2:
-            st.markdown("##### ✅ % Completion")
-            daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
-
-
-        # --- MIDDLE ROW: Order Status Table ---
-        st.markdown("##### 📋 Order Status Table")
-        order_status_matrix(df_day, key_prefix=f"day{i}")
-
-        # --- BOTTOM ROW: Orders Breakdown Chart ---
-        brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
-        
-        with brk_col1:
-            st.markdown("##### 📦 Orders Breakdown")
-        
-        with brk_col2:
-            st.markdown(
-                f"""
-                <div style='
-                    background-color: #f4f4f4;
-                    padding: 6px 10px;
-                    border-radius: 6px;
-                    text-align: center;
-                    font-size: 14px;
-                    line-height: 1.2;
-                '>
-                    <div style='font-weight: bold; font-size: 16px;'>{df_day.shape[0]}</div>
-                    <div style='color: #555;'>🧾 Order Lines</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        
-        with brk_col3:
-            st.markdown(
-                f"""
-                <div style='
-                    background-color: #f4f4f4;
-                    padding: 6px 10px;
-                    border-radius: 6px;
-                    text-align: center;
-                    font-size: 14px;
-                    line-height: 1.2;
-                '>
-                    <div style='font-weight: bold; font-size: 16px;'>{df_day['GINo'].nunique()}</div>
-                    <div style='color: #555;'>📦 No. of GIs</div>
-                </div>
-                """,
+                f"<h3 style='text-align:center; color:gray; margin-bottom:10px; font-weight:bold;'>{dash_date.strftime('%d %b %Y')}</h4>",
                 unsafe_allow_html=True
             )
 
-        
-        daily_overview(df_day, key_prefix=f"day{i}")
+            top1, top2 = st.columns([1, 1.5])
+            with top1:
+                st.markdown("##### 🚨 Critical Orders")
+                critical_df = df_day[(df_day['Order Type'] == 'Ad-hoc Critical') & 
+                                     (~df_day['Order Status'].isin(['Shipped']))]
+                st.markdown(
+                    f"<div style='background-color:#f5a1a1; padding:10px; border-radius:8px; text-align:center;'>"
+                    f"🚨 Critical: {critical_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+                if not critical_df.empty:
+                    st.dataframe(pd.DataFrame({"GI No": critical_df['GINo'].unique()}), key=f"{i}_critical")
 
+                st.markdown("##### ⚠ Urgent Orders")
+                urgent_df = df_day[(df_day['Order Type'] == 'Ad-hoc Urgent') & 
+                                   (~df_day['Order Status'].isin(['Shipped']))]
+                st.markdown(
+                    f"<div style='background-color:#f8e5a1; padding:10px; border-radius:8px; text-align:center;'>"
+                    f"⚠ Urgent: {urgent_df['GINo'].nunique()}</div>", unsafe_allow_html=True)
+                if not urgent_df.empty:
+                    st.dataframe(pd.DataFrame({"GI No": urgent_df['GINo'].unique()}), key=f"{i}_urgent")
 
-    # vertical divider between dates
-    if i != len(date_list) - 1:
-        with cols[col_index + 1]:
-            st.markdown(
-                "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
-                unsafe_allow_html=True
-            )
+            with top2:
+                st.markdown("##### ✅ % Completion")
+                daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
 
-    col_index += 2
+            st.markdown("##### 📋 Order Status Table")
+            order_status_matrix(df_day, key_prefix=f"day{i}")
 
+            brk_col1, brk_col2, brk_col3 = st.columns([1.5, 1, 1])
+            
+            with brk_col1:
+                st.markdown("##### 📦 Orders Breakdown")
+            
+            with brk_col2:
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color: #f4f4f4;
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        text-align: center;
+                        font-size: 14px;
+                        line-height: 1.2;
+                    '>
+                        <div style='font-weight: bold; font-size: 16px;'>{df_day.shape[0]}</div>
+                        <div style='color: #555;'>🧾 Order Lines</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            
+            with brk_col3:
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color: #f4f4f4;
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        text-align: center;
+                        font-size: 14px;
+                        line-height: 1.2;
+                    '>
+                        <div style='font-weight: bold; font-size: 16px;'>{df_day['GINo'].nunique()}</div>
+                        <div style='color: #555;'>📦 No. of GIs</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-# ---------- BOTTOM SECTION ----------
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("### 📊 Order lines (Past 14 Days)")
-    order_volume_summary(df, key_prefix="overall")
-    expiry_date_summary(df, key_prefix="overall")
-with col2:
-    st.markdown("### 📈 Performance Metrics")
-    performance_metrics(df, key_prefix="overall")
+            daily_overview(df_day, key_prefix=f"day{i}")
+
+        if i != len(date_list) - 1:
+            with cols[col_index + 1]:
+                st.markdown(
+                    "<div style='border-left: 1px solid #bbb; height: 1000px; margin: auto;'></div>",
+                    unsafe_allow_html=True
+                )
+
+        col_index += 2
+
+with tab2:
+    # ---------- ANALYTICS TAB ----------
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### 📊 Order Lines (Past 14 Days)")
+        order_volume_summary(df, key_prefix="overall")
+        expiry_date_summary(df, key_prefix="overall")
+    with col2:
+        st.markdown("### 📈 Performance Metrics")
+        performance_metrics(df, key_prefix="overall")
 
 st.markdown("###  *Stay Safe & Well*")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 st.markdown("""
     <div style='text-align:center; color:#6b7280; font-size:0.9rem; margin-top:30px;'>
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
