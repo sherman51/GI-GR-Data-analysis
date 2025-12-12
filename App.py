@@ -825,13 +825,6 @@ with tab2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
 
-st.markdown("###  *Stay Safe & Well*")
-
-st.markdown("""
-    <div style='text-align:center; color:#6b7280; font-size:0.9rem; margin-top:30px;'>
-        ⭐ Stay Safe & Well ⭐
-    </div>
-""", unsafe_allow_html=True)
 
 
 
