@@ -425,8 +425,8 @@ def order_status_matrix(df_today, key_prefix=""):
             .set_table_styles([{
                 "selector": "th",
                 "props": [
-                    ("padding", "8px 10px"),
-                    ("font-size", "12px"),
+                    ("padding", "6px 8px"),  # Reduced padding
+                    ("font-size", "11px"),  # Smaller font
                     ("font-weight", "600"),
                     ("font-family", "'Segoe UI', sans-serif"),
                     ("border", "1px solid #d1d5db"),
@@ -434,27 +434,27 @@ def order_status_matrix(df_today, key_prefix=""):
                     ("background-color", "#f3f4f6"),
                     ("color", "#374151"),
                     ("width", "12.5%"),  # Equal width for 8 columns (7 status + 1 total)
-                    ("min-width", "80px"),  # Minimum width to prevent too narrow
+                    ("min-width", "65px"),  # Reduced min-width
                 ],
             }, {
                 "selector": "td",
                 "props": [
-                    ("padding", "6px 8px"),
-                    ("font-size", "12px"),
+                    ("padding", "5px 6px"),  # Reduced padding
+                    ("font-size", "11px"),  # Smaller font
                     ("font-family", "'Segoe UI', sans-serif"),
                     ("border", "1px solid #e5e7eb"),
                     ("text-align", "center"),
                     ("color", "#1f2937"),
                     ("width", "12.5%"),  # Equal width for all data cells
-                    ("min-width", "80px"),
+                    ("min-width", "65px"),  # Reduced min-width
                 ],
             }, {
                 "selector": "th:first-child, td:first-child",  # Row header (Order Type column)
                 "props": [
-                    ("width", "15%"),  # Slightly wider for order type names
-                    ("min-width", "120px"),
+                    ("width", "14%"),  # Slightly reduced width
+                    ("min-width", "100px"),  # Reduced min-width
                     ("text-align", "left"),
-                    ("padding-left", "12px"),
+                    ("padding-left", "10px"),  # Reduced padding
                 ],
             }, {
                 "selector": "table",
@@ -832,6 +832,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
