@@ -301,10 +301,11 @@ components.html(
         <script>
             function updateClock() {
                 const now = new Date();
+                const dd = String(now.getDay()).padstart(2,'0');
                 const h = String(now.getHours()).padStart(2, '0');
                 const m = String(now.getMinutes()).padStart(2, '0');
                 const s = String(now.getSeconds()).padStart(2, '0');
-                document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+                document.getElementById('clock').textContent = dd+ '/' + h + ':' + m + ':' + s;
             }
             updateClock();
             setInterval(updateClock, 1000);
