@@ -300,7 +300,7 @@ aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)].copy()
 
 # Filter df by Type
-valid_types = ["Disposal", "Goods Issue", "Forward Deploy"]
+valid_types = ["Back Order","Disposal", "Goods Issue", "Forward Deploy"]
 df['Type'] = df['Type'].astype(str).str.strip()
 df = df[df['Type'].isin(valid_types)].copy()
 
@@ -810,5 +810,6 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
