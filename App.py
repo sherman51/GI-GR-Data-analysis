@@ -258,6 +258,39 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+# ---------- REAL-TIME CLOCK ----------
+clock_placeholder = st.empty()
+
+clock_placeholder.markdown(
+    """
+    <div id="live-clock" 
+         style="
+            font-size: 20px; 
+            font-weight: 600; 
+            color: #003366; 
+            text-align: right;
+            margin-top: -55px;
+            margin-bottom: 10px;
+        ">
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const formatted = now.toLocaleString('en-SG', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            document.getElementById('live-clock').innerHTML = '🕒 ' + formatted;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
@@ -824,6 +857,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
