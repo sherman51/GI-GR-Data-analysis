@@ -428,32 +428,45 @@ def order_status_matrix(df_today, key_prefix=""):
                     ("padding", "8px 10px"),
                     ("font-size", "12px"),
                     ("font-weight", "600"),
-                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
+                    ("font-family", "'Segoe UI', sans-serif"),
                     ("border", "1px solid #d1d5db"),
                     ("text-align", "center"),
                     ("background-color", "#f3f4f6"),
                     ("color", "#374151"),
+                    ("width", "12.5%"),  # Equal width for 8 columns (7 status + 1 total)
+                    ("min-width", "80px"),  # Minimum width to prevent too narrow
                 ],
             }, {
                 "selector": "td",
                 "props": [
                     ("padding", "6px 8px"),
                     ("font-size", "12px"),
-                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
+                    ("font-family", "'Segoe UI', sans-serif"),
                     ("border", "1px solid #e5e7eb"),
                     ("text-align", "center"),
                     ("color", "#1f2937"),
+                    ("width", "12.5%"),  # Equal width for all data cells
+                    ("min-width", "80px"),
+                ],
+            }, {
+                "selector": "th:first-child, td:first-child",  # Row header (Order Type column)
+                "props": [
+                    ("width", "15%"),  # Slightly wider for order type names
+                    ("min-width", "120px"),
+                    ("text-align", "left"),
+                    ("padding-left", "12px"),
                 ],
             }, {
                 "selector": "table",
                 "props": [
                     ("border-collapse", "collapse"),
                     ("width", "100%"),
+                    ("table-layout", "fixed"),  # KEY: Forces equal column widths
                     ("margin", "0 auto"),
                     ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
                     ("border-radius", "8px"),
                     ("overflow", "hidden"),
-                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
+                    ("font-family", "'Segoe UI', sans-serif"),
                 ],
             }, {
                 "selector": "tbody tr:hover",
@@ -819,6 +832,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
