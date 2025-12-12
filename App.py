@@ -246,7 +246,6 @@ function copyToClipboard(text) {
 
 
 # ---------- PAGE HEADER ----------
-# ---------- PAGE HEADER WITH REAL-TIME CLOCK ----------
 st.markdown(
     """
     <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, #003366, #2563eb); padding: 14px 18px; border-radius: 10px; margin-bottom: 20px;">
@@ -258,27 +257,29 @@ st.markdown(
             </h2>
         </div>
         <div id="live-clock" style="font-size: 20px; font-weight: 600; color: #ffffff; white-space: nowrap;">
-            🕒 --:--:--
+            --:--:--
         </div>
     </div>
 
     <script>
-        function updateClock() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const formatted = hours + ':' + minutes + ':' + seconds;
-            
-            const clockElement = document.getElementById('live-clock');
-            if (clockElement) {
-                clockElement.innerHTML = '🕒 ' + formatted;
+        (function() {
+            function updateClock() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const formatted = hours + ':' + minutes + ':' + seconds;
+                
+                const clockElement = document.getElementById('live-clock');
+                if (clockElement) {
+                    clockElement.textContent = formatted;
+                }
             }
-        }
-        
-        // Update immediately and then every second
-        updateClock();
-        setInterval(updateClock, 1000);
+            
+            // Update immediately and then every second
+            updateClock();
+            setInterval(updateClock, 1000);
+        })();
     </script>
     """,
     unsafe_allow_html=True
@@ -849,6 +850,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
