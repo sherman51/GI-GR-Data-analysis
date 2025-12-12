@@ -246,43 +246,49 @@ function copyToClipboard(text) {
 
 
 # ---------- PAGE HEADER ----------
+# ---------- PAGE HEADER WITH REAL-TIME CLOCK ----------
+# First, display the header with logo
 st.markdown(
     """
-    <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(90deg, #003366, #2563eb); padding: 14px 18px; border-radius: 10px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center;">
-            <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
-                 style="max-height:42px; height:auto; width:auto; margin-right:12px;">
-            <h2 style="margin: 0; font-family: 'Segoe UI', sans-serif; color: #ffffff; font-weight: 600;">
-                Outbound Dashboard Aircon
-            </h2>
-        </div>
-        <div id="live-clock" style="font-size: 20px; font-weight: 600; color: #ffffff; white-space: nowrap;">
-            --:--:--
+    <div style="display: flex; align-items: center; background: linear-gradient(90deg, #003366, #2563eb); padding: 14px 18px; border-radius: 10px; margin-bottom: 5px;">
+        <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" 
+             style="max-height:42px; height:auto; width:auto; margin-right:12px;">
+        <h2 style="margin: 0; font-family: 'Segoe UI', sans-serif; color: #ffffff; font-weight: 600;">
+            Outbound Dashboard Aircon
+        </h2>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Then display the clock using components.html for reliable JavaScript execution
+components.html(
+    """
+    <div style="text-align: right; margin-top: -60px; margin-bottom: 20px; margin-right: 18px;">
+        <div id="live-clock" style="font-size: 20px; font-weight: 600; color: #003366;">
+            Loading...
         </div>
     </div>
 
     <script>
-        (function() {
-            function updateClock() {
-                const now = new Date();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
-                const formatted = hours + ':' + minutes + ':' + seconds;
-                
-                const clockElement = document.getElementById('live-clock');
-                if (clockElement) {
-                    clockElement.textContent = formatted;
-                }
-            }
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const formatted = hours + ':' + minutes + ':' + seconds;
             
-            // Update immediately and then every second
-            updateClock();
-            setInterval(updateClock, 1000);
-        })();
+            const clockElement = document.getElementById('live-clock');
+            if (clockElement) {
+                clockElement.textContent = formatted;
+            }
+        }
+        
+        updateClock();
+        setInterval(updateClock, 1000);
     </script>
     """,
-    unsafe_allow_html=True
+    height=30
 )
 
 # ---------- HELPER FUNCTIONS ----------
@@ -850,6 +856,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
