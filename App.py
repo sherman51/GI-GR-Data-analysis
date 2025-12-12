@@ -163,7 +163,7 @@ st.markdown(
         =============================== */
         .stTabs [data-baseweb="tab-list"] {
             gap: 22px;
-            justify-content: center;
+            justify-content: flex-start;
             padding-bottom: 4px;
         }
         .stTabs [data-baseweb="tab"] {
@@ -854,6 +854,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
