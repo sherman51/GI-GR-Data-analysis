@@ -371,6 +371,7 @@ data_hash = hashlib.md5(f"{df.shape[0]}_{df['GINo'].sum() if 'GINo' in df.column
 # ---------- DASHBOARD FUNCTIONS ----------
 
 # Daily completed pie
+# Daily completed pie
 def daily_completed_pie(df_today, dash_date, key_prefix=""):
     # Exclude cancelled orders from the total count
     df_active = df_today[df_today['Order Status'] != 'Cancelled']
@@ -380,20 +381,8 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
     
     # Determine what "completed" means based on the date
     if dash_date == today:
-        # Today's orders: Different criteria based on order type
-        # Ad-hoc Critical/Urgent should be shipped
-        # All others should be at least packed
-        critical_urgent_shipped = df_active[
-            (df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
-            (df_active['Order Status'] == 'Shipped')
-        ].shape[0]
-        
-        others_packed_or_shipped = df_active[
-            (~df_active['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) & 
-            (df_active['Order Status'].isin(['Packed', 'Shipped']))
-        ].shape[0]
-        
-        completed_orders = critical_urgent_shipped + others_packed_or_shipped
+        # Today's orders: ALL must be shipped
+        completed_orders = df_active[df_active['Order Status'] == 'Shipped'].shape[0]
         completed_label = "Completed"
     else:
         # D+1 and D+2 orders: All should be packed or shipped
@@ -426,7 +415,6 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         annotations=[dict(text=f"{completed_pct:.1f}%", x=0.5, y=0.5, font_size=16, showarrow=False)]
     )
     st.plotly_chart(fig, use_container_width=True, key=f"{key_prefix}_completed_{data_hash}")
-
 
 def order_status_matrix(df_today, key_prefix=""):
     # --- Build pivot table ---
@@ -880,6 +868,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
