@@ -246,7 +246,6 @@ function copyToClipboard(text) {
 
 
 # ---------- PAGE HEADER ----------
-# ---------- PAGE HEADER WITH REAL-TIME CLOCK ----------
 # Combined header and clock in one HTML component
 components.html(
     """
@@ -881,6 +880,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
