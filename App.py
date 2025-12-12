@@ -246,7 +246,6 @@ function copyToClipboard(text) {
 
 
 # ---------- PAGE HEADER ----------
-# Combined header and clock in one HTML component
 components.html(
     """
     <!DOCTYPE html>
@@ -283,8 +282,8 @@ components.html(
                 font-size: 24px;
             }
             #clock {
-                font-size: 20px;
-                font-weight: 600;
+                font-size: 26px;   /* 🔥 Increased font size */
+                font-weight: 700;  /* Optional: bolder */
                 color: #ffffff;
                 white-space: nowrap;
             }
@@ -296,25 +295,36 @@ components.html(
                 <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" alt="Logo">
                 <h2>Outbound Dashboard Aircon</h2>
             </div>
-            <div id="clock">--:--:--</div>
+            <div id="clock">-- --- --:--:--</div>
         </div>
+
         <script>
             function updateClock() {
                 const now = new Date();
-                const dd = String(now.getDay()).padstart(2,'0');
+
+                const dd = String(now.getDate()).padStart(2, '0');
+
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const mmm = monthNames[now.getMonth()];
+
                 const h = String(now.getHours()).padStart(2, '0');
                 const m = String(now.getMinutes()).padStart(2, '0');
                 const s = String(now.getSeconds()).padStart(2, '0');
-                document.getElementById('clock').textContent = dd+ '/' + h + ':' + m + ':' + s;
+
+                document.getElementById('clock').textContent =
+                    dd + " " + mmm + " " + h + ":" + m + ":" + s;
             }
+
             updateClock();
             setInterval(updateClock, 1000);
         </script>
     </body>
     </html>
     """,
-    height=80
+    height=85
 )
+
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
@@ -869,6 +879,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
