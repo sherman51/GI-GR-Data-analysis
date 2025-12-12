@@ -428,6 +428,7 @@ def order_status_matrix(df_today, key_prefix=""):
                     ("padding", "8px 10px"),
                     ("font-size", "12px"),
                     ("font-weight", "600"),
+                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
                     ("border", "1px solid #d1d5db"),
                     ("text-align", "center"),
                     ("background-color", "#f3f4f6"),
@@ -438,6 +439,7 @@ def order_status_matrix(df_today, key_prefix=""):
                 "props": [
                     ("padding", "6px 8px"),
                     ("font-size", "12px"),
+                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
                     ("border", "1px solid #e5e7eb"),
                     ("text-align", "center"),
                     ("color", "#1f2937"),
@@ -446,11 +448,12 @@ def order_status_matrix(df_today, key_prefix=""):
                 "selector": "table",
                 "props": [
                     ("border-collapse", "collapse"),
-                    ("width", "100%"),  # Ensures full width
+                    ("width", "100%"),
                     ("margin", "0 auto"),
                     ("box-shadow", "0 1px 3px rgba(0,0,0,0.1)"),
                     ("border-radius", "8px"),
                     ("overflow", "hidden"),
+                    ("font-family", "'Segoe UI', sans-serif"),  # ADDED
                 ],
             }, {
                 "selector": "tbody tr:hover",
@@ -467,12 +470,19 @@ def order_status_matrix(df_today, key_prefix=""):
             .format("{:.0f}")
     )
 
-    # --- Render HTML using supported method ---
+    # --- Render HTML with injected font styling ---
     html_code = styled_df.to_html()
 
     with st.container():
         components.html(
             f"""
+            <style>
+                body, html {{
+                    font-family: 'Segoe UI', sans-serif !important;
+                    margin: 0;
+                    padding: 0;
+                }}
+            </style>
             <div class="table-container">
                 {html_code}
             </div>
@@ -480,7 +490,6 @@ def order_status_matrix(df_today, key_prefix=""):
             height=400,
             scrolling=True
         )
-
 
 
 
@@ -810,6 +819,7 @@ st.markdown("""
         ⭐ Stay Safe & Well ⭐
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
