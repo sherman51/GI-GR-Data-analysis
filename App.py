@@ -260,10 +260,11 @@ components.html(
             .header-container {
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
+                justify-content: flex-start;   /* 🔥 Fix spacing */
                 background: linear-gradient(90deg, #003366, #2563eb);
                 padding: 14px 18px;
                 border-radius: 10px;
+                gap: 20px;                     /* 🔥 Add small spacing */
             }
             .header-left {
                 display: flex;
@@ -282,8 +283,8 @@ components.html(
                 font-size: 24px;
             }
             #clock {
-                font-size: 26px;   /* 🔥 Increased font size */
-                font-weight: 700;  /* Optional: bolder */
+                font-size: 26px;
+                font-weight: 700;
                 color: #ffffff;
                 white-space: nowrap;
             }
@@ -879,6 +880,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
