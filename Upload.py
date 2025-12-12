@@ -17,7 +17,7 @@ st.title("📁 Upload Excel Files to Dashboard")
 
 # --- Workstream Label Section ---
 st.header("Workstream Label")
-workstream_label = st.selectbox("Choose your workstream", ["coldroom", "aircon"])
+workstream_label = st.selectbox("Choose your workstream", ["aircon","coldroom"])
 
 # --- Upload Section ---
 st.header(f"Upload Excel File for {workstream_label.capitalize()} Workstream (.xls or .xlsx)")
@@ -66,3 +66,4 @@ if uploaded_file is not None:
 
     except Exception as e:
         st.error(f"Failed to read or upload Excel file: {e}")
+
