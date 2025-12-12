@@ -77,170 +77,144 @@ else:
     st.stop()
 
 # ---------- GLOBAL STYLE OVERRIDES ----------
-st.markdown("""
-<style>
-
-    /* Hide Streamlit default header & footer */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Body font */
-    html, body, [class*="css"]  {
-        font-family: "Segoe UI", sans-serif;
-    }
-
-    /* Page container */
-    .block-container {
-        padding-top: 0.5rem !important;
-        padding-left: 0 !important;   /* remove left gap */
-        padding-right: 0 !important;  /* remove right gap */
-    }
-
-    /* Divider */
-    hr {
-        border: none;
-        height: 1px;
-        background-color: #e5e7eb;
-        margin: 2rem 0;
-    }
-
-    /* Metric cards */
-    .metric-container {
-        background: linear-gradient(145deg, #ffffff, #f3f4f6);
-        padding: 14px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        transition: transform 0.2s ease;
-    }
-    .metric-container:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-    .metric-value {
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: #111827;
-    }
-    .metric-label {
-        font-size: 0.85rem;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-
-    /* --- CUSTOM COLORED EXPANDER HEADERS --- */
-    div.streamlit-expanderHeader:has(p:contains("Critical Orders")) {
-        background-color: #ffe5e5 !important;
-        border: 1px solid #dc2626 !important;
-        border-radius: 6px !important;
-    }
-
-    div.streamlit-expanderHeader:has(p:contains("Urgent Orders")) {
-        background-color: #fff8d6 !important;
-        border: 1px solid #f59e0b !important;
-        border-radius: 6px !important;
-    }
-
-    div.streamlit-expanderHeader:has(p:contains("Outstanding Orders")) {
-        background-color: #e6f0ff !important;
-        border: 1px solid #3b82f6 !important;
-        border-radius: 6px !important;
-    }
-
-    /* ============================================================
-       FULL WIDTH ORDER STATUS TABLE
-       ============================================================ */
-
-    .table-container {
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow-x: auto;
-    }
-
-    .table-container table {
-        width: 100% !important;
-        border-collapse: collapse;
-        margin: 0 !important;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        overflow: hidden;
-    }
-
-    .table-container th {
-        padding: 8px 10px;
-        font-size: 13px;
-        font-weight: 600;
-        border: 1px solid #d1d5db;
-        text-align: center;
-        background-color: #f3f4f6;
-        color: #374151;
-        white-space: nowrap;
-    }
-
-    .table-container td {
-        padding: 6px 8px;
-        font-size: 13px;
-        border: 1px solid #e5e7eb;
-        text-align: center;
-        color: #1f2937;
-    }
-
-    .table-container tbody tr:hover {
-        background-color: #f9fafb;
-    }
-
-    .table-container tbody tr:last-child {
-        font-weight: 600;
-        background-color: #f3f4f6;
-    }
-
-    @media (max-width: 768px) {
-        .table-container th,
-        .table-container td {
-            padding: 5px 5px;
-            font-size: 11px;
+st.markdown(
+    """
+    <style>
+        /* ===============================
+           GLOBAL PAGE PADDING & LAYOUT
+        =============================== */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 0 !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
         }
-    }
 
-    /* ============================================================
-       REMOVE ALL PADDING / MARGINS AROUND TABLE & IFRAME
-       ============================================================ */
+        .main .block-container {
+            padding-top: 0.2rem !important;
+        }
 
-    /* Remove padding around the iframe wrapper */
-    .element-container {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
+        /* Remove wide top margin before header */
+        .st-emotion-cache-z5fcl4 {
+            padding-top: 0 !important;
+        }
 
-    /* Remove padding inside Streamlit HTML block */
-    .stMarkdown, .stHtml {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
+        /* ===============================
+           TITLES AND TEXT
+        =============================== */
+        .stMarkdown h2 {
+            margin-bottom: 0rem !important;
+        }
 
-    /* Force iframe to be flush and full width */
-    iframe {
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-    }
+        .stMarkdown p {
+            margin-top: 0rem !important;
+            margin-bottom: 0rem !important;
+        }
 
-</style>
+        /* ===============================
+           STREAMLIT METRIC STYLE FIXES
+        =============================== */
+        [data-testid="metric-container"] {
+            border: 0.5px solid #cccccc;
+            padding: 3px 10px;
+            border-radius: 8px;
+            background-color: white;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin: 0 !important;
+            height: 90px;
+        }
 
-<script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
-        console.log('Copied to clipboard successfully!');
-    }, function(err) {
-        console.error('Could not copy text: ', err);
-    });
-}
-</script>
-""", unsafe_allow_html=True)
+        [data-testid="metric-container"] > div {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+
+        [data-testid="metric-container"] [data-testid="stMetricLabel"] p {
+            font-size: 17px;
+            font-weight: 400;
+            margin-bottom: 4px;
+            color: #333333;
+        }
+
+        [data-testid="metric-container"] [data-testid="stMetricValue"] p {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 2px;
+            color: #000000;
+        }
+
+        /* Sale difference metrics */
+        .metric-green {
+            color: #34d399 !important;
+            font-weight: bold !important;
+        }
+        .metric-red {
+            color: #ef4444 !important;
+            font-weight: bold !important;
+        }
+
+        /* ===============================
+           TABS
+        =============================== */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 22px;
+            justify-content: center;
+            padding-bottom: 4px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 42px;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* ===============================
+           CALENDAR BOX LABELS
+        =============================== */
+        .stSelectbox label {
+            font-size: 18px !important;
+            font-weight: 600 !important;
+        }
+
+        /* Remove default calendar padding */
+        .st-emotion-cache-1jicfl2 {
+            padding-top: 0 !important;
+            margin-top: -15px !important;
+        }
+
+        /* ===============================
+           AUTO-FIT / AUTO-SCALE DASHBOARD
+           (Keeps layout looking perfect at
+            all zoom levels & screen sizes)
+        =============================== */
+        html {
+            transform-origin: top left;
+            zoom: 1;
+        }
+
+        @media (max-width: 1600px) { html { zoom: 0.95; } }
+        @media (max-width: 1400px) { html { zoom: 0.90; } }
+        @media (max-width: 1200px) { html { zoom: 0.80; } }
+        @media (max-width: 1000px) { html { zoom: 0.70; } }
+        @media (max-width: 800px)  { html { zoom: 0.60; } }
+        @media (max-width: 600px)  { html { zoom: 0.50; } }
+
+        /* Ensure tables and columns shrink cleanly */
+        .dataframe {
+            width: 100% !important;
+        }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 
 
 
@@ -880,6 +854,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
