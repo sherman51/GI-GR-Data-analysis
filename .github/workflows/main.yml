@@ -2,20 +2,17 @@ name: Scheduled URL Ping
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'  # every 30 minutes
+  workflow_dispatch:       # allows manual runs
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
       - name: Ping URL 1
-        uses: appropriate/ping-url-action@v1.1.0
-        with:
-          url: https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
-          expected_status: 200,301,302
+        run: |
+          curl -L --fail https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
 
       - name: Ping URL 2
-        uses: appropriate/ping-url-action@v1.1.0
-        with:
-          url: https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
-          expected_status: 200,301,302
+        run: |
+          curl -L --fail https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
