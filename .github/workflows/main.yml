@@ -2,8 +2,8 @@ name: Scheduled URL Ping
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # every 30 minutes
-  workflow_dispatch:       # allows manual runs
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   ping:
@@ -11,8 +11,10 @@ jobs:
     steps:
       - name: Ping URL 1
         run: |
-          curl -L --fail https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
+          echo "Pinging URL 1..."
+          curl -L --retry 3 --retry-delay 10 --max-time 30 https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
 
       - name: Ping URL 2
         run: |
-          curl -L --fail https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
+          echo "Pinging URL 2..."
+          curl -L --retry 3 --retry-delay 10 --max-time 30 https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
