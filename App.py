@@ -598,6 +598,7 @@ def performance_metrics(df, key_prefix=""):
 date_list = []
 days_checked = 0
 current_date = datetime.today().date()
+today = datetime.today().date()
 #current_date = date(2025,8,15)
 
 while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3 valid days
@@ -605,6 +606,11 @@ while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3
 
     # Filter to see if there are any orders for this date
     df_day = df[df['ExpDate'].dt.date == current_date]
+    
+    # Exclude "Forward Deploy" orders for not today's order
+    if current_date != today:
+        df_day = df_day[df_day['Type'] != 'Forward Deploy']
+    
     order_count = df_day['GINo'].count()
 
     # Skip if Sunday OR if no orders exist for this day
@@ -853,6 +859,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
