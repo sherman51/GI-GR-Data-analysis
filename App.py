@@ -601,27 +601,29 @@ date_list = []
 days_checked = 0
 current_date = datetime.today().date()
 #current_date = date(2025,8,15)
-while len(date_list) < 3 and days_checked < 7:
+
+while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3 valid days
     weekday = current_date.weekday()  # Monday = 0, Sunday = 6
 
-    if weekday == 6:  # Sunday - always skip
+    # Filter to see if there are any orders for this date
+    df_day = df[df['ExpDate'].dt.date == current_date]
+    order_count = df_day['GINo'].count()
+
+    # Skip if Sunday OR if no orders exist for this day
+    if weekday == 6 or order_count == 0:
         current_date += timedelta(days=1)
         days_checked += 1
         continue
 
-    if weekday == 5:  # Saturday
-        # Filter to see if there are any GINo entries for this Saturday
-        df_day = df[df['ExpDate'].dt.date == current_date]
-        if df_day['GINo'].count() == 0:
-            # No orders — skip Saturday
-            current_date += timedelta(days=1)
-            days_checked += 1
-            continue
-
-    # Valid day to display
+    # Valid day to display (has orders and not Sunday)
     date_list.append(current_date)
     current_date += timedelta(days=1)
     days_checked += 1
+
+# If we couldn't find 3 days with orders, just use what we found
+if len(date_list) == 0:
+    st.warning("⚠️ No orders found in the next 14 days.")
+    st.stop()
 
 
 # ---------- DISPLAY ----------
@@ -854,6 +856,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
