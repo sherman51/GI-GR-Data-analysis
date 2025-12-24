@@ -2,15 +2,20 @@ name: Scheduled URL Ping
 
 on:
   schedule:
-    # Runs every 30 minutes
-    - cron: '*/1 * * * *'
+    - cron: '*/30 * * * *'
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping a URL
-        uses: appropriate/ping-url-action@master
+      - name: Ping URL 1
+        uses: appropriate/ping-url-action@v1.1.0
         with:
-          url: 'https://mzjkxsbu3as3cpy3kslh88.streamlit.app/' # Replace with your target URL
-          # Optional: expected_status: 200,301 (default is 200)
+          url: https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
+          expected_status: 200,301,302
+
+      - name: Ping URL 2
+        uses: appropriate/ping-url-action@v1.1.0
+        with:
+          url: https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
+          expected_status: 200,301,302
