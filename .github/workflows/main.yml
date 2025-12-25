@@ -11,19 +11,36 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Ping Streamlit App
+      - name: Ping First Streamlit App
         run: |
-          echo "Pinging Streamlit app at $(date)"
+          echo "Pinging first app at $(date)"
           curl -sSf https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app > /dev/null
           echo "Ping successful!"
         continue-on-error: true
 
-      - name: Check Response
+      - name: Check First App Response
         run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app)
-          echo "HTTP Status Code: $response"
+          echo "First App HTTP Status Code: $response"
           if [ $response -eq 200 ]; then
-            echo "App is awake and responding!"
+            echo "First app is awake and responding!"
           else
-            echo "App returned status code: $response"
+            echo "First app returned status code: $response"
+          fi
+
+      - name: Ping Second Streamlit App
+        run: |
+          echo "Pinging second app at $(date)"
+          curl -sSf https://mzjkxsbu3as3cpy3kslh88.streamlit.app > /dev/null
+          echo "Ping successful!"
+        continue-on-error: true
+
+      - name: Check Second App Response
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://mzjkxsbu3as3cpy3kslh88.streamlit.app)
+          echo "Second App HTTP Status Code: $response"
+          if [ $response -eq 200 ]; then
+            echo "Second app is awake and responding!"
+          else
+            echo "Second app returned status code: $response"
           fi
