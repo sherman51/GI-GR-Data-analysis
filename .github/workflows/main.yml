@@ -1,20 +1,29 @@
-name: Scheduled URL Ping
+name: Keep Streamlit App Awake
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
-  workflow_dispatch:
+    # Runs every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Ping URL 1
+      - name: Ping Streamlit App
         run: |
-          echo "Pinging URL 1..."
-          curl -L --retry 3 --retry-delay 10 --max-time 30 https://mzjkxsbu3as3cpy3kslh88.streamlit.app/
+          echo "Pinging Streamlit app at $(date)"
+          curl -sSf https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app > /dev/null
+          echo "Ping successful!"
+        continue-on-error: true
 
-      - name: Ping URL 2
+      - name: Check Response
         run: |
-          echo "Pinging URL 2..."
-          curl -L --retry 3 --retry-delay 10 --max-time 30 https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app/
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://uploadpy-ynrhtmnl2zosu6yrhx3cfu.streamlit.app)
+          echo "HTTP Status Code: $response"
+          if [ $response -eq 200 ]; then
+            echo "App is awake and responding!"
+          else
+            echo "App returned status code: $response"
+          fi
