@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 from google.cloud import storage
 from google.oauth2 import service_account
+from datetime import datetime
+import pytz
 
 # --- GCP Authentication ---
 credentials = service_account.Credentials.from_service_account_info(
@@ -15,9 +17,43 @@ bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
 
+# --- Last Upload Tracker Function ---
+def get_last_upload_info(bucket, workstream):
+    """Get the last uploaded file info for a workstream"""
+    blobs = list(bucket.list_blobs(prefix=workstream))
+    
+    if not blobs:
+        return None, None
+    
+    # Get the most recently updated blob
+    latest_blob = max(blobs, key=lambda b: b.updated)
+    
+    # Convert to Singapore timezone
+    sg_tz = pytz.timezone('Asia/Singapore')
+    upload_time = latest_blob.updated.astimezone(sg_tz)
+    
+    return latest_blob.name, upload_time
+
 # --- Workstream Label Section ---
 st.header("Workstream Label")
-workstream_label = st.selectbox("Choose your workstream", ["aircon","coldroom"])
+workstream_label = st.selectbox("Choose your workstream", ["aircon", "coldroom"])
+
+# --- Display Last Upload Info ---
+st.markdown("---")
+last_file, last_time = get_last_upload_info(bucket, workstream_label)
+
+if last_file and last_time:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("📂 Last Uploaded File", last_file)
+    with col2:
+        st.metric("📅 Upload Date", last_time.strftime("%d %b %Y"))
+    with col3:
+        st.metric("🕐 Upload Time", last_time.strftime("%I:%M:%S %p"))
+else:
+    st.info(f"ℹ️ No files found for {workstream_label.capitalize()} workstream")
+
+st.markdown("---")
 
 # --- Upload Section ---
 st.header(f"Upload Excel File for {workstream_label.capitalize()} Workstream (.xls or .xlsx)")
@@ -28,7 +64,7 @@ if uploaded_file is not None:
     
     # Automatically prepend the workstream label to the file name
     file_name = f"{workstream_label}-{original_file_name}"
-
+    
     try:
         # Read file using correct engine
         if file_name.endswith(".xls"):
@@ -40,18 +76,18 @@ if uploaded_file is not None:
         else:
             st.error("Unsupported file format!")
             st.stop()
-
+        
+        st.subheader("📊 Preview of uploaded data:")
         st.dataframe(df.head())  # Show preview
-
+        
         # Upload to GCS with the new name
         uploaded_file.seek(0)  # Reset buffer
         blob = bucket.blob(file_name)
         blob.upload_from_file(uploaded_file, content_type=content_type)
-
-        st.success(f"Uploaded '{file_name}' to Google Cloud Storage.")
-
+        st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
+        
         # --- Remove existing workstream-related file ---
-        st.info(f"Cleaning up old {workstream_label} file in the bucket...")
+        st.info(f"🧹 Cleaning up old {workstream_label} file in the bucket...")
         
         # List blobs with the workstream prefix
         blobs = bucket.list_blobs(prefix=workstream_label)
@@ -61,9 +97,11 @@ if uploaded_file is not None:
             if b.name.startswith(workstream_label) and b.name != file_name:
                 b.delete()
                 deleted_count += 1
-
-        st.success(f"Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
-
+        
+        st.success(f"✅ Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
+        
+        # Refresh the page to show updated last upload info
+        st.rerun()
+        
     except Exception as e:
-        st.error(f"Failed to read or upload Excel file: {e}")
-
+        st.error(f"❌ Failed to read or upload Excel file: {e}")
