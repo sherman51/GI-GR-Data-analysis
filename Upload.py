@@ -17,30 +17,6 @@ bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
 
-# --- Custom CSS for filename display ---
-st.markdown("""
-<style>
-    .filename-display {
-        background-color: #f0f2f6;
-        padding: 12px;
-        border-radius: 8px;
-        border-left: 4px solid #1f77b4;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        white-space: normal;
-        font-family: monospace;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    .metric-label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #555;
-        margin-bottom: 8px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 # --- Last Upload Tracker Function ---
 def get_last_upload_info(bucket, workstream):
     """Get the last uploaded file info for a workstream"""
@@ -67,11 +43,15 @@ st.markdown("---")
 last_file, last_time = get_last_upload_info(bucket, workstream_label)
 
 if last_file and last_time:
-    # Display filename in a scrollable/wrappable container
-    st.markdown('<div class="metric-label">📂 Last Uploaded File</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="filename-display">{last_file}</div>', unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Use text input (disabled) to show full filename with horizontal scroll
+    st.markdown("**📂 Last Uploaded File:**")
+    st.text_input(
+        "Last Uploaded File",
+        value=last_file,
+        disabled=True,
+        label_visibility="collapsed",
+        key="filename_display"
+    )
     
     # Display date and time in columns
     col1, col2 = st.columns(2)
