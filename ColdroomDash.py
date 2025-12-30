@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 import hashlib
 
 # ---------- CONFIG ----------
-st.set_page_config(layout="wide", page_title="Outbound Dashboard Aircon", page_icon="📊")
+st.set_page_config(layout="wide", page_title="Coldroom Dashboard Aircon", page_icon="📊")
 
 CONFIG = {
     "priority_map": {
@@ -268,7 +268,7 @@ components.html(
         <div class="header-container">
             <div class="header-left">
                 <img src="https://raw.githubusercontent.com/sherman51/GI-GR-Data-analysis/main/SSW%20Logo.png" alt="Logo">
-                <h2>Outbound Dashboard Aircon</h2>
+                <h2>Coldroom Dashboard Aircon</h2>
             </div>
             <div id="clock">-- --- --:--:--</div>
         </div>
@@ -859,6 +859,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
