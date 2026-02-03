@@ -773,7 +773,7 @@ with tab1:
                     st.text_area(
                         "GI Numbers:",
                         value=urgent_text if urgent_text else "No urgent orders",
-                        height=125,
+                        height=150,
                         key=f"{i}_urgent_copy_text_{data_hash}",
                         label_visibility="collapsed"
                     )
@@ -828,7 +828,7 @@ with tab1:
                     st.text_area(
                         "GI Numbers:",
                         value=outstanding_text if outstanding_text else "No outstanding orders",
-                        height=125,
+                        height=150,
                         key=f"{i}_outstanding_copy_text_{data_hash}",
                         label_visibility="collapsed"
                     )
@@ -859,6 +859,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
