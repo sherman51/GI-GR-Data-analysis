@@ -632,6 +632,34 @@ if len(date_list) == 0:
 # ---------- DISPLAY ----------
 tab1, tab2 = st.tabs(["📊 Daily Dashboard", "📈 Analytics"])
 
+
+# ---------- FIXED CARD HELPER ----------
+def fixed_card(title, body, key, height=150):
+    st.markdown(
+        f"""
+        <div style="
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            padding:8px 10px;
+            margin-bottom:10px;
+            background:#ffffff;
+            height:{height}px;
+            box-sizing:border-box;
+        ">
+            <div style="font-weight:600;margin-bottom:6px;">{title}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.text_area(
+        label="",
+        value=body,
+        height=height - 55,
+        key=key
+    )
+
+
 with tab1:
     layout = []
     for i in range(len(date_list)):
@@ -645,53 +673,34 @@ with tab1:
     for i, dash_date in enumerate(date_list):
         with cols[col_index]:
             df_day = df[df['ExpDate'].dt.date == dash_date]
+            today = pd.Timestamp.today().normalize().date()
 
             # ---------- DATE HEADER ----------
             st.markdown(
-                f"<h3 style='text-align:center; color:#4b5563; margin-bottom:8px; font-weight:bold;'>"
+                f"<h3 style='text-align:center;color:#4b5563;font-weight:bold;'>"
                 f"{dash_date.strftime('%d %b %Y')}</h3>",
                 unsafe_allow_html=True
             )
 
-            # ---------- ORDER BREAKDOWN ----------
-            brk1, brk2, brk3 = st.columns([1.5, 1, 1])
-
-            with brk1:
-                st.markdown("<h5>📦 Orders Breakdown</h5>", unsafe_allow_html=True)
-
-            with brk2:
-                st.markdown(
-                    f"""
-                    <div style='background:#f9fafb;padding:8px;border-radius:8px;text-align:center;border:1px solid #e5e7eb;'>
-                        <div style='font-size:18px;font-weight:600;'>{df_day.shape[0]}</div>
-                        <div style='font-size:12px;color:#6b7280;'>📄 Order Lines</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-            with brk3:
-                st.markdown(
-                    f"""
-                    <div style='background:#f9fafb;padding:8px;border-radius:8px;text-align:center;border:1px solid #e5e7eb;'>
-                        <div style='font-size:18px;font-weight:600;'>{df_day['GINo'].nunique()}</div>
-                        <div style='font-size:12px;color:#6b7280;'>📦 No. of GIs</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            # ---------- BREAKDOWN ----------
+            b1, b2, b3 = st.columns([1.5, 1, 1])
+            with b1:
+                st.markdown("### 📦 Orders Breakdown")
+            with b2:
+                st.metric("Order Lines", df_day.shape[0])
+            with b3:
+                st.metric("No. of GIs", df_day['GINo'].nunique())
 
             st.markdown("---")
 
-            # ---------- TOP ROW (ALIGNED FIX) ----------
-            top_left, top_right = st.columns(2)
+            # ---------- TOP GRID (PERFECTLY ALIGNED) ----------
+            left, right = st.columns(2)
 
-            # ===== LEFT: CRITICAL + URGENT =====
-            with top_left:
+            # ===== LEFT: PRIORITY ORDERS =====
+            with left:
                 st.markdown("### 🚨 Priority Orders")
 
                 # ---- Critical ----
-                today = pd.Timestamp.today().normalize().date()
                 if dash_date == today:
                     critical_df = df_day[
                         (df_day['Order Type'] == 'Ad-hoc Critical') &
@@ -704,16 +713,13 @@ with tab1:
                     ]
 
                 critical_gis = critical_df['GINo'].unique().tolist()
-                critical_text = "\n".join(map(str, critical_gis))
+                critical_text = "\n".join(map(str, critical_gis)) or "No critical orders"
 
-                with st.expander(f"🚨 Critical Orders ({len(critical_gis)})", expanded=True):
-                    st.text_area(
-                        "GI Numbers",
-                        value=critical_text if critical_text else "No critical orders",
-                        height=110,
-                        key=f"{i}_critical_{data_hash}",
-                        label_visibility="collapsed"
-                    )
+                fixed_card(
+                    title=f"🚨 Critical Orders ({len(critical_gis)})",
+                    body=critical_text,
+                    key=f"{i}_critical_{data_hash}"
+                )
 
                 # ---- Urgent ----
                 if dash_date == today:
@@ -728,74 +734,72 @@ with tab1:
                     ]
 
                 urgent_gis = urgent_df['GINo'].unique().tolist()
-                urgent_text = "\n".join(map(str, urgent_gis))
+                urgent_text = "\n".join(map(str, urgent_gis)) or "No urgent orders"
 
-                with st.expander(f"⚠️ Urgent Orders ({len(urgent_gis)})", expanded=True):
-                    st.text_area(
-                        "GI Numbers",
-                        value=urgent_text if urgent_text else "No urgent orders",
-                        height=110,
-                        key=f"{i}_urgent_{data_hash}",
-                        label_visibility="collapsed"
-                    )
+                fixed_card(
+                    title=f"⚠️ Urgent Orders ({len(urgent_gis)})",
+                    body=urgent_text,
+                    key=f"{i}_urgent_{data_hash}"
+                )
 
-            # ===== RIGHT: COMPLETION + OUTSTANDING =====
-            with top_right:
+            # ===== RIGHT: STATUS OVERVIEW =====
+            with right:
                 st.markdown("### 📊 Status Overview")
 
                 daily_completed_pie(df_day, dash_date, key_prefix=f"day{i}")
 
                 if dash_date == today:
-                    crit_urg = df_day[
+                    cu = df_day[
                         (df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) &
                         (~df_day['Order Status'].isin(['Shipped', 'Cancelled']))
                     ]
-                    others = df_day[
+                    other = df_day[
                         (~df_day['Order Type'].isin(['Ad-hoc Critical', 'Ad-hoc Urgent'])) &
                         (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
                     ]
-                    outstanding_df = pd.concat([crit_urg, others])
+                    outstanding_df = pd.concat([cu, other])
                 else:
                     outstanding_df = df_day[
                         (~df_day['Order Status'].isin(['Packed', 'Shipped', 'Cancelled']))
                     ]
 
                 outstanding_gis = outstanding_df['GINo'].unique().tolist()
-                outstanding_text = "\n".join(map(str, outstanding_gis))
+                outstanding_text = "\n".join(map(str, outstanding_gis)) or "No outstanding orders"
 
-                with st.expander(f"⏳ Outstanding Orders ({len(outstanding_gis)})", expanded=True):
-                    st.text_area(
-                        "GI Numbers",
-                        value=outstanding_text if outstanding_text else "No outstanding orders",
-                        height=110,
-                        key=f"{i}_outstanding_{data_hash}",
-                        label_visibility="collapsed"
-                    )
+                fixed_card(
+                    title=f"⏳ Outstanding Orders ({len(outstanding_gis)})",
+                    body=outstanding_text,
+                    key=f"{i}_outstanding_{data_hash}"
+                )
 
             # ---------- STATUS TABLE ----------
             st.markdown("### 📋 Order Status Table")
             order_status_matrix(df_day, key_prefix=f"day{i}")
 
-        # vertical divider
         if i != len(date_list) - 1:
             with cols[col_index + 1]:
-                st.markdown("<div style='border-left:1px solid #bbb;height:1000px;'></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<div style='border-left:1px solid #bbb;height:1000px;'></div>",
+                    unsafe_allow_html=True
+                )
 
         col_index += 2
 
 
 # ---------- ANALYTICS TAB ----------
 with tab2:
-    col1, col2 = st.columns(2)
+    c1, c2 = st.columns(2)
 
-    with col1:
+    with c1:
         st.markdown("### 📊 Order Lines (Past 14 Days)")
         order_volume_summary(df, key_prefix="overall")
         expiry_date_summary(df, key_prefix="overall")
 
-    with col2:
+    with c2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
+
 
 
 
