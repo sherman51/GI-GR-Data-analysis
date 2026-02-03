@@ -731,7 +731,7 @@ with tab1:
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
                                     📋
                                 </button>
-                            """, height=10)
+                            """, height=0)
                     st.text_area(
                         "GI Numbers:",
                         value=critical_text if critical_text else "No critical orders",
@@ -769,7 +769,7 @@ with tab1:
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
                                     📋
                                 </button>
-                            """, height=10)
+                            """, height=0)
                     st.text_area(
                         "GI Numbers:",
                         value=urgent_text if urgent_text else "No urgent orders",
@@ -824,7 +824,7 @@ with tab1:
                                         style="background-color: transparent; border: none; cursor: pointer; font-size: 20px; padding: 0;">
                                     📋
                                 </button>
-                            """, height=10)
+                            """, height=0)
                     st.text_area(
                         "GI Numbers:",
                         value=outstanding_text if outstanding_text else "No outstanding orders",
@@ -859,6 +859,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
