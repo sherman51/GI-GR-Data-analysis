@@ -384,8 +384,8 @@ def daily_completed_pie(df_today, dash_date, key_prefix=""):
         sort=False
     ))
     fig.update_layout(
-        width=160,
-        height=160,
+        width=150,
+        height=150,
         margin=dict(l=5, r=5, t=5, b=5),
         showlegend=True,
         legend=dict(
@@ -859,6 +859,7 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
+
 
 
 
