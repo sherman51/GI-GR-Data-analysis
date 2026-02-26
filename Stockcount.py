@@ -18,14 +18,13 @@ refresh_count = st_autorefresh(interval=60 * 1000, limit=None, key="data_refresh
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
-BUCKET_NAME = "testbucket353"
+BUCKET_NAME = "testbucket352"
 gcs_client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
 bucket = gcs_client.bucket(BUCKET_NAME)
 
 
 def download_latest_excel(bucket):
     blobs = list(bucket.list_blobs())
-    # Filter for files that start with 'count' (case-insensitive)
     count_blobs = [b for b in blobs if b.name.lower().startswith('count') and b.name.lower().endswith(('.xlsx', '.xls'))]
     if not count_blobs:
         return None, None
@@ -150,18 +149,12 @@ def load_data(_file_bytes, fname):
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
 
-    # Ensure numeric columns
     for col in ['OnHand', 'Count', 'Variance']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    # Parse Lot1 as date (expiry)
     if 'Lot1' in df.columns:
         df['ExpiryDate'] = pd.to_datetime(df['Lot1'], errors='coerce')
-
-    # Zone from Location prefix
-    if 'Location' in df.columns:
-        df['Zone'] = df['Location'].astype(str).str[:1]
 
     return df
 
@@ -179,9 +172,6 @@ st.sidebar.metric("Lines with Variance", int((df['Variance'] != 0).sum()))
 total_lines = len(df)
 lines_with_variance = int((df['Variance'] != 0).sum())
 lines_zero_variance = int((df['Variance'] == 0).sum())
-total_onhand = int(df['OnHand'].sum())
-total_counted = int(df['Count'].sum())
-net_variance = int(df['Variance'].sum())
 accuracy_pct = (lines_zero_variance / total_lines * 100) if total_lines > 0 else 0
 variance_lines_pos = int((df['Variance'] > 0).sum())
 variance_lines_neg = int((df['Variance'] < 0).sum())
@@ -192,26 +182,19 @@ tab1, tab2 = st.tabs(["📊 Count Dashboard", "📋 Variance Details"])
 with tab1:
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-    # --- ROW 1: Key Metrics ---
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    # --- ROW 1: 3 Key Metrics ---
+    c1, c2, c3, _pad = st.columns([1, 1, 1, 3])
     with c1:
         st.metric("📄 Total Lines", f"{total_lines:,}")
     with c2:
         st.metric("✅ Zero Variance", f"{lines_zero_variance:,}")
     with c3:
         st.metric("⚠️ Lines w/ Variance", f"{lines_with_variance:,}")
-    with c4:
-        st.metric("📦 System (OnHand)", f"{total_onhand:,}")
-    with c5:
-        st.metric("🔢 Physical Count", f"{total_counted:,}")
-    with c6:
-        delta_color = "normal" if net_variance == 0 else ("inverse" if net_variance < 0 else "normal")
-        st.metric("📊 Net Variance (Qty)", f"{net_variance:+,}")
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    # --- ROW 2: Accuracy donut + Variance breakdown + Zone breakdown ---
-    col_left, col_mid, col_right = st.columns([1.3, 1.3, 1.4])
+    # --- ROW 2: Accuracy donut + Variance breakdown bar ---
+    col_left, col_mid = st.columns([1, 1.6])
 
     with col_left:
         st.markdown("#### ✅ Count Accuracy")
@@ -251,97 +234,56 @@ with tab1:
         )
         st.plotly_chart(fig_var, use_container_width=True, key="var_bar")
 
-    with col_right:
-        st.markdown("#### 🗺️ Lines by Zone")
-        if 'Zone' in df.columns:
-            zone_counts = df.groupby('Zone').size().reset_index(name='Lines')
-            zone_var = df.groupby('Zone').apply(lambda x: (x['Variance'] != 0).sum()).reset_index(name='Variance Lines')
-            zone_summary = zone_counts.merge(zone_var, on='Zone')
-
-            fig_zone = go.Figure()
-            fig_zone.add_trace(go.Bar(
-                name='Total Lines', x=zone_summary['Zone'],
-                y=zone_summary['Lines'], marker_color='#93c5fd',
-                text=zone_summary['Lines'], textposition='outside'
-            ))
-            fig_zone.add_trace(go.Bar(
-                name='Variance Lines', x=zone_summary['Zone'],
-                y=zone_summary['Variance Lines'], marker_color='#f97316',
-                text=zone_summary['Variance Lines'], textposition='outside'
-            ))
-            fig_zone.update_layout(
-                height=260,
-                margin=dict(l=10, r=10, t=10, b=10),
-                barmode='group',
-                yaxis_title="Count",
-                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
-                plot_bgcolor='white',
-                yaxis=dict(gridcolor='#f0f0f0')
-            )
-            st.plotly_chart(fig_zone, use_container_width=True, key="zone_bar")
-
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    # --- ROW 3: Count completion by Count Number ---
-    st.markdown("#### 📋 Count Sheets Summary")
+    # --- ROW 3: Variance lines only table (with Location) ---
+    st.markdown("#### 📋 Count Sheets Summary — Variance Lines Only")
 
-    count_summary = df.groupby('Number').agg(
-        Total_Lines=('LineID', 'count'),
-        Lines_w_Variance=('Variance', lambda x: (x != 0).sum()),
-        OnHand_Qty=('OnHand', 'sum'),
-        Counted_Qty=('Count', 'sum'),
-        Net_Variance=('Variance', 'sum'),
-    ).reset_index()
-    count_summary['Accuracy_%'] = (
-        (count_summary['Total_Lines'] - count_summary['Lines_w_Variance']) /
-        count_summary['Total_Lines'] * 100
-    ).round(1)
+    df_var_only = df[df['Variance'] != 0].copy()
 
-    # Style the table
-    def color_variance(val):
-        if val > 0:
-            return 'color: #16a34a; font-weight: bold'
-        elif val < 0:
-            return 'color: #dc2626; font-weight: bold'
-        return ''
+    if df_var_only.empty:
+        st.success("🎉 No variance lines found! All counts match system quantities.")
+    else:
+        display_cols = ['Number', 'LineID', 'SKUCode', 'Description', 'Location', 'OnHand', 'Count', 'Variance']
+        if 'ExpiryDate' in df_var_only.columns:
+            display_cols.append('ExpiryDate')
+        if 'Remarks' in df_var_only.columns:
+            display_cols.append('Remarks')
 
-    def color_accuracy(val):
-        if val >= 99:
-            return 'background-color: #dcfce7'
-        elif val >= 95:
-            return 'background-color: #fef9c3'
-        return 'background-color: #fee2e2'
+        var_display = df_var_only[[c for c in display_cols if c in df_var_only.columns]].copy()
 
-    styled = count_summary.style \
-        .applymap(color_variance, subset=['Net_Variance']) \
-        .applymap(color_accuracy, subset=['Accuracy_%']) \
-        .format({
-            'OnHand_Qty': '{:,.0f}',
-            'Counted_Qty': '{:,.0f}',
-            'Net_Variance': '{:+,.0f}',
-            'Accuracy_%': '{:.1f}%'
-        }) \
-        .set_table_styles([
-            {"selector": "th", "props": [
-                ("background-color", "#f3f4f6"), ("font-weight", "600"),
-                ("font-size", "12px"), ("padding", "6px 10px"),
-                ("border", "1px solid #d1d5db"), ("text-align", "center")
-            ]},
-            {"selector": "td", "props": [
-                ("font-size", "12px"), ("padding", "5px 10px"),
-                ("border", "1px solid #e5e7eb"), ("text-align", "center")
-            ]},
-            {"selector": "table", "props": [
-                ("border-collapse", "collapse"), ("width", "100%"),
-                ("font-family", "'Segoe UI', sans-serif")
-            ]}
-        ])
+        def highlight_var_row(row):
+            color = '#dcfce7' if row['Variance'] > 0 else '#fee2e2'
+            return [f'background-color: {color}' if col == 'Variance' else '' for col in row.index]
 
-    components.html(
-        f"<style>body{{margin:0;font-family:'Segoe UI',sans-serif;}}</style>{styled.to_html()}",
-        height=420,
-        scrolling=True
-    )
+        fmt = {'OnHand': '{:,.0f}', 'Count': '{:,.0f}', 'Variance': '{:+,.0f}'}
+        if 'ExpiryDate' in var_display.columns:
+            fmt['ExpiryDate'] = lambda x: x.strftime('%d-%b-%Y') if pd.notna(x) else ''
+
+        styled_summary = var_display.style \
+            .apply(highlight_var_row, axis=1) \
+            .format(fmt) \
+            .set_table_styles([
+                {"selector": "th", "props": [
+                    ("background-color", "#f3f4f6"), ("font-weight", "600"),
+                    ("font-size", "12px"), ("padding", "6px 10px"),
+                    ("border", "1px solid #d1d5db"), ("text-align", "center")
+                ]},
+                {"selector": "td", "props": [
+                    ("font-size", "12px"), ("padding", "5px 10px"),
+                    ("border", "1px solid #e5e7eb"), ("text-align", "center")
+                ]},
+                {"selector": "table", "props": [
+                    ("border-collapse", "collapse"), ("width", "100%"),
+                    ("font-family", "'Segoe UI', sans-serif")
+                ]}
+            ])
+
+        components.html(
+            f"<style>body{{margin:0;font-family:'Segoe UI',sans-serif;}}</style>{styled_summary.to_html()}",
+            height=420,
+            scrolling=True
+        )
 
 
 # ===================== TAB 2: VARIANCE DETAILS =====================
@@ -355,6 +297,9 @@ with tab2:
     else:
         st.markdown(f"**{len(df_var)} line(s) with variance found**")
 
+        # Derive zone for filter
+        df_var['Zone'] = df_var['Location'].astype(str).str[:1]
+
         # Filters
         f1, f2, f3 = st.columns(3)
         with f1:
@@ -363,7 +308,7 @@ with tab2:
             count_nums = ["All"] + sorted(df_var['Number'].unique().tolist())
             sel_count = st.selectbox("Count Number", count_nums)
         with f3:
-            zones_avail = ["All"] + sorted(df_var['Zone'].unique().tolist()) if 'Zone' in df_var.columns else ["All"]
+            zones_avail = ["All"] + sorted(df_var['Zone'].unique().tolist())
             sel_zone = st.selectbox("Zone", zones_avail)
 
         # Apply filters
@@ -374,7 +319,7 @@ with tab2:
             filtered = filtered[filtered['Variance'] < 0]
         if sel_count != "All":
             filtered = filtered[filtered['Number'] == sel_count]
-        if sel_zone != "All" and 'Zone' in filtered.columns:
+        if sel_zone != "All":
             filtered = filtered[filtered['Zone'] == sel_zone]
 
         # Display columns
@@ -386,18 +331,17 @@ with tab2:
 
         display_df = filtered[[c for c in display_cols if c in filtered.columns]].copy()
 
-        def highlight_var_row(row):
+        def highlight_var_row2(row):
             color = '#dcfce7' if row['Variance'] > 0 else '#fee2e2'
             return [f'background-color: {color}' if col == 'Variance' else '' for col in row.index]
 
+        fmt2 = {'OnHand': '{:,.0f}', 'Count': '{:,.0f}', 'Variance': '{:+,.0f}'}
+        if 'ExpiryDate' in display_df.columns:
+            fmt2['ExpiryDate'] = lambda x: x.strftime('%d-%b-%Y') if pd.notna(x) else ''
+
         styled_var = display_df.style \
-            .apply(highlight_var_row, axis=1) \
-            .format({
-                'OnHand': '{:,.0f}',
-                'Count': '{:,.0f}',
-                'Variance': '{:+,.0f}',
-                'ExpiryDate': lambda x: x.strftime('%d-%b-%Y') if pd.notna(x) else ''
-            }) \
+            .apply(highlight_var_row2, axis=1) \
+            .format(fmt2) \
             .set_table_styles([
                 {"selector": "th", "props": [
                     ("background-color", "#f3f4f6"), ("font-weight", "600"),
@@ -420,7 +364,7 @@ with tab2:
             scrolling=True
         )
 
-        # Summary stats for filtered
+        # Summary stats
         st.markdown("---")
         s1, s2, s3, s4 = st.columns(4)
         with s1:
