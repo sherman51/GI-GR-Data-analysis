@@ -218,10 +218,10 @@ with tab1:
     with col_mid:
         st.markdown("#### ⚠️ Variance Breakdown")
         fig_var = go.Figure(go.Bar(
-            x=["Gain (+)", "Loss (−)", "Zero"],
-            y=[variance_lines_pos, variance_lines_neg, lines_zero_variance],
-            marker_color=['#3b82f6', '#ef4444', '#22c55e'],
-            text=[variance_lines_pos, variance_lines_neg, lines_zero_variance],
+            x=["Gain (+)", "Loss (−)"],
+            y=[variance_lines_pos, variance_lines_neg],
+            marker_color=['#3b82f6', '#ef4444'],
+            text=[variance_lines_pos, variance_lines_neg],
             textposition='outside'
         ))
         fig_var.update_layout(
@@ -237,7 +237,7 @@ with tab1:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     # --- ROW 3: Variance lines only table (with Location) ---
-    st.markdown("#### 📋 Count Sheets Summary — Variance Lines Only")
+    st.markdown("#### 📋 Variance issue Summary")
 
     df_var_only = df[df['Variance'] != 0].copy()
 
