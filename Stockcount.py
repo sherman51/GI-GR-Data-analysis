@@ -149,15 +149,20 @@ def load_data(_file_bytes, fname):
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
 
-    for col in ['OnHand', 'Count', 'Variance']:
+    # OnHand and Variance: blanks treated as 0
+    for col in ['OnHand', 'Variance']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+
+    # Count: preserve NaN so we can distinguish blank (not counted) from 0 (counted as zero)
+    if 'Count' in df.columns:
+        df['Count'] = pd.to_numeric(df['Count'], errors='coerce')
 
     if 'Lot1' in df.columns:
         df['ExpiryDate'] = pd.to_datetime(df['Lot1'], errors='coerce')
 
-    # Completion: Count != 0 means the line has been physically counted
-    df['Counted'] = df['Count'] != 0
+    # Completion: blank Count = not yet counted, any number including 0 = counted
+    df['Counted'] = df['Count'].notna()
 
     return df
 
@@ -374,11 +379,16 @@ with tab2:
 
         display_df = filtered[[c for c in display_cols if c in filtered.columns]].copy()
 
+        # Display Count as blank where NaN (not yet counted), otherwise as number
+        display_df['Count'] = display_df['Count'].apply(
+            lambda x: '' if pd.isna(x) else f"{int(x):,}"
+        )
+
         def highlight_var_row(row):
             color = '#dcfce7' if row['Variance'] > 0 else '#fee2e2'
             return [f'background-color: {color}' if col == 'Variance' else '' for col in row.index]
 
-        fmt = {'OnHand': '{:,.0f}', 'Count': '{:,.0f}', 'Variance': '{:+,.0f}'}
+        fmt = {'OnHand': '{:,.0f}', 'Variance': '{:+,.0f}'}
         if 'ExpiryDate' in display_df.columns:
             fmt['ExpiryDate'] = lambda x: x.strftime('%d-%b-%Y') if pd.notna(x) else ''
 
