@@ -133,3 +133,4 @@ if uploaded_files:
     st.success("🎉 Upload process completed successfully!")
 
     st.rerun()
+
