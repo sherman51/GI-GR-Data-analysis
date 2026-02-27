@@ -4,6 +4,7 @@ from google.cloud import storage
 from google.oauth2 import service_account
 from datetime import datetime
 import pytz
+import re
 
 # --- GCP Authentication ---
 credentials = service_account.Credentials.from_service_account_info(
@@ -16,6 +17,27 @@ client = storage.Client(credentials=credentials, project=st.secrets["gcp_service
 bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
+
+# --- Keyword Matching Function ---
+def normalize(text):
+    """Lowercase and remove spaces/special chars for fuzzy matching"""
+    return re.sub(r'[^a-z0-9]', '', text.lower())
+
+def find_matching_blob(bucket, workstream, uploaded_filename):
+    """
+    Find an existing blob in the bucket whose name matches the uploaded file
+    based on shared keywords (case-insensitive, space/symbol-insensitive).
+    e.g. uploaded 'GIanalysis.xlsx' matches existing 'aircon-GI analysis.xlsx'
+    """
+    blobs = list(bucket.list_blobs(prefix=workstream))
+    normalized_upload = normalize(uploaded_filename)
+
+    for blob in blobs:
+        normalized_blob = normalize(blob.name)
+        # Check if either filename contains the other (after normalization)
+        if normalized_upload in normalized_blob or normalized_blob in normalized_upload:
+            return blob
+    return None
 
 # --- Last Upload Tracker Function ---
 def get_last_upload_info(bucket, workstream):
@@ -58,24 +80,13 @@ st.markdown("---")
 # --- Upload Section ---
 st.header(f"Upload Excel Files for {workstream_label.capitalize()} Workstream (.xls or .xlsx)")
 
-# ✅ Changed: accept_multiple_files=True
 uploaded_files = st.file_uploader(
     f"Choose Excel file(s) for {workstream_label.capitalize()} workstream",
     type=["xls", "xlsx"],
-    accept_multiple_files=True  # ✅ KEY CHANGE
+    accept_multiple_files=True
 )
 
 if uploaded_files:
-    # --- Delete old files before uploading new batch ---
-    st.info(f"🧹 Cleaning up old {workstream_label} file(s) in the bucket...")
-    blobs = bucket.list_blobs(prefix=workstream_label)
-    deleted_count = 0
-    for b in blobs:
-        b.delete()
-        deleted_count += 1
-    st.success(f"✅ Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
-
-    # --- Upload each file ---
     for uploaded_file in uploaded_files:
         original_file_name = uploaded_file.name
         file_name = f"{workstream_label}-{original_file_name}"
@@ -100,8 +111,17 @@ if uploaded_files:
             blob.upload_from_file(uploaded_file, content_type=content_type)
             st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
 
+            # --- ✅ Delete only the matching old file ---
+            matching_blob = find_matching_blob(bucket, workstream_label, original_file_name)
+            if matching_blob and matching_blob.name != file_name:
+                matching_blob.delete()
+                st.success(f"🗑️ Deleted old matching file: '{matching_blob.name}'")
+            elif matching_blob and matching_blob.name == file_name:
+                st.info(f"ℹ️ No old file to delete — '{file_name}' was overwritten in place.")
+            else:
+                st.info(f"ℹ️ No matching old file found to delete for '{original_file_name}'.")
+
         except Exception as e:
             st.error(f"❌ Failed to process '{original_file_name}': {e}")
 
-    # Refresh to show updated last upload info
     st.rerun()
