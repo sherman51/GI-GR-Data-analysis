@@ -57,7 +57,8 @@ bucket = gcs_client.bucket(BUCKET_NAME)
 
 def download_latest_excel(bucket):
     blobs = list(bucket.list_blobs())
-    aircon_blobs = [b for b in blobs if b.name.lower().startswith('G') and b.name.lower().endswith(('.xlsx', '.xls'))]
+    # Filter for files that start with 'aircon' (case-insensitive)
+    aircon_blobs = [b for b in blobs if b.name.lower().startswith('aircon') and b.name.lower().endswith(('.xlsx', '.xls'))]
     if not aircon_blobs:
         return None, None
     latest_blob = max(aircon_blobs, key=lambda b: b.updated)
@@ -858,10 +859,6 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
-
-
-
-
 
 
 
