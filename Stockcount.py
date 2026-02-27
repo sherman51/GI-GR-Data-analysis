@@ -271,7 +271,6 @@ with tab1:
                 else:
                     st.session_state['icc_sort_col'] = col_key
                     st.session_state['icc_sort_asc'] = True
-                st.rerun()
 
         make_sort_button(h0, "ICC Number",   "Number")
         make_sort_button(h1, "Total",        "Total")
