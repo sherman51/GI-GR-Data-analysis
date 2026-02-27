@@ -25,7 +25,7 @@ bucket = gcs_client.bucket(BUCKET_NAME)
 
 def download_latest_excel(bucket):
     blobs = list(bucket.list_blobs())
-    count_blobs = [b for b in blobs if b.name.lower().startswith('count') and b.name.lower().endswith(('.xlsx', '.xls'))]
+    count_blobs = [b for b in blobs if 'count' in b.name.lower() and b.name.lower().endswith(('.xlsx', '.xls'))]
     if not count_blobs:
         return None, None
     latest_blob = max(count_blobs, key=lambda b: b.updated)
