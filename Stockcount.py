@@ -244,40 +244,50 @@ with tab1:
         )
         icc_summary['Completion_%'] = (icc_summary['Counted'] / icc_summary['Total'] * 100).round(1)
 
-        # Sort controls
-        sort_col, sort_dir_col, _ = st.columns([1.5, 1, 2])
-        with sort_col:
-            sort_by = st.selectbox(
-                "Sort by",
-                ["ICC Number", "Total Lines", "Counted", "Remaining", "Completion %"],
-                key="icc_sort_by"
-            )
-        with sort_dir_col:
-            sort_dir = st.radio("Order", ["⬆ Asc", "⬇ Desc"], horizontal=True, key="icc_sort_dir")
+        # --- Session state for sort ---
+        if 'icc_sort_col' not in st.session_state:
+            st.session_state['icc_sort_col'] = 'Number'
+            st.session_state['icc_sort_asc'] = True
 
-        sort_map = {
-            "ICC Number": "Number",
-            "Total Lines": "Total",
-            "Counted": "Counted",
-            "Remaining": "Remaining",
-            "Completion %": "Completion_%"
-        }
+        # Sort the dataframe
         icc_summary = icc_summary.sort_values(
-            by=sort_map[sort_by],
-            ascending=(sort_dir == "⬆ Asc")
+            by=st.session_state['icc_sort_col'],
+            ascending=st.session_state['icc_sort_asc']
         ).reset_index(drop=True)
 
-        # Build HTML table manually for full control
+        # Helper: render sort arrow for active column
+        def sort_arrow(col_key):
+            if st.session_state['icc_sort_col'] == col_key:
+                return ' ▲' if st.session_state['icc_sort_asc'] else ' ▼'
+            return ' ⇅'
+
+        # Clickable header buttons using Streamlit columns
+        h0, h1, h2, h3, h4 = st.columns([2, 1.2, 1.2, 1.2, 2])
+
+        def make_sort_button(col, label, col_key):
+            if col.button(f"{label}{sort_arrow(col_key)}", key=f"sort_{col_key}", use_container_width=True):
+                if st.session_state['icc_sort_col'] == col_key:
+                    st.session_state['icc_sort_asc'] = not st.session_state['icc_sort_asc']
+                else:
+                    st.session_state['icc_sort_col'] = col_key
+                    st.session_state['icc_sort_asc'] = True
+                st.rerun()
+
+        make_sort_button(h0, "ICC Number",   "Number")
+        make_sort_button(h1, "Total",        "Total")
+        make_sort_button(h2, "Counted",      "Counted")
+        make_sort_button(h3, "Remaining",    "Remaining")
+        make_sort_button(h4, "Completion %", "Completion_%")
+
+        # Build HTML table rows (no header — headers are Streamlit buttons above)
         rows_html = ""
         for _, row in icc_summary.iterrows():
             pct = row['Completion_%']
-            # Progress bar colour
             bar_color = '#22c55e' if pct == 100 else ('#f97316' if pct >= 50 else '#ef4444')
-            # Row background
             row_bg = '#f0fdf4' if pct == 100 else 'white'
 
             bar_html = f"""
-                <div style="background:#e5e7eb; border-radius:4px; height:14px; width:100%; position:relative;">
+                <div style="background:#e5e7eb; border-radius:4px; height:14px; width:100%;">
                     <div style="background:{bar_color}; width:{pct}%; height:14px; border-radius:4px;"></div>
                 </div>
                 <div style="font-size:11px; color:#6b7280; margin-top:2px;">{pct:.1f}%</div>
@@ -299,22 +309,10 @@ with tab1:
         <style>
             body {{ margin: 0; font-family: 'Segoe UI', sans-serif; }}
             table {{ border-collapse: collapse; width: 100%; }}
-            thead tr {{ background-color: #f3f4f6; }}
-            th {{ padding: 8px 10px; font-size: 12px; font-weight: 600; color: #374151;
-                  border-bottom: 2px solid #d1d5db; text-align: center; }}
-            th:first-child {{ text-align: left; }}
             tbody tr:hover {{ background-color: #f9fafb !important; }}
+            td {{ vertical-align: middle; }}
         </style>
         <table>
-            <thead>
-                <tr>
-                    <th style="text-align:left;">ICC Number</th>
-                    <th>Total Lines</th>
-                    <th>Counted</th>
-                    <th>Remaining</th>
-                    <th>Completion</th>
-                </tr>
-            </thead>
             <tbody>
                 {rows_html}
             </tbody>
