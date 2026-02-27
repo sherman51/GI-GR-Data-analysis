@@ -244,6 +244,29 @@ with tab1:
         )
         icc_summary['Completion_%'] = (icc_summary['Counted'] / icc_summary['Total'] * 100).round(1)
 
+        # Sort controls
+        sort_col, sort_dir_col, _ = st.columns([1.5, 1, 2])
+        with sort_col:
+            sort_by = st.selectbox(
+                "Sort by",
+                ["ICC Number", "Total Lines", "Counted", "Remaining", "Completion %"],
+                key="icc_sort_by"
+            )
+        with sort_dir_col:
+            sort_dir = st.radio("Order", ["⬆ Asc", "⬇ Desc"], horizontal=True, key="icc_sort_dir")
+
+        sort_map = {
+            "ICC Number": "Number",
+            "Total Lines": "Total",
+            "Counted": "Counted",
+            "Remaining": "Remaining",
+            "Completion %": "Completion_%"
+        }
+        icc_summary = icc_summary.sort_values(
+            by=sort_map[sort_by],
+            ascending=(sort_dir == "⬆ Asc")
+        ).reset_index(drop=True)
+
         # Build HTML table manually for full control
         rows_html = ""
         for _, row in icc_summary.iterrows():
