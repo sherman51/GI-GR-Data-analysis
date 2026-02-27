@@ -18,7 +18,7 @@ refresh_count = st_autorefresh(interval=60 * 1000, limit=None, key="data_refresh
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
-BUCKET_NAME = "testbucket353"
+BUCKET_NAME = "testbucket352"
 gcs_client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
 bucket = gcs_client.bucket(BUCKET_NAME)
 
