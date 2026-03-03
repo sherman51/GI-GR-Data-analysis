@@ -26,16 +26,6 @@ def normalize(text):
     """Lowercase and remove spaces/special chars for fuzzy matching"""
     return re.sub(r'[^a-z0-9]', '', text.lower())
 
-def find_matching_blob(bucket, workstream, uploaded_filename):
-    blobs = list(bucket.list_blobs(prefix=workstream))
-    normalized_upload = normalize(uploaded_filename)
-
-    for blob in blobs:
-        normalized_blob = normalize(blob.name)
-        if normalized_upload in normalized_blob or normalized_blob in normalized_upload:
-            return blob
-    return None
-
 # --- Last Upload Tracker Function ---
 def get_last_upload_info(bucket, workstream):
     blobs = list(bucket.list_blobs(prefix=workstream))
@@ -44,7 +34,7 @@ def get_last_upload_info(bucket, workstream):
 
     latest_blob = max(blobs, key=lambda b: b.updated)
 
-    sg_tz = pytz.timezone('Asia/Singapore')
+    sg_tz = pytz.timezone("Asia/Singapore")
     upload_time = latest_blob.updated.astimezone(sg_tz)
 
     return latest_blob.name, upload_time
@@ -104,49 +94,59 @@ if uploaded_files:
         file_name = f"{workstream_label}-{original_file_name}"
 
         try:
-            # --- Handle XLS ---
+            # --------------------------------------------------
+            # 1️⃣ Read Excel (Handles BOTH .xls and .xlsx)
+            # --------------------------------------------------
+            uploaded_file.seek(0)
+            df = pd.read_excel(uploaded_file, engine="calamine")
+
+            # --------------------------------------------------
+            # 2️⃣ Set Correct Content Type
+            # --------------------------------------------------
             if file_extension == "xls":
-                uploaded_file.seek(0)
-
-                try:
-                    df = pd.read_excel(uploaded_file, engine="calamine")
-                except Exception:
-                    uploaded_file.seek(0)
-                    df = pd.read_excel(uploaded_file, engine="xlrd")
-
                 content_type = "application/vnd.ms-excel"
-
-            # --- Handle XLSX ---
             elif file_extension == "xlsx":
-                uploaded_file.seek(0)
-                df = pd.read_excel(uploaded_file, engine="openpyxl")
                 content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
             else:
                 st.error(f"❌ Unsupported file format: {original_file_name}")
                 continue
 
-            # Preview
+            # --------------------------------------------------
+            # 3️⃣ Preview
+            # --------------------------------------------------
             st.subheader(f"📊 Preview: {original_file_name}")
             st.dataframe(df.head())
 
-            # Upload to GCS
+            # --------------------------------------------------
+            # 4️⃣ Upload to GCS
+            # --------------------------------------------------
             uploaded_file.seek(0)
             blob = bucket.blob(file_name)
             blob.upload_from_file(uploaded_file, content_type=content_type)
 
             st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
 
-            # --- Delete old matching file (if exists) ---
-            matching_blob = find_matching_blob(bucket, workstream_label, original_file_name)
+            # --------------------------------------------------
+            # 5️⃣ Delete Old Matching File (Safer Logic)
+            # --------------------------------------------------
+            blobs = list(bucket.list_blobs(prefix=workstream_label))
+            normalized_upload = normalize(original_file_name)
 
-            if matching_blob and matching_blob.name != file_name:
-                matching_blob.delete()
-                st.success(f"🗑️ Deleted old matching file: '{matching_blob.name}'")
+            for old_blob in blobs:
 
-            elif matching_blob and matching_blob.name == file_name:
-                st.info(f"ℹ️ File '{file_name}' overwritten successfully.")
+                # Skip the file we just uploaded
+                if old_blob.name == file_name:
+                    continue
 
+                normalized_blob = normalize(old_blob.name)
+
+                if (
+                    normalized_upload in normalized_blob
+                    or normalized_blob in normalized_upload
+                ):
+                    old_blob.delete()
+                    st.success(f"🗑️ Deleted old matching file: '{old_blob.name}'")
+                    break
             else:
                 st.info("ℹ️ No matching old file found.")
 
