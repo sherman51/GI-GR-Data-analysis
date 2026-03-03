@@ -93,7 +93,12 @@ if uploaded_files:
 
         try:
             if original_file_name.endswith(".xls"):
-                df = pd.read_excel(uploaded_file, engine="xlrd")  # xlrd handles legacy .xls binary format
+                # xlrd 2.x dropped .xls support — use calamine which handles legacy .xls
+                try:
+                    df = pd.read_excel(uploaded_file, engine="calamine")
+                except Exception:
+                    uploaded_file.seek(0)
+                    df = pd.read_excel(uploaded_file, engine="xlrd")
                 content_type = "application/vnd.ms-excel"
             elif original_file_name.endswith(".xlsx"):
                 df = pd.read_excel(uploaded_file, engine="openpyxl")
