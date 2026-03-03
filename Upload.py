@@ -93,7 +93,7 @@ if uploaded_files:
 
         try:
             if original_file_name.endswith(".xls"):
-                df = pd.read_excel(uploaded_file, engine="openpyxl")
+                df = pd.read_excel(uploaded_file, engine="xlrd")  # xlrd handles legacy .xls binary format
                 content_type = "application/vnd.ms-excel"
             elif original_file_name.endswith(".xlsx"):
                 df = pd.read_excel(uploaded_file, engine="openpyxl")
