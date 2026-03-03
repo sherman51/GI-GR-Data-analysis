@@ -2,6 +2,7 @@ streamlit
 pandas>=2.0.1
 numpy
 openpyxl>=3.1.0
+python-calamine
 plotly
 streamlit_autorefresh
 google-cloud-storage
