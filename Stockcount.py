@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-import datetime as dt
 import io
+import re
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -47,7 +47,6 @@ def download_latest_excel(bucket):
         if (now_utc - b.updated).total_seconds() > 15
     ]
 
-    # Fall back to all blobs if none are stable yet
     candidate_blobs = stable_blobs if stable_blobs else count_blobs
     latest_blob = max(candidate_blobs, key=lambda b: b.updated)
 
@@ -57,15 +56,57 @@ def download_latest_excel(bucket):
         st.sidebar.error(f"❌ Failed to download '{latest_blob.name}': {e}")
         return None, None
 
-    # Validate file size — a valid Excel is at least a few hundred bytes
     if len(file_bytes) < 200:
         st.sidebar.error(
-            f"❌ File '{latest_blob.name}' is suspiciously small "
-            f"({len(file_bytes)} bytes) — it may be empty or corrupt."
+            f"❌ File '{latest_blob.name}' is too small "
+            f"({len(file_bytes)} bytes) — may be empty or corrupt."
         )
         return None, None
 
     return io.BytesIO(file_bytes), latest_blob.name
+
+
+# ---------- SPREADSHEETML PARSER (XML-based .xls) ----------
+def parse_spreadsheetml(raw_bytes):
+    """
+    Parse Excel XML / SpreadsheetML format .xls files.
+    Handles broken xmlns URIs with embedded whitespace/newlines —
+    common in files exported from ERP/WMS systems.
+    """
+    from lxml import etree
+
+    content = raw_bytes.decode('utf-8', errors='replace')
+
+    # Strip anything before <Workbook
+    content = re.sub(r'^.*?(<Workbook)', r'\1', content, flags=re.DOTALL)
+
+    # Generic fix: remove whitespace inside ANY xmlns="..." URI
+    content = re.sub(r'(xmlns:\w+="[^"]*?)\s+([^"]*?")', r'\1\2', content)
+
+    # Escape bare ampersands
+    content = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)', '&amp;', content)
+
+    try:
+        tree = etree.fromstring(content.encode('utf-8'))
+    except etree.XMLSyntaxError as e:
+        raise ValueError(f"Failed to parse SpreadsheetML XML: {e}")
+
+    ns = 'urn:schemas-microsoft-com:office:spreadsheet'
+    rows = tree.findall(f'.//{{{ns}}}Row')
+
+    if not rows:
+        raise ValueError("No rows found in SpreadsheetML file.")
+
+    data = []
+    for row in rows:
+        cells = row.findall(f'.//{{{ns}}}Data')
+        data.append([c.text if c.text else '' for c in cells])
+
+    if not data:
+        raise ValueError("Parsed rows but found no cell data.")
+
+    df = pd.DataFrame(data[1:], columns=data[0])
+    return df
 
 
 # ---------- FETCH LATEST FILE ----------
@@ -175,35 +216,54 @@ components.html("""
 """, height=85)
 
 
-# ---------- LOAD DATA WITH ENGINE FALLBACK ----------
+# ---------- LOAD DATA WITH FULL FORMAT SUPPORT ----------
 @st.cache_data(ttl=60)
 def load_data(_file_bytes, fname):
-    buf = io.BytesIO(_file_bytes)
+    raw_bytes = _file_bytes
+    buf = io.BytesIO(raw_bytes)
 
-    # Pick engine based on file extension
-    if fname.lower().endswith('.xls'):
-        primary_engine = 'xlrd'
-        fallback_engine = 'openpyxl'
-    else:
-        primary_engine = 'openpyxl'
-        fallback_engine = 'xlrd'
+    # Detect file format from magic bytes
+    is_xlsx = raw_bytes[:4] == b'PK\x03\x04'
+    is_biff  = raw_bytes[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+    is_xml   = (
+        b'<Workbook' in raw_bytes[:500]
+        or b'spreadsheet' in raw_bytes[:500].lower()
+    )
 
     df = None
     last_error = None
 
-    for engine in [primary_engine, fallback_engine]:
-        buf.seek(0)
+    if is_xlsx or fname.lower().endswith('.xlsx'):
         try:
-            df = pd.read_excel(buf, engine=engine)
-            break  # success — stop trying
+            df = pd.read_excel(buf, engine='openpyxl')
         except Exception as e:
             last_error = e
-            continue
+
+    elif is_biff:
+        try:
+            df = pd.read_excel(buf, engine='xlrd')
+        except Exception as e:
+            last_error = e
+
+    elif is_xml:
+        try:
+            df = parse_spreadsheetml(raw_bytes)
+        except Exception as e:
+            last_error = e
+
+    else:
+        # Last-resort: try all engines
+        for engine in ['openpyxl', 'xlrd']:
+            buf.seek(0)
+            try:
+                df = pd.read_excel(buf, engine=engine)
+                break
+            except Exception as e:
+                last_error = e
 
     if df is None:
         raise ValueError(
-            f"Could not read '{fname}' with openpyxl or xlrd. "
-            f"The file may be corrupt or in an unsupported format. "
+            f"Could not read '{fname}'. The file may be corrupt or unsupported. "
             f"Last error: {last_error}"
         )
 
@@ -216,14 +276,14 @@ def load_data(_file_bytes, fname):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-    # Count: preserve NaN so we can distinguish blank (not counted) from 0 (counted as zero)
+    # Count: preserve NaN to distinguish blank (not counted) from 0 (counted as zero)
     if 'Count' in df.columns:
         df['Count'] = pd.to_numeric(df['Count'], errors='coerce')
 
     if 'Lot1' in df.columns:
         df['ExpiryDate'] = pd.to_datetime(df['Lot1'], errors='coerce')
 
-    # Completion: blank Count = not yet counted, any number including 0 = counted
+    # Counted: blank Count = not yet counted, any number including 0 = counted
     df['Counted'] = df['Count'].notna()
 
     return df
@@ -245,9 +305,8 @@ total_counted = int(df['Counted'].sum())
 total_remaining = total_lines - total_counted
 overall_pct = (total_counted / total_lines * 100) if total_lines > 0 else 0
 
-# Variance stats (for Tab 2)
+# Variance stats
 lines_with_variance = int((df['Variance'] != 0).sum())
-lines_zero_variance = int((df['Variance'] == 0).sum())
 variance_lines_pos = int((df['Variance'] > 0).sum())
 variance_lines_neg = int((df['Variance'] < 0).sum())
 
@@ -262,7 +321,6 @@ tab1, tab2 = st.tabs(["📊 Count Progress", "📋 Variance Details"])
 with tab1:
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-    # --- ROW 1: Key Metrics ---
     c1, c2, c3, _pad = st.columns([1, 1, 1, 3])
     with c1:
         st.metric("📄 Total Lines", f"{total_lines:,}")
@@ -273,7 +331,6 @@ with tab1:
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    # --- ROW 2: Overall % Completion Donut ---
     col_donut, col_table = st.columns([1, 2])
 
     with col_donut:
@@ -298,7 +355,6 @@ with tab1:
         )
         st.plotly_chart(fig_overall, use_container_width=True, key="overall_donut")
 
-    # --- ROW 2 RIGHT: ICC Number Progress Table ---
     with col_table:
         st.markdown("#### 📋 Progress by ICC Number")
 
@@ -307,29 +363,22 @@ with tab1:
             Counted=('Counted', 'sum'),
         ).reset_index()
         icc_summary['Remaining'] = icc_summary['Total'] - icc_summary['Counted']
-        icc_summary['Progress'] = icc_summary.apply(
-            lambda r: f"{int(r['Counted'])}/{int(r['Total'])} lines", axis=1
-        )
         icc_summary['Completion_%'] = (icc_summary['Counted'] / icc_summary['Total'] * 100).round(1)
 
-        # --- Session state for sort ---
         if 'icc_sort_col' not in st.session_state:
             st.session_state['icc_sort_col'] = 'Number'
             st.session_state['icc_sort_asc'] = True
 
-        # Sort the dataframe
         icc_summary = icc_summary.sort_values(
             by=st.session_state['icc_sort_col'],
             ascending=st.session_state['icc_sort_asc']
         ).reset_index(drop=True)
 
-        # Helper: render sort arrow for active column
         def sort_arrow(col_key):
             if st.session_state['icc_sort_col'] == col_key:
                 return ' ▲' if st.session_state['icc_sort_asc'] else ' ▼'
             return ' ⇅'
 
-        # Clickable header buttons using Streamlit columns
         h0, h1, h2, h3, h4 = st.columns([2, 1.2, 1.2, 1.2, 2])
 
         def make_sort_button(col, label, col_key):
@@ -346,7 +395,6 @@ with tab1:
         make_sort_button(h3, "Remaining",    "Remaining")
         make_sort_button(h4, "Completion %", "Completion_%")
 
-        # Build HTML table rows
         rows_html = ""
         for _, row in icc_summary.iterrows():
             pct = row['Completion_%']
@@ -359,7 +407,6 @@ with tab1:
                 </div>
                 <div style="font-size:11px; color:#6b7280; margin-top:2px;">{pct:.1f}%</div>
             """
-
             status_icon = "✅" if pct == 100 else ("🟡" if pct >= 50 else "🔴")
 
             rows_html += f"""
@@ -379,13 +426,8 @@ with tab1:
             tbody tr:hover {{ background-color: #f9fafb !important; }}
             td {{ vertical-align: middle; }}
         </style>
-        <table>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
+        <table><tbody>{rows_html}</tbody></table>
         """
-
         components.html(table_html, height=500, scrolling=True)
 
 
@@ -393,7 +435,6 @@ with tab1:
 with tab2:
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
-    # --- Variance summary metrics ---
     v1, v2, v3, _pad = st.columns([1, 1, 1, 3])
     with v1:
         st.metric("⚠️ Lines w/ Variance", f"{lines_with_variance:,}")
@@ -404,7 +445,6 @@ with tab2:
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    # --- Variance breakdown bar chart ---
     col_chart, col_space = st.columns([1.5, 2])
     with col_chart:
         st.markdown("#### ⚠️ Variance Breakdown")
@@ -433,10 +473,8 @@ with tab2:
     if df_var.empty:
         st.success("🎉 No variance lines found! All counts match system quantities.")
     else:
-        # Derive zone for filter
         df_var['Zone'] = df_var['Location'].astype(str).str[:1]
 
-        # Filters
         f1, f2, f3 = st.columns(3)
         with f1:
             var_type = st.selectbox("Variance Type", ["All", "Gain (+)", "Loss (−)"])
@@ -447,7 +485,6 @@ with tab2:
             zones_avail = ["All"] + sorted(df_var['Zone'].unique().tolist())
             sel_zone = st.selectbox("Zone", zones_avail)
 
-        # Apply filters
         filtered = df_var.copy()
         if var_type == "Gain (+)":
             filtered = filtered[filtered['Variance'] > 0]
@@ -458,7 +495,6 @@ with tab2:
         if sel_zone != "All":
             filtered = filtered[filtered['Zone'] == sel_zone]
 
-        # Display columns
         display_cols = ['Number', 'LineID', 'SKUCode', 'Description', 'Location', 'OnHand', 'Count', 'Variance']
         if 'ExpiryDate' in filtered.columns:
             display_cols.append('ExpiryDate')
@@ -466,8 +502,6 @@ with tab2:
             display_cols.append('Remarks')
 
         display_df = filtered[[c for c in display_cols if c in filtered.columns]].copy()
-
-        # Display Count as blank where NaN (not yet counted), otherwise as number
         display_df['Count'] = display_df['Count'].apply(
             lambda x: '' if pd.isna(x) else f"{int(x):,}"
         )
@@ -505,7 +539,6 @@ with tab2:
             scrolling=True
         )
 
-        # Summary stats
         st.markdown("---")
         s1, s2, s3, s4 = st.columns(4)
         with s1:
