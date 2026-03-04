@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
+import io
+import re
 from google.cloud import storage
 from google.oauth2 import service_account
-from datetime import datetime
 import pytz
 
 # --- GCP Authentication ---
@@ -17,22 +18,97 @@ bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
 
+
 # --- Last Upload Tracker Function ---
 def get_last_upload_info(bucket, workstream):
     """Get the last uploaded file info for a workstream"""
     blobs = list(bucket.list_blobs(prefix=workstream))
-
     if not blobs:
         return None, None
-
-    # Get the most recently updated blob
     latest_blob = max(blobs, key=lambda b: b.updated)
-
-    # Convert to Singapore timezone
     sg_tz = pytz.timezone('Asia/Singapore')
     upload_time = latest_blob.updated.astimezone(sg_tz)
-
     return latest_blob.name, upload_time
+
+
+def parse_spreadsheetml(raw_bytes):
+    """
+    Parse Microsoft SpreadsheetML / Excel XML 2003 format.
+    Handles 3 known issues in exported files:
+      1. Malformed opening line: <xml version> instead of <?xml version="1.0"?>
+      2. Broken namespace with stray spaces in xmlns:x
+      3. Unescaped & characters inside cell data
+    """
+    from lxml import etree
+
+    content = raw_bytes.decode('utf-8', errors='replace')
+
+    # Fix 1: Strip bad preamble, keep only from <Workbook> tag onwards
+    content = re.sub(r'^.*?(<Workbook)', r'\1', content, flags=re.DOTALL)
+
+    # Fix 2: Repair broken namespace (extra spaces inside URI)
+    content = re.sub(
+        r'xmlns:x="urn:schemas-\s+microsoft-com:office:excel"',
+        'xmlns:x="urn:schemas-microsoft-com:office:excel"',
+        content
+    )
+
+    # Fix 3: Escape bare & characters that are not already an XML entity
+    content = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)', '&amp;', content)
+
+    tree = etree.fromstring(content.encode('utf-8'))
+    ns = 'urn:schemas-microsoft-com:office:spreadsheet'
+
+    rows = tree.findall(f'.//{{{ns}}}Row')
+    if not rows:
+        raise ValueError("No rows found in SpreadsheetML file.")
+
+    data = []
+    for row in rows:
+        cells = row.findall(f'.//{{{ns}}}Data')
+        data.append([c.text if c.text else '' for c in cells])
+
+    if not data:
+        raise ValueError("Parsed rows but found no cell data.")
+
+    df = pd.DataFrame(data[1:], columns=data[0])
+    return df
+
+
+def read_excel_file(uploaded_file, original_file_name):
+    """
+    Detect the true format of an uploaded Excel file by inspecting raw bytes,
+    then parse accordingly. Handles: .xlsx, real .xls (BIFF), and
+    SpreadsheetML XML files falsely saved as .xls.
+    """
+    raw_bytes = uploaded_file.read()
+    uploaded_file.seek(0)
+
+    is_xlsx = raw_bytes[:4] == b'PK\x03\x04'
+    is_biff = raw_bytes[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+    is_xml  = (b'<Workbook' in raw_bytes[:500] or b'spreadsheet' in raw_bytes[:500].lower())
+
+    if is_xlsx or original_file_name.endswith(".xlsx"):
+        df = pd.read_excel(uploaded_file, engine="openpyxl")
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    elif is_biff:
+        df = pd.read_excel(uploaded_file, engine="xlrd")
+        content_type = "application/vnd.ms-excel"
+
+    elif is_xml:
+        # SpreadsheetML XML disguised as .xls — use custom parser
+        df = parse_spreadsheetml(raw_bytes)
+        content_type = "application/vnd.ms-excel"
+
+    else:
+        raise ValueError(
+            "Unrecognised file format. Please upload a valid .xls or .xlsx file.\n\n"
+            f"File starts with: {raw_bytes[:100].decode('utf-8', errors='replace')}"
+        )
+
+    return df, content_type
+
 
 # --- Workstream Label Section ---
 st.header("Workstream Label")
@@ -51,7 +127,6 @@ if last_file and last_time:
         label_visibility="collapsed",
         key="filename_display"
     )
-
     col1, col2 = st.columns(2)
     with col1:
         st.metric("📅 Upload Date", last_time.strftime("%d %b %Y"))
@@ -70,64 +145,32 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file is not None:
-    original_file_name = uploaded_file.name  # Get the original file name
-
-    # Automatically prepend the workstream label to the file name
+    original_file_name = uploaded_file.name
     file_name = f"{workstream_label}-{original_file_name}"
 
     try:
-        # ✅ FIX: Detect true file format by sniffing raw bytes (not just extension)
-        raw_bytes = uploaded_file.read()
-        uploaded_file.seek(0)  # Reset after sniffing
-
-        # Detect actual format from file signature / content
-        is_xlsx_zip = raw_bytes[:4] == b'PK\x03\x04'                        # ZIP = real .xlsx
-        is_xls_biff = raw_bytes[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1' # BIFF = real .xls
-        is_xml_html = raw_bytes[:20].lower().strip().startswith((            # XML/HTML disguised as .xls
-            b'<?xml', b'<html', b'\r\n<xml', b'\n<xml', b'<xml'
-        ))
-
-        if is_xlsx_zip or original_file_name.endswith(".xlsx"):
-            df = pd.read_excel(uploaded_file, engine="openpyxl")
-            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        elif is_xls_biff:
-            df = pd.read_excel(uploaded_file, engine="xlrd")
-            content_type = "application/vnd.ms-excel"
-        elif is_xml_html:
-            # XML/HTML disguised as .xls — read as HTML table
-            import io
-            tables = pd.read_html(io.BytesIO(raw_bytes))
-            if not tables:
-                st.error("❌ Could not find any table data in the file.")
-                st.stop()
-            df = tables[0]
-            content_type = "application/vnd.ms-excel"
-        else:
-            st.error("❌ Unsupported or corrupt file format. Please upload a valid .xls or .xlsx file.")
-            st.stop()
+        df, content_type = read_excel_file(uploaded_file, original_file_name)
 
         st.subheader("📊 Preview of uploaded data:")
-        st.dataframe(df.head())  # Show preview
+        st.dataframe(df.head())
+        st.caption(f"Total rows: {len(df):,} | Columns: {len(df.columns)}")
 
-        # Upload to GCS with the new name
-        uploaded_file.seek(0)  # Reset buffer
+        # Upload to GCS
+        uploaded_file.seek(0)
         blob = bucket.blob(file_name)
         blob.upload_from_file(uploaded_file, content_type=content_type)
         st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
 
-        # --- Remove existing workstream-related files ---
+        # Remove old workstream files
         st.info(f"🧹 Cleaning up old {workstream_label} file(s) in the bucket...")
-
         blobs = bucket.list_blobs(prefix=workstream_label)
         deleted_count = 0
         for b in blobs:
             if b.name.startswith(workstream_label) and b.name != file_name:
                 b.delete()
                 deleted_count += 1
-
         st.success(f"✅ Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
 
-        # Refresh the page to show updated last upload info
         st.rerun()
 
     except Exception as e:
