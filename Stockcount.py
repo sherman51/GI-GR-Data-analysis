@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import datetime as dt
+import io
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from google.cloud import storage
 from google.oauth2 import service_account
-import io
 from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
 
@@ -23,25 +24,58 @@ gcs_client = storage.Client(credentials=credentials, project=st.secrets["gcp_ser
 bucket = gcs_client.bucket(BUCKET_NAME)
 
 
+# ---------- DOWNLOAD WITH VALIDATION ----------
 def download_latest_excel(bucket):
-    blobs = list(bucket.list_blobs())
-    count_blobs = [b for b in blobs if 'count' in b.name.lower() and b.name.lower().endswith(('.xlsx', '.xls'))]
+    try:
+        blobs = list(bucket.list_blobs())
+    except Exception as e:
+        st.sidebar.error(f"❌ Could not list GCS bucket: {e}")
+        return None, None
+
+    count_blobs = [
+        b for b in blobs
+        if 'count' in b.name.lower() and b.name.lower().endswith(('.xlsx', '.xls'))
+    ]
+
     if not count_blobs:
         return None, None
-    latest_blob = max(count_blobs, key=lambda b: b.updated)
-    file_bytes = latest_blob.download_as_bytes()
+
+    # Skip blobs updated in the last 15 seconds (may still be uploading)
+    now_utc = datetime.now(timezone.utc)
+    stable_blobs = [
+        b for b in count_blobs
+        if (now_utc - b.updated).total_seconds() > 15
+    ]
+
+    # Fall back to all blobs if none are stable yet
+    candidate_blobs = stable_blobs if stable_blobs else count_blobs
+    latest_blob = max(candidate_blobs, key=lambda b: b.updated)
+
+    try:
+        file_bytes = latest_blob.download_as_bytes()
+    except Exception as e:
+        st.sidebar.error(f"❌ Failed to download '{latest_blob.name}': {e}")
+        return None, None
+
+    # Validate file size — a valid Excel is at least a few hundred bytes
+    if len(file_bytes) < 200:
+        st.sidebar.error(
+            f"❌ File '{latest_blob.name}' is suspiciously small "
+            f"({len(file_bytes)} bytes) — it may be empty or corrupt."
+        )
+        return None, None
+
     return io.BytesIO(file_bytes), latest_blob.name
 
 
 # ---------- FETCH LATEST FILE ----------
 file_stream, file_name = download_latest_excel(bucket)
-if file_stream:
-    file_stream.seek(0)
-    st.sidebar.success(f"📥 Using latest file: {file_name}")
-    st.sidebar.info(f"🔄 Last refresh: {datetime.now().strftime('%H:%M:%S')}")
-else:
-    st.sidebar.error("❌ No Count Excel files found in GCS bucket.")
+if file_stream is None:
+    st.sidebar.error("❌ No valid Count Excel files found in GCS bucket.")
     st.stop()
+
+st.sidebar.success(f"📥 Using latest file: {file_name}")
+st.sidebar.info(f"🔄 Last refresh: {datetime.now().strftime('%H:%M:%S')}")
 
 # ---------- GLOBAL STYLE ----------
 st.markdown("""
@@ -141,10 +175,38 @@ components.html("""
 """, height=85)
 
 
-# ---------- LOAD DATA ----------
+# ---------- LOAD DATA WITH ENGINE FALLBACK ----------
 @st.cache_data(ttl=60)
 def load_data(_file_bytes, fname):
-    df = pd.read_excel(io.BytesIO(_file_bytes), engine='openpyxl')
+    buf = io.BytesIO(_file_bytes)
+
+    # Pick engine based on file extension
+    if fname.lower().endswith('.xls'):
+        primary_engine = 'xlrd'
+        fallback_engine = 'openpyxl'
+    else:
+        primary_engine = 'openpyxl'
+        fallback_engine = 'xlrd'
+
+    df = None
+    last_error = None
+
+    for engine in [primary_engine, fallback_engine]:
+        buf.seek(0)
+        try:
+            df = pd.read_excel(buf, engine=engine)
+            break  # success — stop trying
+        except Exception as e:
+            last_error = e
+            continue
+
+    if df is None:
+        raise ValueError(
+            f"Could not read '{fname}' with openpyxl or xlrd. "
+            f"The file may be corrupt or in an unsupported format. "
+            f"Last error: {last_error}"
+        )
+
     df.columns = df.columns.str.strip()
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
@@ -167,9 +229,15 @@ def load_data(_file_bytes, fname):
     return df
 
 
+# ---------- READ & PARSE ----------
 file_stream.seek(0)
 raw_bytes = file_stream.read()
-df = load_data(raw_bytes, file_name)
+
+try:
+    df = load_data(raw_bytes, file_name)
+except ValueError as e:
+    st.error(f"❌ Failed to load Excel file: {e}")
+    st.stop()
 
 # ---------- OVERALL COMPLETION METRICS ----------
 total_lines = len(df)
@@ -278,7 +346,7 @@ with tab1:
         make_sort_button(h3, "Remaining",    "Remaining")
         make_sort_button(h4, "Completion %", "Completion_%")
 
-        # Build HTML table rows (no header — headers are Streamlit buttons above)
+        # Build HTML table rows
         rows_html = ""
         for _, row in icc_summary.iterrows():
             pct = row['Completion_%']
