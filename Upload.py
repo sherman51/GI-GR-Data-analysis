@@ -10,19 +10,21 @@ import pytz
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
-bucket_name = "testbucket352"  # Replace with your actual bucket name
+bucket_name = "testbucket352"
 
 # Initialize GCS client
-client = storage.Client(credentials=credentials, project=st.secrets["gcp_service_account"]["project_id"])
+client = storage.Client(
+    credentials=credentials,
+    project=st.secrets["gcp_service_account"]["project_id"]
+)
 bucket = client.bucket(bucket_name)
 
 st.title("📁 Upload Excel Files to Dashboard")
 
-
 # --- Last Upload Tracker Function ---
-def get_last_upload_info(bucket, workstream):
-    """Get the last uploaded file info for a workstream"""
-    blobs = list(bucket.list_blobs(prefix=workstream))
+def get_last_upload_info(bucket):
+    """Get the last uploaded file info for any file in bucket"""
+    blobs = list(bucket.list_blobs())
     if not blobs:
         return None, None
     latest_blob = max(blobs, key=lambda b: b.updated)
@@ -30,57 +32,33 @@ def get_last_upload_info(bucket, workstream):
     upload_time = latest_blob.updated.astimezone(sg_tz)
     return latest_blob.name, upload_time
 
-
+# --- SpreadsheetML Parser ---
 def parse_spreadsheetml(raw_bytes):
-    """
-    Parse Microsoft SpreadsheetML / Excel XML 2003 format.
-    Handles 3 known issues in exported files:
-      1. Malformed opening line: <xml version> instead of <?xml version="1.0"?>
-      2. Broken namespace with stray spaces in xmlns:x
-      3. Unescaped & characters inside cell data
-    """
     from lxml import etree
-
     content = raw_bytes.decode('utf-8', errors='replace')
-
-    # Fix 1: Strip bad preamble, keep only from <Workbook> tag onwards
     content = re.sub(r'^.*?(<Workbook)', r'\1', content, flags=re.DOTALL)
-
-    # Fix 2: Repair broken namespace (extra spaces inside URI)
     content = re.sub(
         r'xmlns:x="urn:schemas-\s+microsoft-com:office:excel"',
         'xmlns:x="urn:schemas-microsoft-com:office:excel"',
         content
     )
-
-    # Fix 3: Escape bare & characters that are not already an XML entity
     content = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)', '&amp;', content)
-
     tree = etree.fromstring(content.encode('utf-8'))
     ns = 'urn:schemas-microsoft-com:office:spreadsheet'
-
     rows = tree.findall(f'.//{{{ns}}}Row')
     if not rows:
         raise ValueError("No rows found in SpreadsheetML file.")
-
     data = []
     for row in rows:
         cells = row.findall(f'.//{{{ns}}}Data')
         data.append([c.text if c.text else '' for c in cells])
-
     if not data:
         raise ValueError("Parsed rows but found no cell data.")
-
     df = pd.DataFrame(data[1:], columns=data[0])
     return df
 
-
+# --- Read Excel File ---
 def read_excel_file(uploaded_file, original_file_name):
-    """
-    Detect the true format of an uploaded Excel file by inspecting raw bytes,
-    then parse accordingly. Handles: .xlsx, real .xls (BIFF), and
-    SpreadsheetML XML files falsely saved as .xls.
-    """
     raw_bytes = uploaded_file.read()
     uploaded_file.seek(0)
 
@@ -91,33 +69,25 @@ def read_excel_file(uploaded_file, original_file_name):
     if is_xlsx or original_file_name.endswith(".xlsx"):
         df = pd.read_excel(uploaded_file, engine="openpyxl")
         content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
     elif is_biff:
         df = pd.read_excel(uploaded_file, engine="xlrd")
         content_type = "application/vnd.ms-excel"
-
     elif is_xml:
-        # SpreadsheetML XML disguised as .xls — use custom parser
         df = parse_spreadsheetml(raw_bytes)
         content_type = "application/vnd.ms-excel"
-
     else:
         raise ValueError(
-            "Unrecognised file format. Please upload a valid .xls or .xlsx file.\n\n"
-            f"File starts with: {raw_bytes[:100].decode('utf-8', errors='replace')}"
+            "Unrecognised file format. Please upload a valid .xls or .xlsx file."
         )
-
     return df, content_type
 
-
-# --- Workstream Label Section ---
+# --- Workstream Selection ---
 st.header("Workstream Label")
 workstream_label = st.selectbox("Choose your workstream", ["aircon", "coldroom"])
 
 # --- Display Last Upload Info ---
 st.markdown("---")
-last_file, last_time = get_last_upload_info(bucket, workstream_label)
-
+last_file, last_time = get_last_upload_info(bucket)
 if last_file and last_time:
     st.markdown("**📂 Last Uploaded File:**")
     st.text_input(
@@ -133,7 +103,7 @@ if last_file and last_time:
     with col2:
         st.metric("🕐 Upload Time", last_time.strftime("%I:%M:%S %p"))
 else:
-    st.info(f"ℹ️ No files found for {workstream_label.capitalize()} workstream")
+    st.info("ℹ️ No files found in the bucket")
 
 st.markdown("---")
 
@@ -155,21 +125,25 @@ if uploaded_file is not None:
         st.dataframe(df.head())
         st.caption(f"Total rows: {len(df):,} | Columns: {len(df.columns)}")
 
-        # Upload to GCS
+        # --- Upload new file ---
         uploaded_file.seek(0)
         blob = bucket.blob(file_name)
         blob.upload_from_file(uploaded_file, content_type=content_type)
         st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
 
-        # Remove old workstream files
-        st.info(f"🧹 Cleaning up old {workstream_label} file(s) in the bucket...")
-        blobs = bucket.list_blobs(prefix=workstream_label)
+        # --- Cleanup old files containing 'GI' or 'Count' ---
+        st.info("🧹 Cleaning up old files containing 'GI' or 'Count'...")
+        blobs = list(bucket.list_blobs())
         deleted_count = 0
+
         for b in blobs:
-            if b.name.startswith(workstream_label) and b.name != file_name:
+            if b.name == file_name:
+                continue  # skip the newly uploaded file
+            if ("gi" in b.name.lower()) or ("count" in b.name.lower()):
                 b.delete()
                 deleted_count += 1
-        st.success(f"✅ Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
+
+        st.success(f"✅ Deleted {deleted_count} old file(s) containing 'GI' or 'Count'.")
 
         st.rerun()
 
