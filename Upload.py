@@ -21,17 +21,17 @@ st.title("📁 Upload Excel Files to Dashboard")
 def get_last_upload_info(bucket, workstream):
     """Get the last uploaded file info for a workstream"""
     blobs = list(bucket.list_blobs(prefix=workstream))
-    
+
     if not blobs:
         return None, None
-    
+
     # Get the most recently updated blob
     latest_blob = max(blobs, key=lambda b: b.updated)
-    
+
     # Convert to Singapore timezone
     sg_tz = pytz.timezone('Asia/Singapore')
     upload_time = latest_blob.updated.astimezone(sg_tz)
-    
+
     return latest_blob.name, upload_time
 
 # --- Workstream Label Section ---
@@ -43,7 +43,6 @@ st.markdown("---")
 last_file, last_time = get_last_upload_info(bucket, workstream_label)
 
 if last_file and last_time:
-    # Use text input (disabled) to show full filename with horizontal scroll
     st.markdown("**📂 Last Uploaded File:**")
     st.text_input(
         "Last Uploaded File",
@@ -52,8 +51,7 @@ if last_file and last_time:
         label_visibility="collapsed",
         key="filename_display"
     )
-    
-    # Display date and time in columns
+
     col1, col2 = st.columns(2)
     with col1:
         st.metric("📅 Upload Date", last_time.strftime("%d %b %Y"))
@@ -66,51 +64,52 @@ st.markdown("---")
 
 # --- Upload Section ---
 st.header(f"Upload Excel File for {workstream_label.capitalize()} Workstream (.xls or .xlsx)")
-uploaded_file = st.file_uploader(f"Choose an Excel file for {workstream_label.capitalize()} workstream", type=["xls", "xlsx"])
+uploaded_file = st.file_uploader(
+    f"Choose an Excel file for {workstream_label.capitalize()} workstream",
+    type=["xls", "xlsx"]
+)
 
 if uploaded_file is not None:
     original_file_name = uploaded_file.name  # Get the original file name
-    
+
     # Automatically prepend the workstream label to the file name
     file_name = f"{workstream_label}-{original_file_name}"
-    
+
     try:
-        # Read file using correct engine
-        if file_name.endswith(".xls"):
-            df = pd.read_excel(uploaded_file, engine="openpyxl")
+        # ✅ FIX: Use original_file_name to detect extension, and correct engine per format
+        if original_file_name.endswith(".xls"):
+            df = pd.read_excel(uploaded_file, engine="xlrd")       # xlrd for legacy .xls
             content_type = "application/vnd.ms-excel"
-        elif file_name.endswith(".xlsx"):
-            df = pd.read_excel(uploaded_file, engine="openpyxl")
+        elif original_file_name.endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")   # openpyxl for .xlsx
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         else:
-            st.error("Unsupported file format!")
+            st.error("Unsupported file format! Please upload a .xls or .xlsx file.")
             st.stop()
-        
+
         st.subheader("📊 Preview of uploaded data:")
         st.dataframe(df.head())  # Show preview
-        
+
         # Upload to GCS with the new name
         uploaded_file.seek(0)  # Reset buffer
         blob = bucket.blob(file_name)
         blob.upload_from_file(uploaded_file, content_type=content_type)
         st.success(f"✅ Uploaded '{file_name}' to Google Cloud Storage.")
-        
-        # --- Remove existing workstream-related file ---
-        st.info(f"🧹 Cleaning up old {workstream_label} file in the bucket...")
-        
-        # List blobs with the workstream prefix
+
+        # --- Remove existing workstream-related files ---
+        st.info(f"🧹 Cleaning up old {workstream_label} file(s) in the bucket...")
+
         blobs = bucket.list_blobs(prefix=workstream_label)
         deleted_count = 0
         for b in blobs:
-            # Delete only the file that matches the prefix and is NOT the newly uploaded file
             if b.name.startswith(workstream_label) and b.name != file_name:
                 b.delete()
                 deleted_count += 1
-        
+
         st.success(f"✅ Deleted {deleted_count} old {workstream_label} file(s) from the bucket.")
-        
+
         # Refresh the page to show updated last upload info
         st.rerun()
-        
+
     except Exception as e:
         st.error(f"❌ Failed to read or upload Excel file: {e}")
