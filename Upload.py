@@ -76,15 +76,34 @@ if uploaded_file is not None:
     file_name = f"{workstream_label}-{original_file_name}"
 
     try:
-        # ✅ FIX: Use original_file_name to detect extension, and correct engine per format
-        if original_file_name.endswith(".xls"):
-            df = pd.read_excel(uploaded_file, engine="xlrd")       # xlrd for legacy .xls
-            content_type = "application/vnd.ms-excel"
-        elif original_file_name.endswith(".xlsx"):
-            df = pd.read_excel(uploaded_file, engine="openpyxl")   # openpyxl for .xlsx
+        # ✅ FIX: Detect true file format by sniffing raw bytes (not just extension)
+        raw_bytes = uploaded_file.read()
+        uploaded_file.seek(0)  # Reset after sniffing
+
+        # Detect actual format from file signature / content
+        is_xlsx_zip = raw_bytes[:4] == b'PK\x03\x04'                        # ZIP = real .xlsx
+        is_xls_biff = raw_bytes[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1' # BIFF = real .xls
+        is_xml_html = raw_bytes[:20].lower().strip().startswith((            # XML/HTML disguised as .xls
+            b'<?xml', b'<html', b'\r\n<xml', b'\n<xml', b'<xml'
+        ))
+
+        if is_xlsx_zip or original_file_name.endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file, engine="openpyxl")
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        elif is_xls_biff:
+            df = pd.read_excel(uploaded_file, engine="xlrd")
+            content_type = "application/vnd.ms-excel"
+        elif is_xml_html:
+            # XML/HTML disguised as .xls — read as HTML table
+            import io
+            tables = pd.read_html(io.BytesIO(raw_bytes))
+            if not tables:
+                st.error("❌ Could not find any table data in the file.")
+                st.stop()
+            df = tables[0]
+            content_type = "application/vnd.ms-excel"
         else:
-            st.error("Unsupported file format! Please upload a .xls or .xlsx file.")
+            st.error("❌ Unsupported or corrupt file format. Please upload a valid .xls or .xlsx file.")
             st.stop()
 
         st.subheader("📊 Preview of uploaded data:")
