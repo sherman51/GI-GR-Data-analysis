@@ -38,11 +38,7 @@ def get_last_upload_info(bucket):
 
 # --- SpreadsheetML Parser (XML-based .xls) ---
 def parse_spreadsheetml(raw_bytes):
-    """
-    Parse Excel XML / SpreadsheetML format files saved with .xls extension.
-    Handles files exported from ERP/WMS systems that embed whitespace/newlines
-    inside XML namespace URIs, which breaks standard parsers.
-    """
+    """Parse Excel XML / SpreadsheetML format files saved with .xls extension."""
     from lxml import etree
 
     content = raw_bytes.decode('utf-8', errors='replace')
@@ -50,12 +46,15 @@ def parse_spreadsheetml(raw_bytes):
     # Strip anything before <Workbook
     content = re.sub(r'^.*?(<Workbook)', r'\1', content, flags=re.DOTALL)
 
-    # Generic fix: remove any whitespace found INSIDE any xmlns="..." URI.
-    # e.g. xmlns:x="urn:schemas-    microsoft-com:office:excel"
-    # This handles ALL broken namespace URIs regardless of prefix.
-    content = re.sub(r'(xmlns:\w+="[^"]*?)\s+([^"]*?")', r'\1\2', content)
+    # Fix broken xmlns URIs that contain newlines or whitespace
+    content = re.sub(
+        r'xmlns:x="urn:schemas-[\s\r\n]+microsoft-com:office:excel"',
+        'xmlns:x="urn:schemas-microsoft-com:office:excel"',
+        content,
+        flags=re.DOTALL
+    )
 
-    # Escape bare ampersands that would break XML parsing
+    # Escape bare ampersands
     content = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)', '&amp;', content)
 
     try:
