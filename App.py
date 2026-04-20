@@ -306,7 +306,7 @@ def load_data(file):
     try:
         # Seek to beginning to ensure clean read
         file.seek(0)
-        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+        df = pd.read_excel(file, skiprows=6, engine='openpyxl', sheet_name='Good Receive Analysis')
     except Exception as e:
         st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
@@ -600,13 +600,13 @@ current_date = datetime.today().date()
 today = datetime.today().date()
 #current_date = date(2025,8,15)
 
-while len(date_list) < 3 and days_checked < 14:
+while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3 valid days
     weekday = current_date.weekday()  # Monday = 0, Sunday = 6
 
     # Filter to see if there are any orders for this date
     df_day = df[df['ExpDate'].dt.date == current_date]
     
-    # Exclude "Forward Deploy" orders for non-today dates
+    # Exclude "Forward Deploy" orders for not today's order
     if current_date != today:
         df_day = df_day[df_day['Type'] != 'Forward Deploy']
     
@@ -614,21 +614,18 @@ while len(date_list) < 3 and days_checked < 14:
 
     # Skip if Sunday OR if no orders exist for this day
     if weekday == 6 or order_count == 0:
-        current_date -= timedelta(days=1)  # ← fixed
+        current_date += timedelta(days=1)
         days_checked += 1
         continue
 
     # Valid day to display (has orders and not Sunday)
     date_list.append(current_date)
-    current_date -= timedelta(days=1)  # ← fixed
+    current_date += timedelta(days=1)
     days_checked += 1
 
-# Sort so dates display oldest → newest (left to right)
-date_list = sorted(date_list)
-
-# If we couldn't find any days with orders, stop
+# If we couldn't find 3 days with orders, just use what we found
 if len(date_list) == 0:
-    st.warning("⚠️ No orders found in the past 14 days.")
+    st.warning("⚠️ No orders found in the next 14 days.")
     st.stop()
 
 # ---------- DISPLAY ----------
@@ -861,33 +858,3 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
