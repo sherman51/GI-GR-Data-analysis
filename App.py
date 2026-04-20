@@ -302,35 +302,32 @@ components.html(
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
-    """Load and clean data from Excel file."""
     try:
-        # Seek to beginning to ensure clean read
         file.seek(0)
-        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
+        engine = 'xlrd' if file_name.lower().endswith('.xls') else 'openpyxl'
+        df = pd.read_excel(file, skiprows=6, engine=engine)
     except Exception as e:
         st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
-    
-    # Clean column names
+
     df.columns = df.columns.str.strip()
-    
-    # Remove empty rows and columns
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
-    
-    # Convert date columns
+
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
-    
-    # Filter out rows without ExpDate
-    df = df[df['ExpDate'].notna()].copy()  # .copy() ensures clean DataFrame
-    
-    # Map priority and status
+
+    df = df[df['ExpDate'].notna()].copy()
+
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
-    
+
+    # DEBUG - remove after confirming correct load
+    st.sidebar.write("✅ Raw rows loaded:", df.shape[0])
+    st.sidebar.write("📋 Columns found:", df.columns.tolist())
+
     return df
 
 # Load data - create fresh copy
@@ -600,32 +597,34 @@ current_date = datetime.today().date()
 today = datetime.today().date()
 #current_date = date(2025,8,15)
 
-while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3 valid days
+# DEBUG - remove after confirming dates are correct
+st.sidebar.write("📅 ExpDate range:", df['ExpDate'].min(), "→", df['ExpDate'].max())
+st.sidebar.write("📅 Today:", datetime.today().date())
+
+while len(date_list) < 3 and days_checked < 14:
     weekday = current_date.weekday()  # Monday = 0, Sunday = 6
 
-    # Filter to see if there are any orders for this date
     df_day = df[df['ExpDate'].dt.date == current_date]
     
-    # Exclude "Forward Deploy" orders for not today's order
     if current_date != today:
         df_day = df_day[df_day['Type'] != 'Forward Deploy']
     
     order_count = df_day['GINo'].count()
 
-    # Skip if Sunday OR if no orders exist for this day
     if weekday == 6 or order_count == 0:
-        current_date += timedelta(days=1)
+        current_date -= timedelta(days=1)
         days_checked += 1
         continue
 
-    # Valid day to display (has orders and not Sunday)
     date_list.append(current_date)
-    current_date += timedelta(days=1)
+    current_date -= timedelta(days=1)
     days_checked += 1
 
-# If we couldn't find 3 days with orders, just use what we found
+date_list = sorted(date_list)
+
 if len(date_list) == 0:
-    st.warning("⚠️ No orders found in the next 14 days.")
+    st.sidebar.write("🔍 Unique ExpDates in data:", sorted(df['ExpDate'].dt.date.unique().tolist()))
+    st.warning("⚠️ No orders found in the past 14 days.")
     st.stop()
 
 # ---------- DISPLAY ----------
