@@ -306,7 +306,7 @@ def load_data(file):
     try:
         # Seek to beginning to ensure clean read
         file.seek(0)
-        df = pd.read_excel(file, skiprows=5, engine='openpyxl')
+        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
     except Exception as e:
         st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
