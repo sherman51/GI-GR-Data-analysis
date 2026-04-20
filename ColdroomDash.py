@@ -302,35 +302,27 @@ components.html(
 
 # ---------- HELPER FUNCTIONS ----------
 def load_data(file):
-    """Load and clean data from Excel file."""
     try:
-        # Seek to beginning to ensure clean read
         file.seek(0)
         df = pd.read_excel(file, skiprows=6, engine='openpyxl')
     except Exception as e:
         st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
-    
-    # Clean column names
+
     df.columns = df.columns.str.strip()
-    
-    # Remove empty rows and columns
     df.dropna(axis=1, how="all", inplace=True)
     df.dropna(how="all", inplace=True)
-    
-    # Convert date columns
+
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
-    
-    # Filter out rows without ExpDate
-    df = df[df['ExpDate'].notna()].copy()  # .copy() ensures clean DataFrame
-    
-    # Map priority and status
+            df[col] = pd.to_datetime(df[col], format='%d/%b/%Y', errors='coerce')
+
+    df = df[df['ExpDate'].notna()].copy()
+
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
-    
+
     return df
 
 # Load data - create fresh copy
