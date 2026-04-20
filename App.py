@@ -306,7 +306,7 @@ def load_data(file):
     try:
         # Seek to beginning to ensure clean read
         file.seek(0)
-        df = pd.read_excel(file, skiprows=6, engine='openpyxl', sheet_name='Good Receive Analysis')
+        df = pd.read_excel(file, skiprows=6, engine='openpyxl')
     except Exception as e:
         st.error(f"❌ Failed to read Excel file: {str(e)}")
         st.stop()
@@ -625,7 +625,7 @@ while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3
 
 # If we couldn't find 3 days with orders, just use what we found
 if len(date_list) == 0:
-    st.warning(today "⚠️ No orders found in the next 14 days.")
+    st.warning("⚠️ No orders found in the next 14 days.")
     st.stop()
 
 # ---------- DISPLAY ----------
