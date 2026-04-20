@@ -337,7 +337,7 @@ def load_data(file):
 df = load_data(file_stream)
 
 # Filter df - use .copy() to ensure clean filtering
-aircon_zones = ['aircon', 'controlled drug room', 'strong room']
+aircon_zones = ['aircon', 'controlled drug room', 'strong room', 'cold room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)].copy()
 
 # Filter df by Type
