@@ -598,35 +598,50 @@ date_list = []
 days_checked = 0
 current_date = datetime.today().date()
 today = datetime.today().date()
-#current_date = date(2025,8,15)
 
-while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3 valid days
-    weekday = current_date.weekday()  # Monday = 0, Sunday = 6
+# ── DEBUG PANEL ──────────────────────────────────────────
+with st.sidebar.expander("🔍 Date Logic Debug", expanded=True):
+    st.write(f"**Today:** {today}")
+    st.write(f"**ExpDate dtype:** {df['ExpDate'].dtype}")
+    st.write(f"**ExpDate range:** {df['ExpDate'].min().date()} → {df['ExpDate'].max().date()}")
+    st.write(f"**Total rows:** {df.shape[0]}")
 
-    # Filter to see if there are any orders for this date
+    future_df = df[df['ExpDate'].dt.date >= today]
+    st.write(f"**Rows with ExpDate >= today:** {future_df.shape[0]}")
+
+    st.write("**Orders per date (next 14 days):**")
+    scan_date = today
+    debug_rows = []
+    for _ in range(14):
+        day_df = df[df['ExpDate'].dt.date == scan_date]
+        day_df_filtered = day_df[day_df['Type'] != 'Forward Deploy'] if scan_date != today else day_df
+        weekday_name = scan_date.strftime('%a')
+        debug_rows.append({
+            "Date": scan_date.strftime('%d %b'),
+            "Weekday": weekday_name,
+            "Raw rows": day_df.shape[0],
+            "After FD filter": day_df_filtered.shape[0],
+            "Skipped?": "Sunday" if scan_date.weekday() == 6 else ("No orders" if day_df_filtered.shape[0] == 0 else "✅ Added")
+        })
+        scan_date += timedelta(days=1)
+    st.dataframe(pd.DataFrame(debug_rows), hide_index=True)
+# ── END DEBUG ─────────────────────────────────────────────
+
+while len(date_list) < 3 and days_checked < 14:
+    weekday = current_date.weekday()
     df_day = df[df['ExpDate'].dt.date == current_date]
-    
-    # Exclude "Forward Deploy" orders for not today's order
     if current_date != today:
         df_day = df_day[df_day['Type'] != 'Forward Deploy']
-    
     order_count = df_day['GINo'].count()
 
-    # Skip if Sunday OR if no orders exist for this day
     if weekday == 6 or order_count == 0:
         current_date += timedelta(days=1)
         days_checked += 1
         continue
 
-    # Valid day to display (has orders and not Sunday)
     date_list.append(current_date)
     current_date += timedelta(days=1)
     days_checked += 1
-
-# If we couldn't find 3 days with orders, just use what we found
-if len(date_list) == 0:
-    st.warning("⚠️ No orders found in the next 14 days.")
-    st.stop()
 
 # ---------- DISPLAY ----------
 # Create tabs
