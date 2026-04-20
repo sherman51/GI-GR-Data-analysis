@@ -185,9 +185,10 @@ def load_data(file):
 
     for col in ['ExpDate', 'CreatedOn', 'ShippedOn']:
         if col in df.columns:
-            df[col] = pd.to_datetime(df[col], errors='coerce')
+            df[col] = pd.to_datetime(df[col], format='%d/%b/%Y', errors='coerce')
 
     df = df[df['ExpDate'].notna()].copy()
+
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
