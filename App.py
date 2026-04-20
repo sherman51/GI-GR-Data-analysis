@@ -598,27 +598,38 @@ date_list = []
 days_checked = 0
 current_date = datetime.today().date()
 today = datetime.today().date()
+#current_date = date(2025,8,15)
 
 while len(date_list) < 3 and days_checked < 14:
-    weekday = current_date.weekday()
+    weekday = current_date.weekday()  # Monday = 0, Sunday = 6
 
+    # Filter to see if there are any orders for this date
     df_day = df[df['ExpDate'].dt.date == current_date]
     
+    # Exclude "Forward Deploy" orders for non-today dates
     if current_date != today:
         df_day = df_day[df_day['Type'] != 'Forward Deploy']
     
     order_count = df_day['GINo'].count()
 
+    # Skip if Sunday OR if no orders exist for this day
     if weekday == 6 or order_count == 0:
-        current_date -= timedelta(days=1)  # ← was +=
+        current_date -= timedelta(days=1)  # ← fixed
         days_checked += 1
         continue
 
+    # Valid day to display (has orders and not Sunday)
     date_list.append(current_date)
-    current_date -= timedelta(days=1)  # ← was +=
+    current_date -= timedelta(days=1)  # ← fixed
     days_checked += 1
 
-date_list = sorted(date_list)  # Show oldest → newest left to right
+# Sort so dates display oldest → newest (left to right)
+date_list = sorted(date_list)
+
+# If we couldn't find any days with orders, stop
+if len(date_list) == 0:
+    st.warning("⚠️ No orders found in the past 14 days.")
+    st.stop()
 
 # ---------- DISPLAY ----------
 # Create tabs
@@ -850,7 +861,6 @@ with tab2:
     with col2:
         st.markdown("### 📈 Performance Metrics")
         performance_metrics(df, key_prefix="overall")
-
 
 
 
