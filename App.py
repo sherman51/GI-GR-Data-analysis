@@ -622,10 +622,6 @@ while len(date_list) < 3 and days_checked < 14:  # Extended to 14 days to find 3
     date_list.append(current_date)
     current_date += timedelta(days=1)
     days_checked += 1
-
-# If we couldn't find 3 days with orders, just use what we found
-if len(date_list) == 0:
-    st.warning("⚠️ No orders found in the next 14 days.")
     st.stop()
 
 # ---------- DISPLAY ----------
