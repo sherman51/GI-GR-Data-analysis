@@ -188,41 +188,21 @@ def load_data(file):
             df[col] = pd.to_datetime(df[col], format='%d/%b/%Y', errors='coerce')
 
     df = df[df['ExpDate'].notna()].copy()
-
     df['Order Type'] = df['Priority'].map(CONFIG['priority_map']).fillna(df['Priority'])
     df['Status'] = df['Status'].astype(str).str.strip()
     df['Order Status'] = df['Status'].map(CONFIG['status_map']).fillna('Open')
 
     return df
 
-# ---------- LOAD DATA ----------
+# ---------- LOAD & FILTER DATA ----------
 df = load_data(file_stream)
 
-# ── PRE-FILTER DEBUG ──────────────────────────────────────────────────────────
-with st.sidebar.expander("🔬 Pre-filter Debug", expanded=True):
-    st.write(f"**Rows after load:** `{df.shape[0]}`")
-
-    st.write("**Unique StorageZones:**")
-    zone_counts = df['StorageZone'].astype(str).str.strip().value_counts().reset_index()
-    zone_counts.columns = ['StorageZone', 'Count']
-    st.dataframe(zone_counts, hide_index=True)
-
-    st.write("**Unique Types:**")
-    type_counts = df['Type'].astype(str).str.strip().value_counts().reset_index()
-    type_counts.columns = ['Type', 'Count']
-    st.dataframe(type_counts, hide_index=True)
-
-# ---------- FILTER: StorageZone ----------
 aircon_zones = ['aircon', 'controlled drug room', 'strong room', 'cold room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)].copy()
-st.sidebar.write(f"**Rows after zone filter:** `{df.shape[0]}`")
 
-# ---------- FILTER: Type ----------
 valid_types = ["Back Order", "Disposal", "Goods Issue", "Forward Deploy"]
 df['Type'] = df['Type'].astype(str).str.strip()
 df = df[df['Type'].isin(valid_types)].copy()
-st.sidebar.write(f"**Rows after type filter:** `{df.shape[0]}`")
-# ── END PRE-FILTER DEBUG ──────────────────────────────────────────────────────
 
 st.sidebar.metric("Total Records", df.shape[0])
 st.sidebar.metric("Unique GI Numbers", df['GINo'].nunique())
@@ -404,44 +384,7 @@ days_checked = 0
 current_date = datetime.today().date()
 today = datetime.today().date()
 
-# ── DATE LOGIC DEBUG ──────────────────────────────────────────────────────────
-with st.sidebar.expander("🔍 Date Logic Debug", expanded=True):
-    st.write(f"**Today:** `{today}`")
-    st.write(f"**ExpDate dtype:** `{df['ExpDate'].dtype}`")
-    if df.shape[0] > 0:
-        st.write(f"**ExpDate range:** `{df['ExpDate'].min().date()}` → `{df['ExpDate'].max().date()}`")
-    else:
-        st.write("**ExpDate range:** No data after filters")
-    st.write(f"**Total rows:** `{df.shape[0]}`")
-
-    future_df = df[df['ExpDate'].dt.date >= today]
-    st.write(f"**Rows with ExpDate >= today:** `{future_df.shape[0]}`")
-
-    st.write("**Orders per date (next 20 days):**")
-    scan_date = today
-    debug_rows = []
-    for _ in range(20):
-        day_df = df[df['ExpDate'].dt.date == scan_date]
-        day_df_filtered = day_df[day_df['Type'] != 'Forward Deploy'] if scan_date != today else day_df
-        weekday_name = scan_date.strftime('%a')
-        if scan_date.weekday() == 6:
-            reason = "Sunday"
-        elif day_df_filtered.shape[0] == 0:
-            reason = "No orders"
-        else:
-            reason = "✅ Added"
-        debug_rows.append({
-            "Date": scan_date.strftime('%d %b'),
-            "Weekday": weekday_name,
-            "Raw rows": day_df.shape[0],
-            "After FD filter": day_df_filtered.shape[0],
-            "Status": reason
-        })
-        scan_date += timedelta(days=1)
-    st.dataframe(pd.DataFrame(debug_rows), hide_index=True)
-# ── END DATE LOGIC DEBUG ──────────────────────────────────────────────────────
-
-while len(date_list) < 3 and days_checked < 20:  # Extended to 20 days
+while len(date_list) < 3 and days_checked < 20:
     weekday = current_date.weekday()
     df_day = df[df['ExpDate'].dt.date == current_date]
 
