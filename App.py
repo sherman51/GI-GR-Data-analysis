@@ -197,7 +197,7 @@ def load_data(file):
 # ---------- LOAD & FILTER DATA ----------
 df = load_data(file_stream)
 
-aircon_zones = ['aircon', 'controlled drug room', 'strong room', 'cold room']
+aircon_zones = ['aircon', 'controlled drug room', 'strong room']
 df = df[df['StorageZone'].astype(str).str.strip().str.lower().isin(aircon_zones)].copy()
 
 valid_types = ["Back Order", "Disposal", "Goods Issue", "Forward Deploy"]
